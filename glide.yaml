@@ -1,0 +1,8 @@
+package: github.com/leeola/kala
+import:
+- package: github.com/pressly/chi
+  version: v2.0.0rc1
+- package: github.com/BurntSushi/toml
+- package: github.com/inconshreveable/log15
+- package: github.com/leeola/errors
+- package: github.com/minio/blake2b-simd
