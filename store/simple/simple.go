@@ -38,6 +38,18 @@ func New(c Config) (*Simple, error) {
 	}, nil
 }
 
+func (s *Simple) Exists(h string) (bool, error) {
+	p := filepath.Join(s.path, h)
+	_, err := os.Stat(p)
+	if os.IsNotExist(err) {
+		return false, nil
+	}
+	if err != nil {
+		return false, errors.Wrapf(err, "simple store failed to stat hash: %s", h)
+	}
+	return true, nil
+}
+
 func (s *Simple) Read(h string) (io.ReadCloser, error) {
 	p := filepath.Join(s.path, h)
 	f, err := os.Open(p)

@@ -5,6 +5,7 @@ import (
 
 	"github.com/leeola/errors"
 	"github.com/leeola/kala/node"
+	"github.com/leeola/kala/peers"
 	"github.com/leeola/kala/store"
 	"github.com/leeola/kala/store/simple"
 )
@@ -18,6 +19,20 @@ func main() {
 	store, err := initStoreFromConfig(configPath)
 	if err != nil {
 		panic(err)
+	}
+
+	// wrap the store with our indexer and peers, if configured.
+	peerConfig, err := peers.LoadConfig(configPath)
+	if err != nil {
+		panic(err)
+	}
+	if !peerConfig.IsZero() {
+		peerConfig.Store = store
+		p, err := peers.New(peerConfig)
+		if err != nil {
+			panic(err)
+		}
+		store = p
 	}
 
 	nodeConfig, err := node.LoadConfig(configPath)

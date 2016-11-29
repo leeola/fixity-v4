@@ -9,6 +9,25 @@ import (
 	"github.com/pressly/chi"
 )
 
+func (n *Node) HeadContentHandler(w http.ResponseWriter, r *http.Request) {
+	hash := chi.URLParam(r, "hash")
+	log := GetLog(r).New("hash", hash)
+
+	exists, err := n.store.Exists(hash)
+	if err != nil {
+		log.Error("store.Exists failed", "err", err)
+		http.Error(w, "store Exists failed", http.StatusInternalServerError)
+		return
+	}
+
+	// If it does not exist, return 404.
+	if !exists {
+		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+	}
+
+	// return 200 if it exists.
+}
+
 func (n *Node) GetContentHandler(w http.ResponseWriter, r *http.Request) {
 	hash := chi.URLParam(r, "hash")
 	log := GetLog(r).New("hash", hash)

@@ -9,6 +9,9 @@ const (
 )
 
 type Store interface {
+	// Check if the given hash exists in the Store
+	Exists(string) (bool, error)
+
 	// Takes a hex string of the content hash, and returns a reader for the content
 	Read(string) (io.ReadCloser, error)
 
@@ -24,7 +27,10 @@ type Store interface {
 	WriteHash(string, []byte) error
 
 	// List records in the store
-	List(max, offset int) (<-chan string, error)
+	//
+	// TODO(leeola): Enable this. In the current Store implementations this is not
+	// supported. However, this will be how the Indexer constructs the initial index
+	// List(max, offset int) (<-chan string, error)
 }
 
 // type ContentType struct {

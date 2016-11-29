@@ -1,0 +1,7 @@
+BindAddr = "127.0.0.1:4002"
+
+[simpleStore]
+Path = "_test/_stores/two"
+
+[[peers]]
+Addr = "http://127.0.0.1:4001"

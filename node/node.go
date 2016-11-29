@@ -10,6 +10,7 @@ import (
 )
 
 type Config struct {
+	// The address for those node to listen on
 	BindAddr string
 
 	// required
