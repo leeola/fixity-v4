@@ -14,7 +14,8 @@ type Index interface {
 	// each time an index is built a version must be generated that will persist
 	// for the lifetime of the index.
 	//
-	// If the index is rebuilt for any reason, a new index **must** be generated.
+	// If the index is rebuilt for any reason, a new index version **must** be
+	// generated.
 	Version() string
 }
 
