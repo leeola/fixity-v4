@@ -95,14 +95,10 @@ func (p *Peers) Read(h string) (io.ReadCloser, error) {
 	return nil, store.HashNotFoundErr
 }
 
-func (p *Peers) Write([]byte) (string, error) {
-	return "", errors.New("not implemented")
+func (p *Peers) Write(b []byte) (string, error) {
+	return p.store.Write(b)
 }
 
-func (p *Peers) WriteHash(string, []byte) error {
-	return errors.New("not implemented")
-}
-
-func (p *Peers) List(max, offset int) (<-chan string, error) {
-	return nil, errors.New("not implemented")
+func (p *Peers) WriteHash(h string, b []byte) error {
+	return p.store.WriteHash(h, b)
 }

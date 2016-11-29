@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/inconshreveable/log15"
+	"github.com/leeola/kala/index"
 	"github.com/leeola/kala/store"
 	"github.com/pressly/chi"
 )
@@ -13,17 +14,21 @@ type Config struct {
 	// The address for those node to listen on
 	BindAddr string
 
-	// required
+	// The store to provide content for this Node.
 	Store store.Store `toml:"-"`
 
+	// The indexer to provide content queries for this Node.
+	Index index.Index `toml:"-"`
+
 	// optional
-	Router *chi.Mux
+	Router *chi.Mux     `toml:"-"`
 	Log    log15.Logger `toml:"-"`
 }
 
 type Node struct {
 	bindAddr string
 	log      log15.Logger
+	index    index.Index
 	store    store.Store
 	router   *chi.Mux
 }
@@ -31,6 +36,9 @@ type Node struct {
 func New(c Config) (*Node, error) {
 	if c.BindAddr == "" {
 		return nil, errors.New("missing required Config field: BindAddr")
+	}
+	if c.Index == nil {
+		return nil, errors.New("missing required Config field: Index")
 	}
 	if c.Store == nil {
 		return nil, errors.New("missing required Config field: Store")
@@ -47,6 +55,7 @@ func New(c Config) (*Node, error) {
 	n := &Node{
 		bindAddr: c.BindAddr,
 		log:      c.Log,
+		index:    c.Index,
 		store:    c.Store,
 		router:   c.Router,
 	}
