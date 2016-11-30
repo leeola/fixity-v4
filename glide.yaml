@@ -6,3 +6,4 @@ import:
 - package: github.com/inconshreveable/log15
 - package: github.com/leeola/errors
 - package: github.com/minio/blake2b-simd
+- package: github.com/boltdb/bolt

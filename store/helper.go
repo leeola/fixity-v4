@@ -1,7 +1,6 @@
 package store
 
 import (
-	"fmt"
 	"io"
 	"io/ioutil"
 
@@ -24,8 +23,6 @@ func WriteReader(s Store, r io.Reader) (string, error) {
 	if err != nil {
 		return "", errors.Wrap(err, "failed to readall")
 	}
-
-	fmt.Printf("bytes: %q\n", string(b))
 
 	h, err := s.Write(b)
 	return h, errors.Wrap(err, "store failed to write")

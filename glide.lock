@@ -1,6 +1,8 @@
-hash: f5982d49fdd4a3fbeb4f9cfb543f71a3698385c46b5b8284b5078223eb4e60e6
-updated: 2016-11-27T15:26:31.334891987-08:00
+hash: cc0ae7423a6f95e042986cb555b706094a6f8a9510da37da6714d0c8e029e871
+updated: 2016-11-29T16:32:10.997396372-08:00
 imports:
+- name: github.com/boltdb/bolt
+  version: 0d9f544bb94aac29c185968483459ef74d6deb5d
 - name: github.com/BurntSushi/toml
   version: 99064174e013895bbd9b025c31100bd1d9b590ca
 - name: github.com/inconshreveable/log15
@@ -16,7 +18,7 @@ imports:
 - name: github.com/pressly/chi
   version: fc6251083a856d5093f4b96d71252c5e56d9c1b5
 - name: golang.org/x/sys
-  version: 30237cf4eefd639b184d1f2cb77a581ea0be8947
+  version: d5645953809d8b4752afb2c3224b1f1ad73dfa70
   subpackages:
   - unix
 - name: gopkg.in/inconshreveable/log15.v2

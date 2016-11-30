@@ -4,7 +4,7 @@ import (
 	"flag"
 
 	"github.com/leeola/errors"
-	"github.com/leeola/kala/index/memory"
+	"github.com/leeola/kala/index/boltindex"
 	"github.com/leeola/kala/node"
 	"github.com/leeola/kala/peers"
 	"github.com/leeola/kala/store"
@@ -23,13 +23,16 @@ func main() {
 	}
 
 	// wrap the store with our indexer.
-	memIndex, err := memory.New(memory.Config{
-		Store: store,
-	})
+	boltConfig, err := boltindex.LoadConfig(configPath)
 	if err != nil {
 		panic(err)
 	}
-	store = memIndex
+	boltConfig.Store = store
+	boltIndex, err := boltindex.New(boltConfig)
+	if err != nil {
+		panic(err)
+	}
+	store = boltIndex
 
 	// wrap the store with our peers, if configured.
 	peerConfig, err := peers.LoadConfig(configPath)
@@ -52,7 +55,7 @@ func main() {
 
 	// fill the nodeConfig with the instances it needs to init.
 	nodeConfig.Store = store
-	nodeConfig.Index = memIndex
+	nodeConfig.Index = boltIndex
 
 	n, err := node.New(nodeConfig)
 	if err != nil {
