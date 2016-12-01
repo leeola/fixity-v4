@@ -13,7 +13,7 @@ import (
 	"github.com/pressly/chi"
 )
 
-func (n *Node) HeadContentHandler(w http.ResponseWriter, r *http.Request) {
+func (n *Node) HeadBlobHandler(w http.ResponseWriter, r *http.Request) {
 	hash := chi.URLParam(r, "hash")
 	log := GetLog(r).New("hash", hash)
 
@@ -32,7 +32,7 @@ func (n *Node) HeadContentHandler(w http.ResponseWriter, r *http.Request) {
 	// return 200 if it exists.
 }
 
-func (n *Node) GetContentHandler(w http.ResponseWriter, r *http.Request) {
+func (n *Node) GetBlobHandler(w http.ResponseWriter, r *http.Request) {
 	hash := chi.URLParam(r, "hash")
 	log := GetLog(r).New("hash", hash)
 
@@ -55,7 +55,7 @@ func (n *Node) GetContentHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (n *Node) PutContentHandler(w http.ResponseWriter, r *http.Request) {
+func (n *Node) PutBlobHandler(w http.ResponseWriter, r *http.Request) {
 	hash := chi.URLParam(r, "hash")
 	log := GetLog(r).New("hash", hash)
 
@@ -72,7 +72,7 @@ func (n *Node) PutContentHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (n *Node) PostContentHandler(w http.ResponseWriter, r *http.Request) {
+func (n *Node) PostBlobHandler(w http.ResponseWriter, r *http.Request) {
 	log := GetLog(r)
 	h, err := store.WriteReader(n.store, r.Body)
 	if err != nil {
