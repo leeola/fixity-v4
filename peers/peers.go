@@ -58,7 +58,7 @@ func New(c Config) (*Peers, error) {
 }
 
 func (p *Peers) Exists(h string) (bool, error) {
-	return false, errors.New("not implemented")
+	return p.store.Exists(h)
 }
 
 func (p *Peers) Read(h string) (io.ReadCloser, error) {
