@@ -30,7 +30,12 @@ type Query struct {
 	// An unordered index of all the hashes in the database.
 	//
 	// Order is not gauranteed to be the same between re-indexes.
-	IndexEntry int `json:"indexEntry"`
+	FromEntry int `json:"fromEntry"`
+
+	// Limit the results to this value.
+	//
+	// Note that this is ignored with QueryOne.
+	Limit int `json:"limit"`
 }
 
 type Result struct {

@@ -8,7 +8,6 @@ import (
 
 	"github.com/boltdb/bolt"
 	"github.com/leeola/errors"
-	"github.com/leeola/kala/index"
 	"github.com/leeola/kala/store"
 )
 
@@ -108,54 +107,6 @@ func (bi *BoltIndex) initMeta() error {
 	})
 }
 
-func (bi *BoltIndex) QueryOne(q index.Query) (index.Result, error) {
-	if q.IndexVersion != "" && bi.version != q.IndexVersion {
-		return index.Result{}, index.ErrIndexVersionsDoNotMatch
-	}
-
-	// if q.IndexEntry != 0 {
-	// 	h, ok := bi.entries[q.IndexEntry]
-	// 	if !ok {
-	// 		return index.Result{}, index.ErrNoQueryResults
-	// 	}
-
-	// 	return index.Result{
-	// 		IndexVersion: bi.version,
-	// 		Hash:         h,
-	// 	}, nil
-	// }
-
-	return index.Result{}, index.ErrNoQueryResults
-}
-
-func (bi *BoltIndex) Query(q index.Query) (index.Results, error) {
-	if q.IndexVersion != "" && bi.version != q.IndexVersion {
-		return index.Results{}, index.ErrIndexVersionsDoNotMatch
-	}
-
-	// If IndexEntry was specified, there can only be one match.
-	//
-	// In the future when more query fields are added, the single entry
-	// will have to be filtered against the other query fields.
-	if q.IndexEntry != 0 {
-		h, err := bi.GetEntry(q.IndexEntry)
-		if err != nil {
-			return index.Results{}, errors.Wrap(err, "failed to get entry from dv")
-		}
-		// db returns zero values for no match.
-		if h == "" {
-			return index.Results{}, index.ErrNoQueryResults
-		}
-
-		return index.Results{
-			IndexVersion: bi.version,
-			Hashes:       []string{h},
-		}, nil
-	}
-
-	return index.Results{}, index.ErrNoQueryResults
-}
-
 func (bi *BoltIndex) GetInt(bucket, key []byte) (int, error) {
 	var i int
 	err := bi.db.View(func(tx *bolt.Tx) error {
@@ -180,29 +131,6 @@ func (bi *BoltIndex) GetString(bucket, key []byte) (string, error) {
 		return nil
 	})
 	return s, err
-}
-
-func (bi *BoltIndex) Version() string {
-	return bi.version
-}
-
-func (bi *BoltIndex) AddEntry(h string) error {
-	bi.entryCount += 1
-	return bi.db.Update(func(tx *bolt.Tx) error {
-		entryKey := itob(bi.entryCount)
-
-		metaBucket := tx.Bucket(metaBucketName)
-		if err := metaBucket.Put(metaEntryCountKey, entryKey); err != nil {
-			return err
-		}
-
-		entryBucket := tx.Bucket(entryBucketName)
-		if err := entryBucket.Put(entryKey, []byte(h)); err != nil {
-			return err
-		}
-
-		return nil
-	})
 }
 
 func (bi *BoltIndex) GetEntry(i int) (string, error) {

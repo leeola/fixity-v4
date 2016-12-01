@@ -88,16 +88,26 @@ func (n *Node) PostContentHandler(w http.ResponseWriter, r *http.Request) {
 func (n *Node) GetQueryHandler(w http.ResponseWriter, r *http.Request) {
 	log := GetLog(r)
 
-	q := index.Query{}
+	q := index.Query{
+		// default limit of 5
+		Limit: 5,
+	}
 	for k, v := range r.URL.Query() {
 		switch k {
-		case "indexEntry":
+		case "fromEntry":
 			i, err := strconv.Atoi(v[0])
 			if err != nil {
-				http.Error(w, "indexEntry must be integer", http.StatusInternalServerError)
+				http.Error(w, "fromEntry must be integer", http.StatusInternalServerError)
 				return
 			}
-			q.IndexEntry = i
+			q.FromEntry = i
+		case "limit":
+			i, err := strconv.Atoi(v[0])
+			if err != nil {
+				http.Error(w, "limit must be integer", http.StatusInternalServerError)
+				return
+			}
+			q.Limit = i
 		case "indexVersion":
 			q.IndexVersion = v[0]
 		default:
