@@ -144,3 +144,7 @@ func (n *Node) GetQueryHandler(w http.ResponseWriter, r *http.Request) {
 
 	io.Copy(w, bytes.NewReader(b))
 }
+
+func (n *Node) GetIndexContentHandler(w http.ResponseWriter, r *http.Request) {
+	http.Error(w, http.StatusText(http.StatusNotImplemented), http.StatusNotImplemented)
+}

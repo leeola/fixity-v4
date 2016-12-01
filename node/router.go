@@ -8,4 +8,5 @@ func (n *Node) initRouter() {
 	n.router.Put("/content/:hash", n.PutContentHandler)
 	n.router.Post("/content", n.PostContentHandler)
 	n.router.Get("/index/query", n.GetQueryHandler)
+	n.router.Get("/index/content", n.GetIndexContentHandler)
 }
