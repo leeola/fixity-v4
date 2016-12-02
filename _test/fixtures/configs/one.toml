@@ -10,8 +10,5 @@ Path = "_test/_stores/one/store"
 [boltDatabase]
 BoltPath = "_test/_stores/one/db"
 
-[boltIndex]
-BoltPath = "_test/_stores/one/index"
-
 [[peers]]
 Addr = "http://127.0.0.1:4002"

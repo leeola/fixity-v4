@@ -10,9 +10,6 @@ Path = "_test/_stores/two/store"
 [boltDatabase]
 BoltPath = "_test/_stores/two/db"
 
-[boltIndex]
-BoltPath = "_test/_stores/two/index"
-
 [[peers]]
 Addr = "http://127.0.0.1:4001"
 Frequency = 8
