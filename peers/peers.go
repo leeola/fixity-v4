@@ -1,18 +1,28 @@
 package peers
 
 import (
-	"errors"
 	"io"
+	"time"
 
 	"github.com/inconshreveable/log15"
+	"github.com/leeola/errors"
 	"github.com/leeola/kala/client"
+	"github.com/leeola/kala/peers/peer"
 	"github.com/leeola/kala/store"
 )
 
 type Config struct {
-	PeerAddrs []string
-	Store     store.Store
-	Log       log15.Logger
+	Peers []PeerConfig
+	Store store.Store
+	Log   log15.Logger
+}
+
+// Note that this exists to construct an individual Peer, in combination with the
+// Peers Config. This should not be confused with Peer.Config.
+type PeerConfig struct {
+	Addr      string
+	Frequency time.Duration
+	Pins      []peer.PinQuery
 }
 
 // NOTE: Peers has a lot of room for optimization in how it reads/writes/etc
@@ -22,9 +32,9 @@ type Config struct {
 //
 // For now though, avoiding premature optimization in Peers.
 type Peers struct {
-	peerClients []*client.Client
-	store       store.Store
-	log         log15.Logger
+	peers []*peer.Peer
+	store store.Store
+	log   log15.Logger
 }
 
 func New(c Config) (*Peers, error) {
@@ -36,24 +46,36 @@ func New(c Config) (*Peers, error) {
 		c.Log = log15.New()
 	}
 
-	clients := make([]*client.Client, len(c.PeerAddrs))
-	for i, addr := range c.PeerAddrs {
-		c, err := client.New(client.Config{
-			KalaAddr: addr,
+	peers := make([]*peer.Peer, len(c.Peers))
+	for i, pc := range c.Peers {
+		kc, err := client.New(client.Config{
+			KalaAddr: pc.Addr,
 		})
 		if err != nil {
-			return nil, err
+			return nil, errors.Wrap(err, "failed to construct kala client")
 		}
-		clients[i] = c
+
+		p, err := peer.New(peer.Config{
+			Client:    kc,
+			Pins:      pc.Pins,
+			Store:     c.Store,
+			Log:       c.Log,
+			Frequency: pc.Frequency,
+		})
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to construct peer")
+		}
+
+		peers[i] = p
 	}
 
 	// TODO(leeola): sort peerClients based on a pre-configured means. Eg, network
 	// locality, etc.
 
 	return &Peers{
-		peerClients: clients,
-		store:       c.Store,
-		log:         c.Log,
+		peers: peers,
+		store: c.Store,
+		log:   c.Log,
 	}, nil
 }
 
@@ -75,7 +97,7 @@ func (p *Peers) Read(h string) (io.ReadCloser, error) {
 	// to get it from the clients.
 	//
 	// This is a point of potential optimization. See Peers docstring for details.
-	for _, c := range p.peerClients {
+	for _, c := range p.peers {
 		peerRc, err := c.Read(h)
 
 		// Note that we're dropping the error because we expect multiple peers to not
@@ -101,4 +123,12 @@ func (p *Peers) Write(b []byte) (string, error) {
 
 func (p *Peers) WriteHash(h string, b []byte) error {
 	return p.store.WriteHash(h, b)
+}
+
+func (ps *Peers) StartPinning() {
+	ps.log.Info("Peers are starting to pin")
+
+	for _, p := range ps.peers {
+		p.StartPinning()
+	}
 }

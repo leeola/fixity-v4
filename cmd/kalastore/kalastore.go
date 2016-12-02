@@ -35,16 +35,20 @@ func main() {
 	store = boltIndex
 
 	// wrap the store with our peers, if configured.
-	peerConfig, err := peers.LoadConfig(configPath)
+	peersConfig, err := peers.LoadConfig(configPath)
 	if err != nil {
 		panic(err)
 	}
-	if !peerConfig.IsZero() {
-		peerConfig.Store = store
-		p, err := peers.New(peerConfig)
+	if !peersConfig.IsZero() {
+		peersConfig.Store = store
+		p, err := peers.New(peersConfig)
 		if err != nil {
 			panic(err)
 		}
+
+		// start the pinning
+		p.StartPinning()
+
 		store = p
 	}
 

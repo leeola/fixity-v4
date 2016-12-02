@@ -21,7 +21,7 @@ type Config struct {
 }
 
 type Client struct {
-	kalaAddr   *url.URL
+	kalaAddr   string
 	httpClient *http.Client
 }
 
@@ -30,7 +30,8 @@ func New(c Config) (*Client, error) {
 		return nil, errors.New("missing Config field: KalaAddr")
 	}
 
-	u, err := url.Parse(c.KalaAddr)
+	// Parse it ahead of time to ensure it's valid
+	_, err := url.Parse(c.KalaAddr)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to parse KalaAddr")
 	}
@@ -40,13 +41,16 @@ func New(c Config) (*Client, error) {
 	}
 
 	return &Client{
-		kalaAddr:   u,
+		kalaAddr:   c.KalaAddr,
 		httpClient: c.HttpClient,
 	}, nil
 }
 
 func (c *Client) Exists(h string) (bool, error) {
-	u := &*c.kalaAddr
+	u, err := url.Parse(c.kalaAddr)
+	if err != nil {
+		return false, err
+	}
 	u.Path = path.Join("content", h)
 	res, err := c.httpClient.Head(u.String())
 	if err != nil {
@@ -57,7 +61,10 @@ func (c *Client) Exists(h string) (bool, error) {
 }
 
 func (c *Client) Read(h string) (io.ReadCloser, error) {
-	u := &*c.kalaAddr
+	u, err := url.Parse(c.kalaAddr)
+	if err != nil {
+		return nil, err
+	}
 	u.Path = path.Join("content", h)
 	res, err := c.httpClient.Get(u.String())
 	if err != nil {
@@ -77,9 +84,12 @@ func (c *Client) Read(h string) (io.ReadCloser, error) {
 }
 
 func (c *Client) Write(b []byte) (string, error) {
-	r := bytes.NewReader(b)
-	u := &*c.kalaAddr
+	u, err := url.Parse(c.kalaAddr)
+	if err != nil {
+		return "", err
+	}
 	u.Path = "content"
+	r := bytes.NewReader(b)
 	// TODO(leeola): decide the best content type for the http api
 	res, err := c.httpClient.Post(u.String(), "application/json", r)
 	if err != nil {
@@ -104,7 +114,10 @@ func (c *Client) WriteHash(h string, b []byte) error {
 	bLen := len(b)
 	r := bytes.NewReader(b)
 
-	u := &*c.kalaAddr
+	u, err := url.Parse(c.kalaAddr)
+	if err != nil {
+		return err
+	}
 	u.Path = path.Join("content", h)
 
 	req, err := http.NewRequest(http.MethodPut, u.String(), r)

@@ -49,3 +49,16 @@ type Results struct {
 	IndexVersion string   `json:"indexVersion"`
 	Hashes       []string `json:"hashes"`
 }
+
+func (q Query) IsZero() bool {
+	switch {
+	case q.FromEntry != 0:
+		return false
+	case q.IndexVersion != "":
+		return false
+	case q.Limit != 0:
+		return false
+	default:
+		return true
+	}
+}
