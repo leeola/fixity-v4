@@ -13,6 +13,19 @@ import (
 	"github.com/pressly/chi"
 )
 
+func (n *Node) GetNodeId(w http.ResponseWriter, r *http.Request) {
+	log := GetLog(r)
+
+	id, err := n.db.GetNodeId()
+	if err != nil {
+		log.Error("database GetNodeId failed", "err", err)
+		http.Error(w, "database returned an error", http.StatusInternalServerError)
+		return
+	}
+
+	fmt.Fprint(w, id)
+}
+
 func (n *Node) HeadBlobHandler(w http.ResponseWriter, r *http.Request) {
 	hash := chi.URLParam(r, "hash")
 	log := GetLog(r).New("hash", hash)

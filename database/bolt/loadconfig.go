@@ -1,4 +1,4 @@
-package simple
+package bolt
 
 import (
 	"os"
@@ -16,20 +16,20 @@ func LoadConfig(configPath string) (Config, error) {
 
 	var conf struct {
 		CreateMissingPaths bool
-		SimpleStore        Config `toml:"simpleStore"`
+		BoltDatabase       Config
 	}
 	if _, err := toml.DecodeReader(f, &conf); err != nil {
 		return Config{}, errors.Wrap(err, "failed to unmarshal config")
 	}
 
 	// Create the db path if it's missing.
-	if conf.CreateMissingPaths && conf.SimpleStore.Path != "" {
-		if _, err := os.Stat(conf.SimpleStore.Path); os.IsNotExist(err) {
-			if err := os.MkdirAll(conf.SimpleStore.Path, 0755); err != nil {
+	if conf.CreateMissingPaths && conf.BoltDatabase.BoltPath != "" {
+		if _, err := os.Stat(conf.BoltDatabase.BoltPath); os.IsNotExist(err) {
+			if err := os.MkdirAll(conf.BoltDatabase.BoltPath, 0755); err != nil {
 				return Config{}, err
 			}
 		}
 	}
 
-	return conf.SimpleStore, nil
+	return conf.BoltDatabase, nil
 }

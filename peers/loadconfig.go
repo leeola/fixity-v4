@@ -6,7 +6,7 @@ import (
 
 	"github.com/BurntSushi/toml"
 	"github.com/leeola/errors"
-	"github.com/leeola/kala/peers/peer"
+	"github.com/leeola/kala/index"
 )
 
 func LoadConfig(configPath string) (Config, error) {
@@ -39,7 +39,7 @@ func LoadConfig(configPath string) (Config, error) {
 			if peerStruct.PinAll && !hasNoFilterPinQuery(peerConfig.Pins) {
 				// Add an empty pin query, which by nature includes all hashes.
 				// See Peer and PinQuery for further details.
-				peerConfig.Pins = append(peerConfig.Pins, peer.PinQuery{})
+				peerConfig.Pins = append(peerConfig.Pins, index.PinQuery{})
 			}
 
 			// multiply the frequency by Seconds so that in the config it is based
@@ -68,7 +68,7 @@ func (c Config) IsZero() bool {
 	}
 }
 
-func hasNoFilterPinQuery(pinQueries []peer.PinQuery) bool {
+func hasNoFilterPinQuery(pinQueries []index.PinQuery) bool {
 	if pinQueries == nil {
 		return false
 	}

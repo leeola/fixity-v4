@@ -51,7 +51,7 @@ func (c *Client) Exists(h string) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	u.Path = path.Join("content", h)
+	u.Path = path.Join(u.Path, "blob", h)
 	res, err := c.httpClient.Head(u.String())
 	if err != nil {
 		return false, err
@@ -65,7 +65,7 @@ func (c *Client) Read(h string) (io.ReadCloser, error) {
 	if err != nil {
 		return nil, err
 	}
-	u.Path = path.Join("content", h)
+	u.Path = path.Join(u.Path, "blob", h)
 	res, err := c.httpClient.Get(u.String())
 	if err != nil {
 		return nil, err
@@ -77,7 +77,7 @@ func (c *Client) Read(h string) (io.ReadCloser, error) {
 
 	if res.StatusCode != http.StatusOK {
 		return nil, errors.Errorf("unexpected kala response: %d %q",
-			res.Status, res.StatusCode)
+			res.StatusCode, res.Status)
 	}
 
 	return res.Body, nil
@@ -88,7 +88,7 @@ func (c *Client) Write(b []byte) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	u.Path = "content"
+	u.Path = path.Join(u.Path, "blob")
 	r := bytes.NewReader(b)
 	// TODO(leeola): decide the best content type for the http api
 	res, err := c.httpClient.Post(u.String(), "application/json", r)
@@ -99,7 +99,7 @@ func (c *Client) Write(b []byte) (string, error) {
 
 	if res.StatusCode != http.StatusOK {
 		return "", errors.Errorf("unexpected kala response: %d %q",
-			res.Status, res.StatusCode)
+			res.StatusCode, res.Status)
 	}
 
 	resB, err := ioutil.ReadAll(res.Body)
@@ -118,7 +118,7 @@ func (c *Client) WriteHash(h string, b []byte) error {
 	if err != nil {
 		return err
 	}
-	u.Path = path.Join("content", h)
+	u.Path = path.Join(u.Path, "blob", h)
 
 	req, err := http.NewRequest(http.MethodPut, u.String(), r)
 	if err != nil {
@@ -136,8 +136,33 @@ func (c *Client) WriteHash(h string, b []byte) error {
 
 	if res.StatusCode != http.StatusOK {
 		return errors.Errorf("unexpected kala response: %d %q",
-			res.Status, res.StatusCode)
+			res.StatusCode, res.Status)
 	}
 
 	return nil
+}
+
+func (c *Client) NodeId() (string, error) {
+	u, err := url.Parse(c.kalaAddr)
+	if err != nil {
+		return "", err
+	}
+	u.Path = path.Join(u.Path, "id")
+
+	res, err := c.httpClient.Get(u.String())
+	if err != nil {
+		return "", err
+	}
+
+	if res.StatusCode != http.StatusOK {
+		return "", errors.Errorf("unexpected kala response: %d %q",
+			res.StatusCode, res.Status)
+	}
+
+	b, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return "", errors.Wrap(err, "failed to read from response body")
+	}
+
+	return string(b), nil
 }

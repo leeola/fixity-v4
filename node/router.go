@@ -3,6 +3,7 @@ package node
 func (n *Node) initRouter() {
 	n.router.Use(LoggingMiddleware(n.log))
 
+	n.router.Get("/id", n.GetNodeId)
 	n.router.Head("/blob/:hash", n.HeadBlobHandler)
 	n.router.Get("/blob/:hash", n.GetBlobHandler)
 	n.router.Put("/blob/:hash", n.PutBlobHandler)

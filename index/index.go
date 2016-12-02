@@ -7,16 +7,6 @@ type Index interface {
 
 	// Query the Index with the given fields.
 	Query(Query) (Results, error)
-
-	// Return a unique identifier for the given **built index**.
-	//
-	// This is not a version of the code or software behind the index, but rather
-	// each time an index is built a version must be generated that will persist
-	// for the lifetime of the index.
-	//
-	// If the index is rebuilt for any reason, a new index version **must** be
-	// generated.
-	Version() string
 }
 
 type Query struct {
@@ -36,6 +26,11 @@ type Query struct {
 	//
 	// Note that this is ignored with QueryOne.
 	Limit int `json:"limit"`
+}
+
+// PinQuery is a subset of a Query contaning fields logical to Peer pinning.
+type PinQuery struct {
+	// no query fields at the moment.
 }
 
 type Result struct {
@@ -61,4 +56,23 @@ func (q Query) IsZero() bool {
 	default:
 		return true
 	}
+}
+
+func (pq PinQuery) IsZero() bool {
+	switch {
+	default:
+		return true
+	}
+}
+
+// CommaString returns a comma delimited string of all the fields.
+//
+// IMPORTANT: The order of the fields *must be the same* for each individual
+// query.
+//
+// CommaString is used to store the paginate (indexEntry) data for a remote peer,
+// and CommaString is used as a key for that data.
+func (pq PinQuery) CommaString() string {
+	// There are no fields to delimit currently
+	return ""
 }

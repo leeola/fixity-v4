@@ -7,6 +7,8 @@ import (
 	"github.com/inconshreveable/log15"
 	"github.com/leeola/errors"
 	"github.com/leeola/kala/client"
+	"github.com/leeola/kala/database"
+	"github.com/leeola/kala/index"
 	"github.com/leeola/kala/peers/peer"
 	"github.com/leeola/kala/store"
 )
@@ -14,7 +16,12 @@ import (
 type Config struct {
 	Peers []PeerConfig
 	Store store.Store
-	Log   log15.Logger
+
+	// The database is used mainly to store the last index received for each
+	// pinquery that a this node is configured to pin from other nodes.
+	Database database.Database
+
+	Log log15.Logger
 }
 
 // Note that this exists to construct an individual Peer, in combination with the
@@ -22,7 +29,7 @@ type Config struct {
 type PeerConfig struct {
 	Addr      string
 	Frequency time.Duration
-	Pins      []peer.PinQuery
+	Pins      []index.PinQuery
 }
 
 // NOTE: Peers has a lot of room for optimization in how it reads/writes/etc
@@ -40,6 +47,9 @@ type Peers struct {
 func New(c Config) (*Peers, error) {
 	if c.Store == nil {
 		return nil, errors.New("missing Config field: Store")
+	}
+	if c.Database == nil {
+		return nil, errors.New("missing Config field: Database")
 	}
 
 	if c.Log == nil {
@@ -59,6 +69,7 @@ func New(c Config) (*Peers, error) {
 			Client:    kc,
 			Pins:      pc.Pins,
 			Store:     c.Store,
+			Database:  c.Database,
 			Log:       c.Log,
 			Frequency: pc.Frequency,
 		})
