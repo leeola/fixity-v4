@@ -17,7 +17,7 @@ type Config struct {
 	KalaAddr string
 
 	// Optional. The http client that this Kala Client will use.
-	HttpClient *http.Client
+	HttpClient *http.Client `toml:"-"`
 }
 
 type Client struct {
