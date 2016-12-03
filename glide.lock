@@ -1,5 +1,5 @@
-hash: cc0ae7423a6f95e042986cb555b706094a6f8a9510da37da6714d0c8e029e871
-updated: 2016-11-29T16:32:10.997396372-08:00
+hash: 71509e1d15ad9f5a7e00ce6e35680f5aa7efc6726e460e1a535e720a80c8f157
+updated: 2016-12-02T20:33:00.560218506-08:00
 imports:
 - name: github.com/boltdb/bolt
   version: 0d9f544bb94aac29c185968483459ef74d6deb5d
@@ -15,10 +15,14 @@ imports:
   version: 30a891c33c7cde7b02a981314b4228ec99380cca
 - name: github.com/minio/blake2b-simd
   version: 3f5f724cb5b182a5c278d6d3d55b40e7f8c2efb4
+- name: github.com/mitchellh/go-homedir
+  version: 756f7b183b7ab78acdbbee5c7f392838ed459dda
 - name: github.com/pressly/chi
   version: fc6251083a856d5093f4b96d71252c5e56d9c1b5
+- name: github.com/urfave/cli
+  version: 0bdeddeeb0f650497d603c4ad7b20cfe685682f6
 - name: golang.org/x/sys
-  version: d5645953809d8b4752afb2c3224b1f1ad73dfa70
+  version: ca83bd2cb9abb47839b50eb4da612f00158f5870
   subpackages:
   - unix
 - name: gopkg.in/inconshreveable/log15.v2
