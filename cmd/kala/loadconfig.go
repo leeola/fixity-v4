@@ -6,6 +6,9 @@ import (
 
 	"github.com/BurntSushi/toml"
 	"github.com/leeola/errors"
+	"github.com/leeola/kala/client"
+	homedir "github.com/mitchellh/go-homedir"
+	"github.com/urfave/cli"
 )
 
 func LoadConfig(configPath string) (Config, error) {
@@ -39,4 +42,38 @@ func BindToUrl(bindAddr string) string {
 		// if the bind addr is something like localhost:8000
 		return "http://" + bindAddr
 	}
+}
+
+func ClientFromContext(c *cli.Context) (*client.Client, error) {
+	config, _ := ConfigFromFile(c)
+	if kalaAddr := c.String("KalaAddr"); kalaAddr != "" {
+		config.KalaAddr = kalaAddr
+	}
+
+	if config.KalaAddr == "" {
+		return nil, errors.New("missing KalaAddr")
+	}
+
+	client, err := client.New(client.Config{
+		KalaAddr: config.KalaAddr,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return client, nil
+}
+
+func ConfigFromFile(c *cli.Context) (Config, error) {
+	configPath, err := homedir.Expand(c.GlobalString("config"))
+	if err != nil {
+		return Config{}, err
+	}
+
+	conf, err := LoadConfig(configPath)
+	if err != nil {
+		return Config{}, err
+	}
+
+	return conf, nil
 }

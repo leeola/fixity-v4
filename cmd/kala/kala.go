@@ -11,6 +11,11 @@ func main() {
 	app := cli.NewApp()
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
+			Name:  "host",
+			Usage: "kala host",
+			Value: "",
+		},
+		cli.StringFlag{
 			Name:  "config",
 			Usage: "use specified kala config",
 			Value: "~/.kala.toml",
