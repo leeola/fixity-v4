@@ -23,6 +23,16 @@ func main() {
 	}
 	app.Commands = []cli.Command{
 		{
+			Name:   "blob",
+			Usage:  "get raw blobs",
+			Action: blobCommand,
+			Flags: []cli.Flag{
+				cli.BoolFlag{
+					Name: "upload",
+				},
+			},
+		},
+		{
 			Name:   "id",
 			Usage:  "display this nodes id",
 			Action: idCommand,

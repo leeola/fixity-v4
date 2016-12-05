@@ -166,3 +166,49 @@ func (c *Client) NodeId() (string, error) {
 
 	return string(b), nil
 }
+
+func (c *Client) GetBlob(h string) (io.ReadCloser, error) {
+	u, err := url.Parse(c.kalaAddr)
+	if err != nil {
+		return nil, err
+	}
+	u.Path = path.Join(u.Path, "blob", h)
+
+	res, err := c.httpClient.Get(u.String())
+	if err != nil {
+		return nil, err
+	}
+
+	if res.StatusCode != http.StatusOK {
+		return nil, errors.Errorf("unexpected kala response: %d %q",
+			res.StatusCode, res.Status)
+	}
+
+	return res.Body, nil
+}
+
+func (c *Client) PostBlob(r io.Reader) (string, error) {
+	u, err := url.Parse(c.kalaAddr)
+	if err != nil {
+		return "", err
+	}
+	u.Path = path.Join(u.Path, "blob")
+
+	res, err := c.httpClient.Post(u.String(), "plain/text", r)
+	if err != nil {
+		return "", err
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != http.StatusOK {
+		return "", errors.Errorf("unexpected kala response: %d %q",
+			res.StatusCode, res.Status)
+	}
+
+	b, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return "", err
+	}
+
+	return string(b), nil
+}
