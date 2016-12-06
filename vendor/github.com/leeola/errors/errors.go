@@ -8,13 +8,6 @@ import (
 	"strings"
 )
 
-func New(s string) error {
-	return &errWrap{
-		Msg:      s,
-		SumStack: []string{callerLine() + ": " + s},
-	}
-}
-
 func Cause(err error) error {
 	cErr, ok := err.(causer)
 	if !ok {
@@ -37,6 +30,36 @@ func Errorf(f string, s ...interface{}) error {
 	}
 }
 
+// Equals checks if a and b are the same, have the same cause, or variations within.
+func Equals(a error, b error) bool {
+	if a == b {
+		return true
+	}
+
+	if a == nil || b == nil {
+		return false
+	}
+
+	aCause := Cause(a)
+	if aCause == b {
+		return true
+	}
+
+	bCause := Cause(b)
+	if bCause == a {
+		return true
+	}
+
+	return aCause == bCause
+}
+
+func New(s string) error {
+	return &errWrap{
+		Msg:      s,
+		SumStack: []string{callerLine() + ": " + s},
+	}
+}
+
 func Println(err error) {
 	if err == nil {
 		return
@@ -56,6 +79,41 @@ func Sprintln(err error) string {
 	}
 
 	return strings.Join(sErr.SumStack, "\n") + "\n"
+}
+
+// Stack wraps the given error with a stack line without a new message.
+func Stack(err error) error {
+	sErr, ok := err.(*errWrap)
+
+	stackLine := callerLine()
+	errMsg := err.Error()
+
+	if !ok {
+		return &errWrap{
+			err:      err,
+			Msg:      errMsg,
+			SumStack: []string{stackLine},
+		}
+	}
+
+	// if the errWrap is actually the original error, do not modify it. Make
+	// a new err as the wrap, and embed the old one.
+	//
+	// We do this because currently we're not actually embedding all errors, but rather
+	// only the original errors. Repeated Wrap() calls just modify the state of the
+	// error msg/stack, but we don't want to modify the original error.
+	if sErr.IsCause() {
+		sErr = &errWrap{
+			err:      sErr,
+			Msg:      errMsg,
+			SumStack: sErr.SumStack[:],
+		}
+	}
+
+	// the given error is a wrapped error, modify it to the latest error information
+	sErr.Msg = errMsg
+	sErr.SumStack = append(sErr.SumStack, stackLine)
+	return sErr
 }
 
 func Wrap(err error, s string) error {
@@ -103,7 +161,7 @@ func wrap(err error, caller string, s string) error {
 		sErr = &errWrap{
 			err:      sErr,
 			Msg:      sErr.Error(),
-			SumStack: sErr.SumStack,
+			SumStack: sErr.SumStack[:],
 		}
 	}
 

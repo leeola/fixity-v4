@@ -1,5 +1,5 @@
 hash: 71509e1d15ad9f5a7e00ce6e35680f5aa7efc6726e460e1a535e720a80c8f157
-updated: 2016-12-02T20:33:00.560218506-08:00
+updated: 2016-12-05T19:59:39.123559473-08:00
 imports:
 - name: github.com/boltdb/bolt
   version: 0d9f544bb94aac29c185968483459ef74d6deb5d
@@ -8,7 +8,7 @@ imports:
 - name: github.com/inconshreveable/log15
   version: b105bd37f74e5d9dc7b6ad7806715c7a2b83fd3f
 - name: github.com/leeola/errors
-  version: 60081e341295d5774cc853d9f8f28560a23f5672
+  version: b97fec5d757de173e42477ce5d8293d208141a2b
 - name: github.com/mattn/go-colorable
   version: d228849504861217f796da67fae4f6e347643f15
 - name: github.com/mattn/go-isatty
@@ -16,13 +16,13 @@ imports:
 - name: github.com/minio/blake2b-simd
   version: 3f5f724cb5b182a5c278d6d3d55b40e7f8c2efb4
 - name: github.com/mitchellh/go-homedir
-  version: 756f7b183b7ab78acdbbee5c7f392838ed459dda
+  version: b8bc1bf767474819792c23f32d8286a45736f1c6
 - name: github.com/pressly/chi
   version: fc6251083a856d5093f4b96d71252c5e56d9c1b5
 - name: github.com/urfave/cli
   version: 0bdeddeeb0f650497d603c4ad7b20cfe685682f6
 - name: golang.org/x/sys
-  version: ca83bd2cb9abb47839b50eb4da612f00158f5870
+  version: 478fcf54317e52ab69f40bb4c7a1520288d7f7ea
   subpackages:
   - unix
 - name: gopkg.in/inconshreveable/log15.v2
