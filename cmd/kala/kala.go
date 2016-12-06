@@ -39,8 +39,11 @@ func main() {
 		},
 		{
 			Name:   "query",
-			Usage:  "query the node",
 			Action: queryCommand,
+		},
+		{
+			Name:   "upload",
+			Action: uploadCommand,
 		},
 	}
 

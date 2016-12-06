@@ -10,6 +10,7 @@ import (
 	"github.com/leeola/kala/peers"
 	"github.com/leeola/kala/store"
 	"github.com/leeola/kala/store/simple"
+	"github.com/leeola/kala/upload/file"
 )
 
 func main() {
@@ -77,6 +78,8 @@ func main() {
 		panic(err)
 	}
 
+	addDefaultUploads(n, store)
+
 	if err := n.ListenAndServe(); err != nil {
 		panic(err)
 	}
@@ -98,4 +101,8 @@ func initStoreFromConfig(configPath string) (store.Store, error) {
 
 	// no more store implementations to load from config.
 	return nil, nil
+}
+
+func addDefaultUploads(n *node.Node, s store.Store) {
+	n.AddUploader("file", file.FileUpload(s))
 }

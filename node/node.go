@@ -10,6 +10,7 @@ import (
 	"github.com/leeola/kala/database"
 	"github.com/leeola/kala/index"
 	"github.com/leeola/kala/store"
+	"github.com/leeola/kala/upload"
 	"github.com/pressly/chi"
 )
 
@@ -38,6 +39,8 @@ type Node struct {
 	store    store.Store
 	db       database.Database
 	router   *chi.Mux
+
+	upload map[string]upload.Upload
 }
 
 func New(c Config) (*Node, error) {
@@ -69,6 +72,7 @@ func New(c Config) (*Node, error) {
 		store:    c.Store,
 		db:       c.Database,
 		router:   c.Router,
+		upload:   map[string]upload.Upload{},
 	}
 
 	if err := n.initDatabase(); err != nil {
@@ -96,6 +100,10 @@ func (n *Node) initDatabase() error {
 	}
 
 	return nil
+}
+
+func (n *Node) AddUploader(t string, u upload.Upload) {
+	n.upload[t] = u
 }
 
 func (n *Node) ListenAndServe() error {

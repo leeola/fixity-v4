@@ -1,6 +1,7 @@
 package store
 
 import (
+	"encoding/json"
 	"io"
 	"io/ioutil"
 
@@ -49,14 +50,34 @@ func WriteHashReader(s Store, h string, r io.Reader) error {
 	return errors.Wrap(err, "store failed to write")
 }
 
-func WriteMultiPart(s Store, c MultiPart) (io.ReadCloser, error) {
-	return nil, errors.New("not implemented")
+func WriteMultiPart(s Store, mp MultiPart) (string, error) {
+	b, err := json.Marshal(mp)
+	if err != nil {
+		return "", errors.Stack(err)
+	}
+
+	h, err := s.Write(b)
+	if err != nil {
+		return "", errors.Stack(err)
+	}
+
+	return h, nil
 }
 
-func WriteContent(s Store, c Content) (io.ReadCloser, error) {
-	return nil, errors.New("not implemented")
+func WriteContent(s Store, c Content) (string, error) {
+	b, err := json.Marshal(c)
+	if err != nil {
+		return "", errors.Stack(err)
+	}
+
+	h, err := s.Write(b)
+	if err != nil {
+		return "", errors.Stack(err)
+	}
+
+	return h, nil
 }
 
-func ReadParts(s Store, h string) (io.ReadCloser, error) {
-	return nil, errors.New("not implemented")
+func ReadParts(s Store, h string) error {
+	return errors.New("not implemented")
 }

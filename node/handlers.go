@@ -10,6 +10,7 @@ import (
 
 	"github.com/leeola/kala/index"
 	"github.com/leeola/kala/store"
+	"github.com/leeola/kala/util/jsonutil"
 	"github.com/pressly/chi"
 )
 
@@ -90,12 +91,20 @@ func (n *Node) PostBlobHandler(w http.ResponseWriter, r *http.Request) {
 	h, err := store.WriteReader(n.store, r.Body)
 	if err != nil {
 		log.Error("store write failed", "err", err)
-		http.Error(w, "store write failed", http.StatusInternalServerError)
+		jsonutil.Error(w, "store write failed", http.StatusInternalServerError)
 		return
 	}
 
 	log.Debug("POSTed content", "hash", h)
-	fmt.Fprint(w, h)
+
+	_, err = jsonutil.MarshalToWriter(w, HashResponse{
+		Hash: h,
+	})
+	if err != nil {
+		log.Error("store write failed", "err", err)
+		jsonutil.Error(w, "store write failed", http.StatusInternalServerError)
+		return
+	}
 }
 
 func (n *Node) GetQueryHandler(w http.ResponseWriter, r *http.Request) {
@@ -160,4 +169,28 @@ func (n *Node) GetQueryHandler(w http.ResponseWriter, r *http.Request) {
 
 func (n *Node) GetIndexContentHandler(w http.ResponseWriter, r *http.Request) {
 	http.Error(w, http.StatusText(http.StatusNotImplemented), http.StatusNotImplemented)
+}
+
+func (n *Node) PostUploadHandler(w http.ResponseWriter, r *http.Request) {
+	key := chi.URLParam(r, "handler")
+	log := GetLog(r).New("handler", key)
+
+	uploadHandler, ok := n.upload[key]
+	if !ok {
+		log.Info("requested upload handler not found")
+		http.Error(w, "requested upload handler not found",
+			http.StatusInternalServerError)
+		return
+	}
+
+	hashes, err := uploadHandler.Upload(r.Body, nil)
+	if err != nil {
+		log.Error("uplad handler returned error", "err", err)
+		http.Error(w, "upload failed", http.StatusInternalServerError)
+		return
+	}
+
+	jsonutil.MarshalToWriter(w, HashesResponse{
+		Hashes: hashes,
+	})
 }

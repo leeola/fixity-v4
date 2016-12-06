@@ -2,6 +2,7 @@ package client
 
 import (
 	"bytes"
+	"encoding/json"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -9,6 +10,7 @@ import (
 	"path"
 
 	"github.com/leeola/errors"
+	"github.com/leeola/kala/node"
 	"github.com/leeola/kala/store"
 )
 
@@ -210,5 +212,41 @@ func (c *Client) PostBlob(r io.Reader) (string, error) {
 		return "", err
 	}
 
-	return string(b), nil
+	var hashRes node.HashResponse
+	if err := json.Unmarshal(b, &hashRes); err != nil {
+		return "", err
+	}
+
+	return hashRes.Hash, nil
+}
+
+func (c *Client) Upload(t string, r io.Reader) ([]string, error) {
+	u, err := url.Parse(c.kalaAddr)
+	if err != nil {
+		return nil, err
+	}
+	u.Path = path.Join(u.Path, "upload", t)
+
+	res, err := c.httpClient.Post(u.String(), "plain/text", r)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != http.StatusOK {
+		return nil, errors.Errorf("unexpected kala response: %d %q",
+			res.StatusCode, res.Status)
+	}
+
+	b, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	var hashesRes node.HashesResponse
+	if err := json.Unmarshal(b, &hashesRes); err != nil {
+		return nil, err
+	}
+
+	return hashesRes.Hashes, nil
 }

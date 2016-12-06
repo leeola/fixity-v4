@@ -1,6 +1,9 @@
 package store
 
-import "io"
+import (
+	"io"
+	"time"
+)
 
 const (
 	PermaType     = "perma"
@@ -38,16 +41,16 @@ type Store interface {
 // }
 
 type Perma struct {
-	Type      string `json:"type"`
-	CreatedAt string `json:"createdAt,omitempty"`
-	Rand      []byte `json:"rand"`
+	Type      string    `json:"type"`
+	CreatedAt time.Time `json:"createdAt,omitempty"`
+	Rand      []byte    `json:"rand"`
 }
 
 // MultiPart is a series of hashes for a single piece of data.
 type MultiPart struct {
-	Type      string `json:"type"`
-	CreatedAt string `json:"createdAt,omitempty"`
-	Perma     string `json:"perma,omitempty"`
+	Type      string    `json:"type"`
+	CreatedAt time.Time `json:"createdAt,omitempty"`
+	Perma     string    `json:"perma,omitempty"`
 
 	// A sum of the *content* of all of the parts, combined.
 	//
@@ -57,8 +60,6 @@ type MultiPart struct {
 }
 
 type Content struct {
-	Type      string `json:"type"`
-	CreatedAt string `json:"createdAt,omitempty"`
-	Perma     string `json:"perma,omitempty"`
-	Content   []byte `json:"content"`
+	Type    string `json:"type"`
+	Content []byte `json:"content"`
 }
