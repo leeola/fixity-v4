@@ -5,7 +5,7 @@ BindAddr = "127.0.0.1:4002"
 CreateMissingPaths = true
 
 [simpleStore]
-Path = "_test/_stores/two/store"
+StorePath = "_test/_stores/two/store"
 
 [boltDatabase]
 BoltPath = "_test/_stores/two/db"

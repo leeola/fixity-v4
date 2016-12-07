@@ -14,8 +14,8 @@ import (
 )
 
 type Config struct {
-	Path string
-	Log  log15.Logger
+	StorePath string
+	Log       log15.Logger
 }
 
 type Simple struct {
@@ -24,7 +24,7 @@ type Simple struct {
 }
 
 func New(c Config) (*Simple, error) {
-	if c.Path == "" {
+	if c.StorePath == "" {
 		return nil, errors.New("missing required Config field: Path")
 	}
 
@@ -34,7 +34,7 @@ func New(c Config) (*Simple, error) {
 
 	return &Simple{
 		log:  c.Log,
-		path: c.Path,
+		path: c.StorePath,
 	}, nil
 }
 
@@ -97,7 +97,7 @@ func (c Config) IsZero() bool {
 	switch {
 	case c.Log != nil:
 		return false
-	case c.Path != "":
+	case c.StorePath != "":
 		return false
 	default:
 		return true

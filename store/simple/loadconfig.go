@@ -24,18 +24,18 @@ func LoadConfig(configPath string) (Config, error) {
 		return Config{}, errors.Wrap(err, "failed to unmarshal config")
 	}
 
-	if !conf.DontExpandHome && conf.SimpleStore.Path != "" {
-		p, err := homedir.Expand(conf.SimpleStore.Path)
+	if !conf.DontExpandHome && conf.SimpleStore.StorePath != "" {
+		p, err := homedir.Expand(conf.SimpleStore.StorePath)
 		if err != nil {
 			return Config{}, errors.Stack(err)
 		}
-		conf.SimpleStore.Path = p
+		conf.SimpleStore.StorePath = p
 	}
 
 	// Create the db path if it's missing.
-	if conf.CreateMissingPaths && conf.SimpleStore.Path != "" {
-		if _, err := os.Stat(conf.SimpleStore.Path); os.IsNotExist(err) {
-			if err := os.MkdirAll(conf.SimpleStore.Path, 0755); err != nil {
+	if conf.CreateMissingPaths && conf.SimpleStore.StorePath != "" {
+		if _, err := os.Stat(conf.SimpleStore.StorePath); os.IsNotExist(err) {
+			if err := os.MkdirAll(conf.SimpleStore.StorePath, 0755); err != nil {
 				return Config{}, err
 			}
 		}
