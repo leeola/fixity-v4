@@ -30,6 +30,10 @@ type Store interface {
 	// List(max, offset int) (<-chan string, error)
 }
 
+type ContentRoller interface {
+	Roll() (Content, error)
+}
+
 type Perma struct {
 	CreatedAt time.Time `json:"createdAt,omitempty"`
 	Rand      []byte    `json:"rand"`
@@ -37,13 +41,8 @@ type Perma struct {
 
 // MultiPart is a series of hashes for a single piece of data.
 type MultiPart struct {
-	Perma string `json:"perma,omitempty"`
-
-	// A sum of the *content* of all of the parts, combined.
-	//
-	// This allows for easy referencing of the data via the original checksum
-	PartsSum string   `json:"PartsSum"`
-	Parts    []string `json:"parts"`
+	Perma string   `json:"perma,omitempty"`
+	Parts []string `json:"parts"`
 }
 
 type Content struct {

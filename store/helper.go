@@ -50,6 +50,28 @@ func WriteHashReader(s Store, h string, r io.Reader) error {
 	return errors.Wrap(err, "store failed to write")
 }
 
+func WriteContentRoller(s Store, r ContentRoller) ([]string, error) {
+	var hashes []string
+	for {
+		c, err := r.Roll()
+		if err != nil && err != io.EOF {
+			return nil, errors.Stack(err)
+		}
+
+		if err == io.EOF {
+			break
+		}
+
+		h, err := WriteContent(s, c)
+		if err != nil {
+			return nil, errors.Stack(err)
+		}
+		hashes = append(hashes, h)
+	}
+
+	return hashes, nil
+}
+
 func WriteMultiPart(s Store, mp MultiPart) (string, error) {
 	b, err := json.Marshal(mp)
 	if err != nil {

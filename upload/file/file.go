@@ -2,38 +2,37 @@ package file
 
 import (
 	"io"
-	"io/ioutil"
 
 	"github.com/leeola/errors"
 	"github.com/leeola/kala/store"
+	"github.com/leeola/kala/store/roller/camli"
 	"github.com/leeola/kala/upload"
 )
 
 func FileUpload(s store.Store) upload.UploadFunc {
 	return func(rc io.ReadCloser, m upload.Metadata) ([]string, error) {
+		if rc == nil {
+			return nil, errors.New("missing ReadCloser")
+		}
 		defer rc.Close()
-		b, err := ioutil.ReadAll(rc)
+
+		roller, err := camli.New(rc)
 		if err != nil {
 			return nil, errors.Stack(err)
 		}
 
-		var contentHashes []string
-		// TODO(leeola): in the future, split the file into deduped chunks here.
-		h, err := store.WriteContent(s, store.Content{
-			Content: b,
-		})
+		hashes, err := store.WriteContentRoller(s, roller)
 		if err != nil {
-			return nil, err
-		}
-		contentHashes = append(contentHashes, h)
-
-		h, err = store.WriteMultiPart(s, store.MultiPart{
-			Parts: contentHashes,
-		})
-		if err != nil {
-			return nil, err
+			return nil, errors.Stack(err)
 		}
 
-		return append([]string{h}, contentHashes...), nil
+		h, err := store.WriteMultiPart(s, store.MultiPart{
+			Parts: hashes,
+		})
+		if err != nil {
+			return nil, errors.Stack(err)
+		}
+
+		return append([]string{h}, hashes...), nil
 	}
 }
