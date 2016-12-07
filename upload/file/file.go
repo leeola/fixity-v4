@@ -3,7 +3,6 @@ package file
 import (
 	"io"
 	"io/ioutil"
-	"time"
 
 	"github.com/leeola/errors"
 	"github.com/leeola/kala/store"
@@ -18,12 +17,9 @@ func FileUpload(s store.Store) upload.UploadFunc {
 			return nil, errors.Stack(err)
 		}
 
-		now := time.Now()
-
 		var contentHashes []string
 		// TODO(leeola): in the future, split the file into deduped chunks here.
 		h, err := store.WriteContent(s, store.Content{
-			Type:    store.ContentType,
 			Content: b,
 		})
 		if err != nil {
@@ -32,9 +28,7 @@ func FileUpload(s store.Store) upload.UploadFunc {
 		contentHashes = append(contentHashes, h)
 
 		h, err = store.WriteMultiPart(s, store.MultiPart{
-			Type:      store.MultiPartType,
-			CreatedAt: now,
-			Parts:     contentHashes,
+			Parts: contentHashes,
 		})
 		if err != nil {
 			return nil, err

@@ -5,12 +5,6 @@ import (
 	"time"
 )
 
-const (
-	PermaType     = "perma"
-	ContentType   = "content"
-	MultiPartType = "multiPart"
-)
-
 type Store interface {
 	// Check if the given hash exists in the Store
 	Exists(string) (bool, error)
@@ -36,21 +30,14 @@ type Store interface {
 	// List(max, offset int) (<-chan string, error)
 }
 
-// type ContentType struct {
-// 	Type string `json:"type"`
-// }
-
 type Perma struct {
-	Type      string    `json:"type"`
 	CreatedAt time.Time `json:"createdAt,omitempty"`
 	Rand      []byte    `json:"rand"`
 }
 
 // MultiPart is a series of hashes for a single piece of data.
 type MultiPart struct {
-	Type      string    `json:"type"`
-	CreatedAt time.Time `json:"createdAt,omitempty"`
-	Perma     string    `json:"perma,omitempty"`
+	Perma string `json:"perma,omitempty"`
 
 	// A sum of the *content* of all of the parts, combined.
 	//
@@ -60,6 +47,5 @@ type MultiPart struct {
 }
 
 type Content struct {
-	Type    string `json:"type"`
 	Content []byte `json:"content"`
 }
