@@ -1,6 +1,10 @@
-hash: 71509e1d15ad9f5a7e00ce6e35680f5aa7efc6726e460e1a535e720a80c8f157
-updated: 2016-12-05T19:59:39.123559473-08:00
+hash: ff34924596d52c526f1fe4a07874137f53f10c2707185f651761c343475142f4
+updated: 2016-12-06T18:36:25.065523334-08:00
 imports:
+- name: camlistore.org
+  version: c55c8602d3cea4511081630e17bca7ed601abc44
+  subpackages:
+  - pkg/rollsum
 - name: github.com/boltdb/bolt
   version: 0d9f544bb94aac29c185968483459ef74d6deb5d
 - name: github.com/BurntSushi/toml

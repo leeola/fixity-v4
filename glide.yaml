@@ -9,3 +9,6 @@ import:
 - package: github.com/boltdb/bolt
 - package: github.com/mitchellh/go-homedir
 - package: github.com/urfave/cli
+- package: camlistore.org
+  subpackages:
+  - pkg/rollsum
