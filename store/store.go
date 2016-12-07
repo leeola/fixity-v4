@@ -36,7 +36,7 @@ type ContentRoller interface {
 
 type Perma struct {
 	CreatedAt time.Time `json:"createdAt,omitempty"`
-	Rand      []byte    `json:"rand"`
+	Rand      int       `json:"rand"`
 }
 
 // MultiPart is a series of hashes for a single piece of data.

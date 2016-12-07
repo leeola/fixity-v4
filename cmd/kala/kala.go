@@ -61,6 +61,11 @@ func main() {
 			Usage:     "print a blob hash",
 			ArgsUsage: "<hash>",
 			Action:    blobCommand,
+			Flags: []cli.Flag{
+				cli.BoolFlag{
+					Name: "allow-content",
+				},
+			},
 		},
 		{
 			Name:   "id",
