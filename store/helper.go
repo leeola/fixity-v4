@@ -78,6 +78,6 @@ func WriteContent(s Store, c Content) (string, error) {
 	return h, nil
 }
 
-func ReadParts(s Store, h string) error {
-	return errors.New("not implemented")
+func MultiPartFromReader(io.Reader) (MultiPart, error) {
+	return MultiPart{}, errors.New("not implemented")
 }

@@ -9,6 +9,7 @@ import (
 
 func main() {
 	app := cli.NewApp()
+	app.Usage = "a kala store cli"
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
 			Name:  "host",
@@ -23,27 +24,48 @@ func main() {
 	}
 	app.Commands = []cli.Command{
 		{
-			Name:   "blob",
-			Usage:  "get raw blobs",
-			Action: blobCommand,
+			Name:   "query",
+			Usage:  "query the index for matching hashes",
+			Action: queryCommand,
+		},
+		{
+			Name:      "upload",
+			Usage:     "upload content with metadata",
+			ArgsUsage: "<FILE>",
+			Action:    uploadCommand,
 			Flags: []cli.Flag{
+				cli.StringFlag{
+					Name:  "type",
+					Usage: "standard unix file metadata",
+					Value: "file",
+				},
 				cli.BoolFlag{
-					Name: "upload",
+					Name:  "stdin",
+					Usage: "read from stdin instead of a file",
 				},
 			},
 		},
 		{
+			Name:      "download",
+			Action:    downloadCommand,
+			Usage:     "download content with metadata",
+			ArgsUsage: "<FILE>",
+			Flags: []cli.Flag{
+				cli.BoolFlag{
+					Name: "stdout",
+				},
+			},
+		},
+		{
+			Name:      "blob",
+			Usage:     "print a blob hash",
+			ArgsUsage: "<hash>",
+			Action:    blobCommand,
+		},
+		{
 			Name:   "id",
-			Usage:  "display this nodes id",
+			Usage:  "print the id of the connected node",
 			Action: idCommand,
-		},
-		{
-			Name:   "query",
-			Action: queryCommand,
-		},
-		{
-			Name:   "upload",
-			Action: uploadCommand,
 		},
 	}
 

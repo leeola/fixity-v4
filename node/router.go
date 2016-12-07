@@ -11,4 +11,5 @@ func (n *Node) initRouter() {
 	n.router.Get("/index/query", n.GetQueryHandler)
 	n.router.Get("/index/content", n.GetIndexContentHandler)
 	n.router.Post("/upload/:handler", n.PostUploadHandler)
+	n.router.Get("/download/:hash", n.GetDownloadHandler)
 }

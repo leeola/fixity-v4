@@ -186,11 +186,40 @@ func (n *Node) PostUploadHandler(w http.ResponseWriter, r *http.Request) {
 	hashes, err := uploadHandler.Upload(r.Body, nil)
 	if err != nil {
 		log.Error("uplad handler returned error", "err", err)
-		http.Error(w, "upload failed", http.StatusInternalServerError)
+		jsonutil.Error(w, "upload failed", http.StatusInternalServerError)
 		return
 	}
 
-	jsonutil.MarshalToWriter(w, HashesResponse{
+	_, err = jsonutil.MarshalToWriter(w, HashesResponse{
 		Hashes: hashes,
 	})
+	if err != nil {
+		log.Error("failed to marshal response", "err", err)
+		jsonutil.Error(w, http.StatusText(http.StatusNotImplemented),
+			http.StatusInternalServerError)
+		return
+	}
+}
+
+func (n *Node) GetDownloadHandler(w http.ResponseWriter, r *http.Request) {
+	hash := chi.URLParam(r, "hash")
+	log := GetLog(r).New("hash", hash)
+
+	reader, err := store.NewReader(store.ReaderConfig{
+		Hash:  hash,
+		Store: n.store,
+	})
+	if err != nil {
+		log.Error("failed to marshal response", "err", err)
+		jsonutil.Error(w, http.StatusText(http.StatusNotImplemented),
+			http.StatusInternalServerError)
+		return
+	}
+
+	if _, err := io.Copy(w, reader); err != nil {
+		log.Error("response write failed", "err", err)
+		jsonutil.Error(w, http.StatusText(http.StatusNotImplemented),
+			http.StatusInternalServerError)
+		return
+	}
 }

@@ -250,3 +250,32 @@ func (c *Client) Upload(t string, r io.Reader) ([]string, error) {
 
 	return hashesRes.Hashes, nil
 }
+
+// TODO(leeola): support downloading with metadata on the cmd/kala side.
+// This may work by exposing an endpoint for metadata, and then having an Upload
+// implement a Download or Restore interface as well, which will write the metadata
+// back to the file (in the case of unix filesystems).
+func (c *Client) Download(h string) (rc io.ReadCloser, err error) {
+	u, err := url.Parse(c.kalaAddr)
+	if err != nil {
+		return nil, err
+	}
+	u.Path = path.Join(u.Path, "download", h)
+
+	res, err := c.httpClient.Get(u.String())
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		if err != nil {
+			res.Body.Close()
+		}
+	}()
+
+	if res.StatusCode != http.StatusOK {
+		return nil, errors.Errorf("unexpected kala response: %d %q",
+			res.StatusCode, res.Status)
+	}
+
+	return res.Body, nil
+}
