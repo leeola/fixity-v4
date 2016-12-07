@@ -33,6 +33,7 @@ func FileUpload(s store.Store) upload.UploadFunc {
 			return nil, errors.Stack(err)
 		}
 
-		return append([]string{h}, hashes...), nil
+		// Append the multipart to the end
+		return append(hashes, h), nil
 	}
 }
