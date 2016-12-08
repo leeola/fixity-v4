@@ -7,7 +7,6 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
-	"time"
 
 	"github.com/urfave/cli"
 )
@@ -65,8 +64,7 @@ func getContentType(r io.Reader) (string, error) {
 	}
 
 	var c struct {
-		CreatedAt time.Time
-		Rand      int
+		PermaRand int
 		Parts     []string
 		Content   []byte
 	}
@@ -79,7 +77,7 @@ func getContentType(r io.Reader) (string, error) {
 		return "Content", nil
 	case len(c.Parts) != 0:
 		return "MultiPart", nil
-	case !c.CreatedAt.IsZero() && c.Rand != 0:
+	case c.PermaRand != 0:
 		return "Perma", nil
 	default:
 		return "Unknown", nil

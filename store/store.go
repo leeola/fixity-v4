@@ -1,9 +1,6 @@
 package store
 
-import (
-	"io"
-	"time"
-)
+import "io"
 
 type Store interface {
 	// Check if the given hash exists in the Store
@@ -35,8 +32,7 @@ type ContentRoller interface {
 }
 
 type Perma struct {
-	CreatedAt time.Time `json:"createdAt,omitempty"`
-	Rand      int       `json:"rand"`
+	PermaRand int `json:"permaRand"`
 }
 
 // MultiPart is a series of hashes for a single piece of data.
