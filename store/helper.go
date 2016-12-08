@@ -6,10 +6,13 @@ import (
 	"io/ioutil"
 
 	"github.com/leeola/errors"
+	"github.com/leeola/kala/util"
 )
 
-func NewPerma(s Store, h string) (string, error) {
-	return "", errors.New("not implemented")
+func NewAnchor(s Store) (string, error) {
+	return WriteAnchor(s, Anchor{
+		AnchorRand: util.RandomInt(),
+	})
 }
 
 func WriteReader(s Store, r io.Reader) (string, error) {
@@ -72,8 +75,8 @@ func WriteContentRoller(s Store, r ContentRoller) ([]string, error) {
 	return hashes, nil
 }
 
-func WriteMultiPart(s Store, mp MultiPart) (string, error) {
-	b, err := json.Marshal(mp)
+func MarshalAndWrite(s Store, v interface{}) (string, error) {
+	b, err := json.Marshal(v)
 	if err != nil {
 		return "", errors.Stack(err)
 	}
@@ -86,20 +89,58 @@ func WriteMultiPart(s Store, mp MultiPart) (string, error) {
 	return h, nil
 }
 
+func WriteAnchor(s Store, a Anchor) (string, error) {
+	return MarshalAndWrite(s, a)
+}
+
+func WriteMultiPart(s Store, mp MultiPart) (string, error) {
+	return MarshalAndWrite(s, mp)
+}
+
+func WriteMeta(s Store, m Meta) (string, error) {
+	return MarshalAndWrite(s, m)
+}
+
 func WriteContent(s Store, c Content) (string, error) {
-	b, err := json.Marshal(c)
-	if err != nil {
-		return "", errors.Stack(err)
-	}
-
-	h, err := s.Write(b)
-	if err != nil {
-		return "", errors.Stack(err)
-	}
-
-	return h, nil
+	return MarshalAndWrite(s, c)
 }
 
 func MultiPartFromReader(io.Reader) (MultiPart, error) {
 	return MultiPart{}, errors.New("not implemented")
+}
+
+func ReadAndUnmarshal(s Store, h string, v interface{}) error {
+	rc, err := s.Read(h)
+	if err != nil {
+		return errors.Stack(err)
+	}
+	defer rc.Close()
+
+	b, err := ioutil.ReadAll(rc)
+	if err != nil {
+		return errors.Stack(err)
+	}
+
+	if err := json.Unmarshal(b, v); err != nil {
+		return errors.Stack(err)
+	}
+
+	return nil
+}
+
+func ReadMeta(s Store, h string) (Meta, error) {
+	var m Meta
+	if err := ReadAndUnmarshal(s, h, &m); err != nil {
+		return Meta{}, errors.Stack(err)
+	}
+
+	if !IsValidMeta(m) {
+		return Meta{}, errors.Errorf("given hash %q is not a valid meta struct", h)
+	}
+
+	return m, nil
+}
+
+func IsValidMeta(m Meta) bool {
+	return m.CreatedAt.IsZero() && (m.Anchor == "" || m.Multi == "")
 }

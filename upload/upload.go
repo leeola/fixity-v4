@@ -1,13 +1,17 @@
 package upload
 
-import "io"
+import (
+	"io"
 
-// Metadata is a map of metadata to write along with the upload data.
+	"github.com/leeola/kala/store"
+)
+
+// MetaChanges is a map of metadata changes to write along with the upload data.
 //
-// It is up to the uploader to decide how this metadata is stored with the
-// content, the caller should make no assumptions. See specific Upload
+// It is up to the uploader to decide how this metadata is stored within the
+// Meta blob, the caller should make no assumptions. See specific Upload
 // implementation documentation as needed.
-type Metadata map[string]interface{}
+//type MetaChanges map[string]string
 
 // Upload processes incoming data for a specific type with supplied metadata.
 //
@@ -25,12 +29,12 @@ type Metadata map[string]interface{}
 // Download method, primarily shuttling content specific metadata into and
 // out of the store.
 type Upload interface {
-	Upload(io.ReadCloser, Metadata) ([]string, error)
+	Upload(io.ReadCloser, store.MetaChanges) ([]string, error)
 }
 
 // UploadFunc implements Upload for a single function.
-type UploadFunc (func(io.ReadCloser, Metadata) ([]string, error))
+type UploadFunc (func(io.ReadCloser, store.MetaChanges) ([]string, error))
 
-func (f UploadFunc) Upload(rc io.ReadCloser, m Metadata) ([]string, error) {
-	return f(rc, m)
+func (f UploadFunc) Upload(rc io.ReadCloser, c store.MetaChanges) ([]string, error) {
+	return f(rc, c)
 }

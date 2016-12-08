@@ -9,31 +9,88 @@ import (
 	"github.com/leeola/kala/upload"
 )
 
+type FileMeta struct {
+	store.Meta
+
+	Filename string `json:"filename"`
+}
+
+// TODO(leeola): centralize the common tasks in this method into helpers.
+// A lot of this (writing content roller and multipart, etc) is going to be
+// duplicated on every ContentType handler.
 func FileUpload(s store.Store) upload.UploadFunc {
-	return func(rc io.ReadCloser, m upload.Metadata) ([]string, error) {
+	return func(rc io.ReadCloser, c store.MetaChanges) ([]string, error) {
+		// TODO(leeola): remove the need for an rc, so just metadata can be changed.
 		if rc == nil {
 			return nil, errors.New("missing ReadCloser")
 		}
 		defer rc.Close()
+
+		newAnchor, _ := c.GetNewAnchor()
+		_, providedAnchorHash := c.GetAnchor()
+		if newAnchor && providedAnchorHash {
+			return nil, errors.New("cannot request new anchor and use existing anchor")
+		}
 
 		roller, err := camli.New(rc)
 		if err != nil {
 			return nil, errors.Stack(err)
 		}
 
+		// write the actual content
 		hashes, err := store.WriteContentRoller(s, roller)
 		if err != nil {
 			return nil, errors.Stack(err)
 		}
 
+		var meta FileMeta
+
+		// write the multipart
 		h, err := store.WriteMultiPart(s, store.MultiPart{
 			Parts: hashes,
 		})
 		if err != nil {
 			return nil, errors.Stack(err)
 		}
+		hashes = append(hashes, h)
+		c.SetMulti(h)
 
-		// Append the multipart to the end
-		return append(hashes, h), nil
+		// write a new anchor if specified
+		if newAnchor {
+			h, err := store.NewAnchor(s)
+			if err != nil {
+				return nil, errors.Stack(err)
+			}
+			c.SetAnchor(h)
+			hashes = append(hashes, h)
+		}
+
+		// If the previous hash exists, populate the above filemeta with the data
+		// in the hash.
+		if h, _ := c.GetPreviousMeta(); h != "" {
+			if err := store.ReadAndUnmarshal(s, h, &meta); err != nil {
+				return nil, errors.Stack(err)
+			}
+		}
+
+		// Apply any of the requested value changes.
+		meta.ApplyChanges(c)
+
+		// Now write the meta as well.
+		h, err = store.MarshalAndWrite(s, meta)
+		if err != nil {
+			return nil, errors.Stack(err)
+		}
+		hashes = append(hashes, h)
+
+		return hashes, nil
+	}
+}
+
+func (m *FileMeta) ApplyChanges(c store.MetaChanges) {
+	store.ApplyCommonChanges(&m.Meta, c)
+
+	if f, ok := c.GetString("filename"); ok {
+		m.Filename = f
 	}
 }

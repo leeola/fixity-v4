@@ -11,6 +11,7 @@ import (
 	"github.com/leeola/kala/index"
 	"github.com/leeola/kala/store"
 	"github.com/leeola/kala/util/jsonutil"
+	"github.com/leeola/kala/util/urlutil"
 	"github.com/pressly/chi"
 )
 
@@ -175,15 +176,25 @@ func (n *Node) PostUploadHandler(w http.ResponseWriter, r *http.Request) {
 	key := chi.URLParam(r, "handler")
 	log := GetLog(r).New("handler", key)
 
+	metaChanges := store.NewMetaChangesFromValues(r.URL.Query())
+
+	newAnchor := urlutil.GetQueryBool(r, "newAnchor")
+	anchorHash := urlutil.GetQueryString(r, "anchor")
+	if newAnchor && anchorHash != "" {
+		log.Info("newAnchor and anchor query fields both defined, rejecting request")
+		jsonutil.Error(w, "query params newAnchor and anchor must not be used together",
+			http.StatusBadRequest)
+	}
+
 	uploadHandler, ok := n.upload[key]
 	if !ok {
 		log.Info("requested upload handler not found")
 		http.Error(w, "requested upload handler not found",
-			http.StatusInternalServerError)
+			http.StatusBadRequest)
 		return
 	}
 
-	hashes, err := uploadHandler.Upload(r.Body, nil)
+	hashes, err := uploadHandler.Upload(r.Body, metaChanges)
 	if err != nil {
 		log.Error("uplad handler returned error", "err", err)
 		jsonutil.Error(w, "upload failed", http.StatusInternalServerError)
@@ -195,7 +206,7 @@ func (n *Node) PostUploadHandler(w http.ResponseWriter, r *http.Request) {
 	})
 	if err != nil {
 		log.Error("failed to marshal response", "err", err)
-		jsonutil.Error(w, http.StatusText(http.StatusNotImplemented),
+		jsonutil.Error(w, http.StatusText(http.StatusInternalServerError),
 			http.StatusInternalServerError)
 		return
 	}
@@ -211,14 +222,14 @@ func (n *Node) GetDownloadHandler(w http.ResponseWriter, r *http.Request) {
 	})
 	if err != nil {
 		log.Error("failed to marshal response", "err", err)
-		jsonutil.Error(w, http.StatusText(http.StatusNotImplemented),
+		jsonutil.Error(w, http.StatusText(http.StatusInternalServerError),
 			http.StatusInternalServerError)
 		return
 	}
 
 	if _, err := io.Copy(w, reader); err != nil {
 		log.Error("response write failed", "err", err)
-		jsonutil.Error(w, http.StatusText(http.StatusNotImplemented),
+		jsonutil.Error(w, http.StatusText(http.StatusInternalServerError),
 			http.StatusInternalServerError)
 		return
 	}
