@@ -20,6 +20,10 @@ type Metadata map[string]interface{}
 //
 // The uploader is responsible for writing raw blobs as needed. If multipart or
 // permanode chunks need to be written, it is responsible for doing so!
+//
+// TODO(leeola): refactor Upload to a ContentType interface with an Upload and
+// Download method, primarily shuttling content specific metadata into and
+// out of the store.
 type Upload interface {
 	Upload(io.ReadCloser, Metadata) ([]string, error)
 }
