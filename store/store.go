@@ -38,11 +38,18 @@ type Perma struct {
 	PermaRand int `json:"permaRand"`
 }
 
+type Meta struct {
+	Perma     string    `json:"perma"`
+	Multi     string    `json:"multi"`
+	CreatedAt time.Time `json:"createdAt"`
+
+	ChangeType string `json:"changeType,omitempty"`
+	ChangeLog  string `json:"changeLog,omitempty"`
+}
+
 // MultiPart is a series of hashes for a single piece of data.
 type MultiPart struct {
-	CreatedAt time.Time `json:"createdAt,omitempty"`
-	Perma     string    `json:"perma,omitempty"`
-	Parts     []string  `json:"parts"`
+	Parts []string `json:"parts"`
 }
 
 type Content struct {
