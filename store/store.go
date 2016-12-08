@@ -1,6 +1,9 @@
 package store
 
-import "io"
+import (
+	"io"
+	"time"
+)
 
 type Store interface {
 	// Check if the given hash exists in the Store
@@ -37,8 +40,9 @@ type Perma struct {
 
 // MultiPart is a series of hashes for a single piece of data.
 type MultiPart struct {
-	Perma string   `json:"perma,omitempty"`
-	Parts []string `json:"parts"`
+	CreatedAt time.Time `json:"createdAt,omitempty"`
+	Perma     string    `json:"perma,omitempty"`
+	Parts     []string  `json:"parts"`
 }
 
 type Content struct {
