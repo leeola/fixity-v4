@@ -34,20 +34,20 @@ type ContentRoller interface {
 	Roll() (Content, error)
 }
 
-type Perma struct {
-	PermaRand int `json:"permaRand"`
+type Anchor struct {
+	AnchorRand int `json:"anchorRand"`
 }
 
 type Meta struct {
-	Perma     string    `json:"perma"`
-	Multi     string    `json:"multi"`
-	CreatedAt time.Time `json:"createdAt"`
+	Anchor       string    `json:"anchor"`
+	Multi        string    `json:"multi"`
+	CreatedAt    time.Time `json:"createdAt"`
+	PreviousMeta string    `json:"previousMeta,omitempty"`
 
 	ChangeType string `json:"changeType,omitempty"`
 	ChangeLog  string `json:"changeLog,omitempty"`
 }
 
-// MultiPart is a series of hashes for a single piece of data.
 type MultiPart struct {
 	Parts []string `json:"parts"`
 }
