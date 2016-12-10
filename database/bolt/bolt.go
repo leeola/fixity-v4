@@ -14,6 +14,7 @@ const (
 	dbFilename = "bolt.db"
 )
 
+// Buckets and keys
 var (
 	// The name of the bucket for this nodes metadata
 	nodeBucketName = []byte("node")
@@ -31,6 +32,9 @@ var (
 	indexMetaBucketName      = []byte("indexMeta")
 	indexMetaEntryCountKey   = []byte("entryCount")
 	indexMetaIndexVersionKey = []byte("indexVersion")
+
+	// the bucket used to store random metadata
+	metadataBucketName = []byte("metadata")
 )
 
 type Config struct {
@@ -60,6 +64,7 @@ func New(c Config) (*Bolt, error) {
 		indexEntryBucketName,
 		indexMetaBucketName,
 		peersBucketName,
+		metadataBucketName,
 	}
 	err = db.Update(func(tx *boltdb.Tx) error {
 		for _, bName := range bucketNames {

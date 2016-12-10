@@ -3,6 +3,8 @@ package store
 import (
 	"io"
 	"time"
+
+	"github.com/leeola/kala/index"
 )
 
 type Store interface {
@@ -54,4 +56,21 @@ type MultiPart struct {
 
 type Content struct {
 	Content []byte `json:"content"`
+}
+
+func (m Meta) ToMetadata() index.Metadata {
+	im := index.Metadata{}
+	if m.Anchor != "" {
+		im["anchor"] = m.Anchor
+	}
+	if m.Multi != "" {
+		im["multi"] = m.Multi
+	}
+	if !m.CreatedAt.IsZero() {
+		im["createdAt"] = m.CreatedAt.String()
+	}
+	if m.PreviousMeta != "" {
+		im["previousMeta"] = m.PreviousMeta
+	}
+	return im
 }

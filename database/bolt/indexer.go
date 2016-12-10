@@ -6,8 +6,23 @@ import (
 	"github.com/leeola/kala/index"
 )
 
-func (b *Bolt) Metadata(h string, m index.Metadata) error {
-	return errors.New("not implemented")
+// TODO(leeola): pull the keys first and append the hash (if not already in).
+// This allows multiple keys to be in the query.
+func (b *Bolt) Metadata(h string, i index.Indexable) error {
+	return b.db.Update(func(tx *boltdb.Tx) error {
+		metadataBucket := tx.Bucket(metadataBucketName)
+
+		for k, v := range i.ToMetadata() {
+			// map the key+value to the db.
+			key := k + "::" + v
+			err := metadataBucket.Put([]byte(key), []byte(h))
+			if err != nil {
+				return errors.Wrapf(err, "failed to insert metadata key %q into bolt", key)
+			}
+		}
+
+		return nil
+	})
 }
 
 func (b *Bolt) Entry(h string) error {

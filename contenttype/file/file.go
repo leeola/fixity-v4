@@ -84,6 +84,10 @@ func FileUpload(s store.Store, i index.Indexer) contenttype.UploadFunc {
 		}
 		hashes = append(hashes, h)
 
+		// Pass the changes as metadata to index.
+		// Note that we're indexing the FileMeta hash specifically.
+		i.Metadata(h, meta)
+
 		return hashes, nil
 	}
 }
@@ -94,4 +98,12 @@ func (m *FileMeta) ApplyChanges(c store.MetaChanges) {
 	if f, ok := c.GetString("filename"); ok {
 		m.Filename = f
 	}
+}
+
+func (m FileMeta) ToMetadata() index.Metadata {
+	im := m.Meta.ToMetadata()
+	if m.Filename != "" {
+		im["filename"] = m.Filename
+	}
+	return im
 }

@@ -4,7 +4,7 @@ package index
 // the ContentType Uploaders as they are the furthest downstream and know the
 // most about the data being uploaded.
 type Indexer interface {
-	Metadata(h string, m Metadata) error
+	Metadata(h string, m Indexable) error
 }
 
 // EntryIndexer is a special interface that the Kala Node uses to index each blob.
@@ -27,6 +27,11 @@ type Queryer interface {
 	Query(Query) (Results, error)
 }
 
+// Indexable converts any data type that can return a metadata type to be indexed.
+type Indexable interface {
+	ToMetadata() Metadata
+}
+
 type Query struct {
 	// If supplied, an error (ErrIndexVersionsDoNotMatch) will be returned if the
 	// expected IndexVersion and the current IndexVersion do not match.
@@ -46,7 +51,7 @@ type Query struct {
 	Limit int `json:"limit"`
 }
 
-type Metadata map[string]interface{}
+type Metadata map[string]string
 
 // PinQuery is a subset of a Query contaning fields logical to Peer pinning.
 type PinQuery struct {
