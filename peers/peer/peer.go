@@ -151,7 +151,7 @@ func (p *Peer) checkPin(pin index.PinQuery) error {
 
 	var highestEntry int
 	for i, h := range res.Hashes {
-		if err := p.PinHash(h); err != nil {
+		if err := p.PinHash(h.Hash); err != nil {
 			return err
 		}
 

@@ -61,13 +61,18 @@ type PinQuery struct {
 type Result struct {
 	// See Index.Version() and Query.IndexVersion
 	IndexVersion string `json:"indexVersion"`
-	Hash         string `json:"hash"`
+	Hash         Hash   `json:"hash"`
 }
 
 type Results struct {
 	// See Index.Version() and Query.IndexVersion
-	IndexVersion string   `json:"indexVersion"`
-	Hashes       []string `json:"hashes"`
+	IndexVersion string `json:"indexVersion"`
+	Hashes       []Hash `json:"hashes"`
+}
+
+type Hash struct {
+	Entry int    `json:"entry"`
+	Hash  string `json:"hash"`
 }
 
 func (q Query) IsZero() bool {

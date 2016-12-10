@@ -13,7 +13,7 @@ func (b *Bolt) QueryOne(q index.Query) (index.Result, error) {
 		return index.Result{}, err
 	}
 
-	var h string
+	var h index.Hash
 	// technically Query() should have returned ErrNoQueryResults and been
 	// returned above, so there should always be at least one hash. Nevertheless,
 	// prevent a slice bounds panic.
@@ -42,7 +42,7 @@ func (b *Bolt) Query(q index.Query) (index.Results, error) {
 	}
 
 	if q.FromEntry != 0 {
-		indexEntries := make([]string, q.Limit)
+		hashes := make([]index.Hash, q.Limit)
 
 		var i int
 		for ; i < q.Limit; i++ {
@@ -55,7 +55,10 @@ func (b *Bolt) Query(q index.Query) (index.Results, error) {
 				break
 			}
 
-			indexEntries[i] = h
+			hashes[i] = index.Hash{
+				Entry: q.FromEntry + i,
+				Hash:  h,
+			}
 		}
 
 		return index.Results{
@@ -63,7 +66,7 @@ func (b *Bolt) Query(q index.Query) (index.Results, error) {
 			// trim the slice to the last actual index we got from the db.
 			// Ie, if the limit was 50, but only 10 records existed, the slice will be
 			// 50 elements big. So indexEntries[:i] will equal indexEntries[:9]
-			Hashes: indexEntries[:i],
+			Hashes: hashes,
 		}, nil
 	}
 
