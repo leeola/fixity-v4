@@ -7,10 +7,10 @@ import (
 	"time"
 
 	"github.com/inconshreveable/log15"
+	"github.com/leeola/kala/contenttype"
 	"github.com/leeola/kala/database"
 	"github.com/leeola/kala/index"
 	"github.com/leeola/kala/store"
-	"github.com/leeola/kala/upload"
 	"github.com/pressly/chi"
 )
 
@@ -40,7 +40,7 @@ type Node struct {
 	db       database.Database
 	router   *chi.Mux
 
-	upload map[string]upload.Upload
+	upload map[string]contenttype.Upload
 }
 
 func New(c Config) (*Node, error) {
@@ -72,7 +72,7 @@ func New(c Config) (*Node, error) {
 		store:    c.Store,
 		db:       c.Database,
 		router:   c.Router,
-		upload:   map[string]upload.Upload{},
+		upload:   map[string]contenttype.Upload{},
 	}
 
 	if err := n.initDatabase(); err != nil {
@@ -102,7 +102,7 @@ func (n *Node) initDatabase() error {
 	return nil
 }
 
-func (n *Node) AddUploader(t string, u upload.Upload) {
+func (n *Node) AddUploader(t string, u contenttype.Upload) {
 	n.upload[t] = u
 }
 

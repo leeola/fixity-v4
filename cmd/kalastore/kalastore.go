@@ -4,13 +4,13 @@ import (
 	"flag"
 
 	"github.com/leeola/errors"
+	"github.com/leeola/kala/contenttype/file"
 	"github.com/leeola/kala/database/bolt"
 	"github.com/leeola/kala/index/dbindex"
 	"github.com/leeola/kala/node"
 	"github.com/leeola/kala/peers"
 	"github.com/leeola/kala/store"
 	"github.com/leeola/kala/store/simple"
-	"github.com/leeola/kala/upload/file"
 )
 
 func main() {

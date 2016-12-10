@@ -4,9 +4,9 @@ import (
 	"io"
 
 	"github.com/leeola/errors"
+	"github.com/leeola/kala/contenttype"
 	"github.com/leeola/kala/store"
 	"github.com/leeola/kala/store/roller/camli"
-	"github.com/leeola/kala/upload"
 )
 
 type FileMeta struct {
@@ -18,7 +18,7 @@ type FileMeta struct {
 // TODO(leeola): centralize the common tasks in this method into helpers.
 // A lot of this (writing content roller and multipart, etc) is going to be
 // duplicated on every ContentType handler.
-func FileUpload(s store.Store) upload.UploadFunc {
+func FileUpload(s store.Store) contenttype.UploadFunc {
 	return func(rc io.ReadCloser, c store.MetaChanges) ([]string, error) {
 		// TODO(leeola): remove the need for an rc, so just metadata can be changed.
 		if rc == nil {

@@ -1,17 +1,10 @@
-package upload
+package contenttype
 
 import (
 	"io"
 
 	"github.com/leeola/kala/store"
 )
-
-// MetaChanges is a map of metadata changes to write along with the upload data.
-//
-// It is up to the uploader to decide how this metadata is stored within the
-// Meta blob, the caller should make no assumptions. See specific Upload
-// implementation documentation as needed.
-//type MetaChanges map[string]string
 
 // Upload processes incoming data for a specific type with supplied metadata.
 //
@@ -24,12 +17,14 @@ import (
 //
 // The uploader is responsible for writing raw blobs as needed. If multipart or
 // permanode chunks need to be written, it is responsible for doing so!
-//
-// TODO(leeola): refactor Upload to a ContentType interface with an Upload and
-// Download method, primarily shuttling content specific metadata into and
-// out of the store.
 type Upload interface {
 	Upload(io.ReadCloser, store.MetaChanges) ([]string, error)
+}
+
+type Restore interface {
+}
+
+type Index interface {
 }
 
 // UploadFunc implements Upload for a single function.
