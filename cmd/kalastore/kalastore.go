@@ -6,7 +6,7 @@ import (
 	"github.com/leeola/errors"
 	"github.com/leeola/kala/contenttype/file"
 	"github.com/leeola/kala/database/bolt"
-	"github.com/leeola/kala/index/dbindex"
+	"github.com/leeola/kala/index"
 	"github.com/leeola/kala/node"
 	"github.com/leeola/kala/peers"
 	"github.com/leeola/kala/store"
@@ -29,20 +29,20 @@ func main() {
 	}
 
 	// load a store specified in the config.
-	store, err := initStoreFromConfig(configPath)
+	store, err := initStoreFromConfig(configPath, db)
 	if err != nil {
 		panic(err)
 	}
 
-	// wrap the store with our indexer.
-	index, err := dbindex.New(dbindex.Config{
-		Database: db,
-		Store:    store,
-	})
-	if err != nil {
-		panic(err)
-	}
-	store = index
+	// // wrap the store with our indexer.
+	// index, err := dbindex.New(dbindex.Config{
+	// 	Database: db,
+	// 	Store:    store,
+	// })
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// store = index
 
 	// wrap the store with our peers, if configured.
 	peersConfig, err := peers.LoadConfig(configPath)
@@ -70,7 +70,7 @@ func main() {
 
 	// fill the nodeConfig with the instances it needs to init.
 	nodeConfig.Store = store
-	nodeConfig.Index = index
+	nodeConfig.Index = db
 	nodeConfig.Database = db
 
 	n, err := node.New(nodeConfig)
@@ -78,14 +78,14 @@ func main() {
 		panic(err)
 	}
 
-	addDefaultUploads(n, store)
+	addDefaultUploads(n, store, db)
 
 	if err := n.ListenAndServe(); err != nil {
 		panic(err)
 	}
 }
 
-func initStoreFromConfig(configPath string) (store.Store, error) {
+func initStoreFromConfig(configPath string, i index.EntryIndexer) (store.Store, error) {
 	// first try the SimpleStore
 	simpleConfig, err := simple.LoadConfig(configPath)
 	if err != nil {
@@ -94,6 +94,7 @@ func initStoreFromConfig(configPath string) (store.Store, error) {
 
 	// if there is a config for the Simple store, use it.
 	if !simpleConfig.IsZero() {
+		simpleConfig.EntryIndexer = i
 		simpleStore, err := simple.New(simpleConfig)
 		// errors.Wrap() returns nil if err is nil, this is safe.
 		return simpleStore, errors.Wrap(err, "failed to init simple store")
@@ -103,6 +104,6 @@ func initStoreFromConfig(configPath string) (store.Store, error) {
 	return nil, nil
 }
 
-func addDefaultUploads(n *node.Node, s store.Store) {
-	n.AddUploader("file", file.FileUpload(s))
+func addDefaultUploads(n *node.Node, s store.Store, i index.Indexer) {
+	n.AddUploader("file", file.FileUpload(s, i))
 }

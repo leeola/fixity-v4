@@ -1,4 +1,4 @@
-package dbindex
+package bolt
 
 import (
 	"github.com/leeola/errors"
@@ -6,9 +6,9 @@ import (
 	"github.com/leeola/kala/index"
 )
 
-func (dbi *Dbindex) QueryOne(q index.Query) (index.Result, error) {
+func (b *Bolt) QueryOne(q index.Query) (index.Result, error) {
 	q.Limit = 1
-	results, err := dbi.Query(q)
+	results, err := b.Query(q)
 	if err != nil {
 		return index.Result{}, err
 	}
@@ -27,8 +27,8 @@ func (dbi *Dbindex) QueryOne(q index.Query) (index.Result, error) {
 	}, nil
 }
 
-func (dbi *Dbindex) Query(q index.Query) (index.Results, error) {
-	indexVersion, err := dbi.db.GetNodeId()
+func (b *Bolt) Query(q index.Query) (index.Results, error) {
+	indexVersion, err := b.GetNodeId()
 	if err != nil {
 		return index.Results{}, errors.Wrap(err, "failed to get index version (nodeid)")
 	}
@@ -46,7 +46,7 @@ func (dbi *Dbindex) Query(q index.Query) (index.Results, error) {
 
 		var i int
 		for ; i < q.Limit; i++ {
-			h, err := dbi.db.GetIndexEntry(q.FromEntry + i)
+			h, err := b.GetIndexEntry(q.FromEntry + i)
 			if err != nil && err != database.ErrNoRecord {
 				return index.Results{}, errors.Wrap(err, "failed to get entry from db")
 			}

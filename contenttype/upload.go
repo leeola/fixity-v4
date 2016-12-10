@@ -6,7 +6,7 @@ import (
 	"github.com/leeola/kala/store"
 )
 
-// Upload processes incoming data for a specific type with supplied metadata.
+// Uploader processes incoming data for a specific type with supplied metadata.
 //
 // This allows the caller of the /upload/:type api to inform Kala of metadata about
 // the data being uploaded. The Kala upload plugin (such as a jpeg or mp3 plugin)
@@ -17,14 +17,20 @@ import (
 //
 // The uploader is responsible for writing raw blobs as needed. If multipart or
 // permanode chunks need to be written, it is responsible for doing so!
-type Upload interface {
+type Uploader interface {
 	Upload(io.ReadCloser, store.MetaChanges) ([]string, error)
 }
 
-type Restore interface {
+type Index interface {
 }
 
-type Index interface {
+// Restorer is a general purpose interface for restoring data to it's original state.
+//
+// This is not frequently implemented, as the use cases are not always applicable,
+// but the easiest example is restoring posix metadata for a file back to the file.
+//
+// NOTE: This is not needed anywhere currently. Hence the lack of any methods ;)
+type Restorer interface {
 }
 
 // UploadFunc implements Upload for a single function.

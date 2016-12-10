@@ -25,7 +25,7 @@ type Config struct {
 	Database database.Database `toml:"-"`
 
 	// The indexer to provide content queries for this Node.
-	Index index.Index `toml:"-"`
+	Index index.Queryer `toml:"-"`
 
 	// optional
 	Router *chi.Mux     `toml:"-"`
@@ -35,12 +35,12 @@ type Config struct {
 type Node struct {
 	bindAddr string
 	log      log15.Logger
-	index    index.Index
+	index    index.Queryer
 	store    store.Store
 	db       database.Database
 	router   *chi.Mux
 
-	upload map[string]contenttype.Upload
+	upload map[string]contenttype.Uploader
 }
 
 func New(c Config) (*Node, error) {
@@ -72,7 +72,7 @@ func New(c Config) (*Node, error) {
 		store:    c.Store,
 		db:       c.Database,
 		router:   c.Router,
-		upload:   map[string]contenttype.Upload{},
+		upload:   map[string]contenttype.Uploader{},
 	}
 
 	if err := n.initDatabase(); err != nil {
@@ -102,7 +102,7 @@ func (n *Node) initDatabase() error {
 	return nil
 }
 
-func (n *Node) AddUploader(t string, u contenttype.Upload) {
+func (n *Node) AddUploader(t string, u contenttype.Uploader) {
 	n.upload[t] = u
 }
 

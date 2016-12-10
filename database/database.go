@@ -28,15 +28,6 @@ type Database interface {
 	// GetNodeId gets the NodeId for the running Node.
 	GetNodeId() (string, error)
 
-	// InsertIndexEntry maps an auto incrementing index entry to the given hash.
-	//
-	// IMPORTANT: Kala expects the index entry to be auto incrementing, as that is
-	// how an entry is determined to be new or old by its peers.
-	InsertIndexEntry(h string) error
-
-	// GetIndexEntry gets the hash for the given indexEntry.
-	GetIndexEntry(int) (string, error)
-
 	// SetPeerPinLastEntry sets the lastEntry for the given pin query from the peer.
 	//
 	// This is used to ensure a Pinning can keep track of the last successful pin
