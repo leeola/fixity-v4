@@ -66,6 +66,14 @@ func FileUpload(s store.Store, i index.Indexer) contenttype.UploadFunc {
 			hashes = append(hashes, h)
 		}
 
+		// Write the entries, not including the final metadata hash
+		// The last hash is metadata, and we'll add that manually.
+		for _, h := range hashes {
+			if err := i.Entry(h); err != nil {
+				return nil, errors.Stack(err)
+			}
+		}
+
 		// If the previous hash exists, populate the above filemeta with the data
 		// in the hash.
 		if h, _ := c.GetPreviousMeta(); h != "" {
@@ -84,9 +92,10 @@ func FileUpload(s store.Store, i index.Indexer) contenttype.UploadFunc {
 		}
 		hashes = append(hashes, h)
 
-		// Pass the changes as metadata to index.
-		// Note that we're indexing the FileMeta hash specifically.
-		i.Metadata(h, meta)
+		// Pass the changes as metadata to the indexer.
+		if err := i.Metadata(h, meta); err != nil {
+			return nil, errors.Stack(err)
+		}
 
 		return hashes, nil
 	}

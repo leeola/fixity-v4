@@ -7,6 +7,9 @@ CreateMissingPaths = true
 [simpleStore]
 StorePath = "_stores/two/store"
 
+[bleveIndex]
+BleveDir = "_stores/two/index"
+
 [boltDatabase]
 BoltPath = "_stores/two/db"
 

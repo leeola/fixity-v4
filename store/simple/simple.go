@@ -9,29 +9,23 @@ import (
 
 	"github.com/inconshreveable/log15"
 	"github.com/leeola/errors"
-	"github.com/leeola/kala/index"
 	"github.com/leeola/kala/store"
 	blake2b "github.com/minio/blake2b-simd"
 )
 
 type Config struct {
-	StorePath    string
-	EntryIndexer index.EntryIndexer
-	Log          log15.Logger
+	StorePath string
+	Log       log15.Logger
 }
 
 type Simple struct {
-	path         string
-	entryIndexer index.EntryIndexer
-	log          log15.Logger
+	path string
+	log  log15.Logger
 }
 
 func New(c Config) (*Simple, error) {
 	if c.StorePath == "" {
 		return nil, errors.New("missing required Config field: Path")
-	}
-	if c.EntryIndexer == nil {
-		return nil, errors.New("missing required Config field: EntryIndexer")
 	}
 
 	if c.Log == nil {
@@ -39,9 +33,8 @@ func New(c Config) (*Simple, error) {
 	}
 
 	return &Simple{
-		log:          c.Log,
-		path:         c.StorePath,
-		entryIndexer: c.EntryIndexer,
+		log:  c.Log,
+		path: c.StorePath,
 	}, nil
 }
 
@@ -92,12 +85,8 @@ func (s *Simple) WriteHash(h string, b []byte) error {
 // Verification of the content *must be done* before using this method to write.
 func (s *Simple) writeHash(h string, b []byte) error {
 	p := filepath.Join(s.path, h)
-	if err := ioutil.WriteFile(p, b, 0644); err != nil {
-		return errors.Wrap(err, "failed to write to disk")
-	}
-
-	err := s.entryIndexer.Entry(h)
-	return errors.Wrap(err, "failed to write index entry")
+	err := ioutil.WriteFile(p, b, 0644)
+	return errors.Wrap(err, "failed to write to disk")
 }
 
 func (s *Simple) List(max, offset int) (<-chan string, error) {

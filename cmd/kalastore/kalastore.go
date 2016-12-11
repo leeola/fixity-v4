@@ -7,6 +7,7 @@ import (
 	"github.com/leeola/kala/contenttype/file"
 	"github.com/leeola/kala/database/bolt"
 	"github.com/leeola/kala/index"
+	"github.com/leeola/kala/index/blev"
 	"github.com/leeola/kala/node"
 	"github.com/leeola/kala/peers"
 	"github.com/leeola/kala/store"
@@ -28,21 +29,21 @@ func main() {
 		panic(err)
 	}
 
-	// load a store specified in the config.
-	store, err := initStoreFromConfig(configPath, db)
+	indexConfig, err := blev.LoadConfig(configPath)
 	if err != nil {
 		panic(err)
 	}
 
-	// // wrap the store with our indexer.
-	// index, err := dbindex.New(dbindex.Config{
-	// 	Database: db,
-	// 	Store:    store,
-	// })
-	// if err != nil {
-	// 	panic(err)
-	// }
-	// store = index
+	index, err := blev.New(indexConfig)
+	if err != nil {
+		panic(err)
+	}
+
+	// load a store specified in the config.
+	store, err := initStoreFromConfig(configPath)
+	if err != nil {
+		panic(err)
+	}
 
 	// wrap the store with our peers, if configured.
 	peersConfig, err := peers.LoadConfig(configPath)
@@ -70,7 +71,7 @@ func main() {
 
 	// fill the nodeConfig with the instances it needs to init.
 	nodeConfig.Store = store
-	nodeConfig.Index = db
+	nodeConfig.Index = index
 	nodeConfig.Database = db
 
 	n, err := node.New(nodeConfig)
@@ -78,14 +79,14 @@ func main() {
 		panic(err)
 	}
 
-	addDefaultUploads(n, store, db)
+	addDefaultUploads(n, store, index)
 
 	if err := n.ListenAndServe(); err != nil {
 		panic(err)
 	}
 }
 
-func initStoreFromConfig(configPath string, i index.EntryIndexer) (store.Store, error) {
+func initStoreFromConfig(configPath string) (store.Store, error) {
 	// first try the SimpleStore
 	simpleConfig, err := simple.LoadConfig(configPath)
 	if err != nil {
@@ -94,7 +95,6 @@ func initStoreFromConfig(configPath string, i index.EntryIndexer) (store.Store, 
 
 	// if there is a config for the Simple store, use it.
 	if !simpleConfig.IsZero() {
-		simpleConfig.EntryIndexer = i
 		simpleStore, err := simple.New(simpleConfig)
 		// errors.Wrap() returns nil if err is nil, this is safe.
 		return simpleStore, errors.Wrap(err, "failed to init simple store")
