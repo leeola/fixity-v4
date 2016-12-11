@@ -142,5 +142,5 @@ func ReadMeta(s Store, h string) (Meta, error) {
 }
 
 func IsValidMeta(m Meta) bool {
-	return m.CreatedAt.IsZero() && (m.Anchor == "" || m.Multi == "")
+	return m.UploadedAt.IsZero() && (m.Anchor == "" || m.Multi == "")
 }

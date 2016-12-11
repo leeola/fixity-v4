@@ -109,7 +109,7 @@ func NewMetaChangesFromValues(m url.Values) MetaChanges {
 
 func ApplyCommonChanges(m *Meta, c MetaChanges) {
 	// Always set the timestamp
-	m.CreatedAt = time.Now()
+	m.UploadedAt = time.Now()
 
 	if v, ok := c.GetAnchor(); ok {
 		m.Anchor = v

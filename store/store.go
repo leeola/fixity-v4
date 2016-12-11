@@ -44,7 +44,7 @@ type Meta struct {
 	Anchor string `json:"anchor"`
 	Multi  string `json:"multi"`
 
-	CreatedAt    time.Time `json:"createdAt"`
+	UploadedAt   time.Time `json:"uploadedAt"`
 	PreviousMeta string    `json:"previousMeta,omitempty"`
 
 	ChangeType string `json:"changeType,omitempty"`
@@ -67,8 +67,8 @@ func (m Meta) ToMetadata() index.Metadata {
 	if m.Multi != "" {
 		im["multi"] = m.Multi
 	}
-	if !m.CreatedAt.IsZero() {
-		im["createdAt"] = m.CreatedAt.String()
+	if !m.UploadedAt.IsZero() {
+		im["uploadedAt"] = m.UploadedAt.String()
 	}
 	if m.PreviousMeta != "" {
 		im["previousMeta"] = m.PreviousMeta
