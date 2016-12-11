@@ -220,12 +220,18 @@ func (c *Client) PostBlob(r io.Reader) (string, error) {
 	return hashRes.Hash, nil
 }
 
-func (c *Client) Upload(t string, r io.Reader) ([]string, error) {
+func (c *Client) Upload(t string, r io.Reader, mc store.MetaChanges) ([]string, error) {
 	u, err := url.Parse(c.kalaAddr)
 	if err != nil {
 		return nil, err
 	}
 	u.Path = path.Join(u.Path, "upload", t)
+
+	q := u.Query()
+	for k, v := range mc {
+		q.Set(k, v)
+	}
+	u.RawQuery = q.Encode()
 
 	res, err := c.httpClient.Post(u.String(), "plain/text", r)
 	if err != nil {

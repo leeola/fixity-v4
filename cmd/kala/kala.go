@@ -35,12 +35,24 @@ func main() {
 			Action:    uploadCommand,
 			Flags: []cli.Flag{
 				cli.StringFlag{
-					Name:  "type",
-					Usage: "standard unix file metadata",
+					Name:  "c, content-type",
+					Usage: "the content type of the uploaded data",
 					Value: "file",
 				},
+				cli.StringFlag{
+					Name:  "f, filename",
+					Usage: "the filename to use in place of the filename on disk",
+				},
+				cli.StringFlag{
+					Name:  "a, anchor",
+					Usage: "the anchor to use, if any",
+				},
 				cli.BoolFlag{
-					Name:  "stdin",
+					Name:  "n, new-anchor",
+					Usage: "create a new anchor for this upload",
+				},
+				cli.BoolFlag{
+					Name:  "i, stdin",
 					Usage: "read from stdin instead of a file",
 				},
 			},
@@ -63,7 +75,7 @@ func main() {
 			Action:    blobCommand,
 			Flags: []cli.Flag{
 				cli.BoolFlag{
-					Name: "allow-content",
+					Name: "a, allow-content",
 				},
 			},
 		},
