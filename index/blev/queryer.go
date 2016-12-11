@@ -38,6 +38,27 @@ func (b *Bleve) Query(q index.Query) (index.Results, error) {
 		queries = append(queries, nQ)
 	}
 
+	if q.Metadata != nil {
+		for k, v := range q.Metadata {
+			// TODO(leeola): implement meaning method for taking non-string
+			s, ok := v.(string)
+			if !ok {
+				b.log.Warn("unhandled non-string metadata query", "key", k, "value", v)
+				continue
+			}
+
+			tQ := bleve.NewTermQuery(s)
+			tQ.SetField(k)
+			queries = append(queries, tQ)
+		}
+	}
+
+	if len(queries) == 0 {
+		return index.Results{
+			IndexVersion: b.indexVersion,
+		}, nil
+	}
+
 	conjQuery := bleve.NewConjunctionQuery(queries...)
 	search := bleve.NewSearchRequest(conjQuery)
 	search.Fields = []string{"index"}
@@ -46,7 +67,8 @@ func (b *Bleve) Query(q index.Query) (index.Results, error) {
 		return index.Results{}, errors.Stack(err)
 	}
 
-	hashes := make([]index.Hash, searchResults.Hits.Len())
+	hashes := make([]index.Hash, len(searchResults.Hits))
+
 	for i, documentMatch := range searchResults.Hits {
 		entryInterface, ok := documentMatch.Fields["index"]
 		if !ok {

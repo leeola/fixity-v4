@@ -116,52 +116,55 @@ func (n *Node) GetQueryHandler(w http.ResponseWriter, r *http.Request) {
 		Limit: 5,
 	}
 	for k, v := range r.URL.Query() {
+		if len(v) != 1 {
+			jsonutil.Error(w, "duplicate query values not supported",
+				http.StatusBadRequest)
+			return
+		}
 		switch k {
 		case "fromEntry":
 			i, err := strconv.Atoi(v[0])
 			if err != nil {
-				http.Error(w, "fromEntry must be integer", http.StatusInternalServerError)
+				jsonutil.Error(w, "fromEntry must be integer", http.StatusBadRequest)
 				return
 			}
 			q.FromEntry = i
 		case "limit":
 			i, err := strconv.Atoi(v[0])
 			if err != nil {
-				http.Error(w, "limit must be integer", http.StatusInternalServerError)
+				jsonutil.Error(w, "limit must be integer", http.StatusBadRequest)
 				return
 			}
 			q.Limit = i
 		case "indexVersion":
 			q.IndexVersion = v[0]
 		default:
-			log.Error("unhandled query param", "key", k, "value", v)
-			http.Error(w,
-				fmt.Sprintf("invalid query param %q", k),
-				http.StatusInternalServerError)
-			return
+			if q.Metadata == nil {
+				q.Metadata = map[string]interface{}{}
+			}
+			q.Metadata[k] = v[0]
 		}
 	}
 
 	result, err := n.index.Query(q)
 	switch err {
-	case index.ErrNoQueryResults:
-		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
-		return
 	case index.ErrIndexVersionsDoNotMatch:
-		http.Error(w, "index Versions do not match", http.StatusInternalServerError)
+		jsonutil.Error(w, "index Versions do not match", http.StatusBadRequest)
 		return
 	case nil:
 		// do nothing here. we use this so that default: doesn't catch nil err
 	default:
 		log.Error("index.Query failed", "err", err)
-		http.Error(w, "index Query failed", http.StatusInternalServerError)
+		jsonutil.Error(w, http.StatusText(http.StatusInternalServerError),
+			http.StatusInternalServerError)
 		return
 	}
 
 	b, err := json.Marshal(result)
 	if err != nil {
-		log.Error("index.Query failed", "err", err)
-		http.Error(w, "index Query failed", http.StatusInternalServerError)
+		log.Error("result marshalling failed", "err", err)
+		jsonutil.Error(w, http.StatusText(http.StatusInternalServerError),
+			http.StatusInternalServerError)
 		return
 	}
 

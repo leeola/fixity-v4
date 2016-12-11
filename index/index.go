@@ -40,6 +40,8 @@ type Query struct {
 	//
 	// Note that this is ignored with QueryOne.
 	Limit int `json:"limit"`
+
+	Metadata Metadata `json:"metadata"`
 }
 
 type Metadata map[string]interface{}
