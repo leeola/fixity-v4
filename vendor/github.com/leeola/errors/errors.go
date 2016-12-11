@@ -9,6 +9,10 @@ import (
 )
 
 func Cause(err error) error {
+	if err == nil {
+		return nil
+	}
+
 	cErr, ok := err.(causer)
 	if !ok {
 		return err
@@ -83,6 +87,10 @@ func Sprintln(err error) string {
 
 // Stack wraps the given error with a stack line without a new message.
 func Stack(err error) error {
+	if err == nil {
+		return nil
+	}
+
 	sErr, ok := err.(*errWrap)
 
 	stackLine := callerLine()

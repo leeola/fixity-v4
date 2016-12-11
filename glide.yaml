@@ -12,3 +12,4 @@ import:
 - package: camlistore.org
   subpackages:
   - pkg/rollsum
+- package: github.com/blevesearch/bleve
