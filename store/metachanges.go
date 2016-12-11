@@ -3,6 +3,7 @@ package store
 import (
 	"net/url"
 	"strconv"
+	"time"
 )
 
 // MetaChanges is map of generic mutations to be handled by ContentType interfaces.
@@ -107,6 +108,9 @@ func NewMetaChangesFromValues(m url.Values) MetaChanges {
 }
 
 func ApplyCommonChanges(m *Meta, c MetaChanges) {
+	// Always set the timestamp
+	m.CreatedAt = time.Now()
+
 	if v, ok := c.GetAnchor(); ok {
 		m.Anchor = v
 	}
