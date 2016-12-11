@@ -40,7 +40,10 @@ func queryCommand(c *cli.Context) error {
 		case "indexVersion":
 			q.IndexVersion = v
 		default:
-			Printlnf("warning: unhandled query argument: %s=%s", k, v)
+			if q.Metadata == nil {
+				q.Metadata = index.Metadata{}
+			}
+			q.Metadata[k] = v
 		}
 	}
 
@@ -50,7 +53,7 @@ func queryCommand(c *cli.Context) error {
 	}
 
 	for _, h := range results.Hashes {
-		Printlnf(h.Hash)
+		Printlnf("#%d %s", h.Entry, h.Hash)
 	}
 
 	return nil

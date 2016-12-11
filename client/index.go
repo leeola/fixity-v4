@@ -29,6 +29,17 @@ func (c *Client) Query(q index.Query) (index.Results, error) {
 	if q.IndexVersion != "" {
 		v.Add("indexVersion", q.IndexVersion)
 	}
+	if q.Metadata != nil {
+		for k, kv := range q.Metadata {
+			// TODO(leeola): implement meaning method for taking non-string values
+			s, ok := kv.(string)
+			if !ok {
+				return index.Results{}, errors.Errorf(
+					"unhandled non-string metadata query: %s=%s", k, kv)
+			}
+			v.Set(k, s)
+		}
+	}
 	u.RawQuery = v.Encode()
 
 	res, err := c.httpClient.Get(u.String())
