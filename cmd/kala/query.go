@@ -50,7 +50,7 @@ func queryCommand(c *cli.Context) error {
 	}
 
 	for _, h := range results.Hashes {
-		Printlnf(h)
+		Printlnf(h.Hash)
 	}
 
 	return nil

@@ -31,17 +31,13 @@ func blobCommand(c *cli.Context) error {
 
 	var r io.Reader = rc
 	if !c.Bool("allow-content") {
-		var copyR bytes.Buffer
-		r = &copyR
-
-		// Tee the reader so we can check it's type.
-		teeR := io.TeeReader(rc, &copyR)
-		cType, err := getContentType(teeR)
+		teeR, cType, err := getContentType(r)
 		if err != nil {
 			return err
 		}
+		r = teeR
 
-		if cType == "Content" || cType == "Unknown" {
+		if cType == "Content" {
 			Printlnf(`To prevent large content bytes from spamming your console,
 viewing blobs of type "Content" or "Unknown" is disabled by default.
 
@@ -57,29 +53,42 @@ use the --allow-content flag.
 	return nil
 }
 
-func getContentType(r io.Reader) (string, error) {
-	b, err := ioutil.ReadAll(r)
+func getContentType(r io.Reader) (io.Reader, string, error) {
+	var copyR bytes.Buffer
+
+	// Tee the reader so we can check it's type.
+	teeR := io.TeeReader(r, &copyR)
+
+	b, err := ioutil.ReadAll(teeR)
 	if err != nil {
-		return "", err
+		return nil, "", err
 	}
 
 	var c struct {
-		PermaRand int
-		Parts     []string
-		Content   []byte
+		AnchorRand int
+		Parts      []string
+		Content    []byte
+
+		Anchor string
+		Multi  string
 	}
 	if err := json.Unmarshal(b, &c); err != nil {
-		return "", err
+		return nil, "", err
 	}
 
+	var cType string
 	switch {
 	case len(c.Content) != 0:
-		return "Content", nil
+		cType = "Content"
 	case len(c.Parts) != 0:
-		return "MultiPart", nil
-	case c.PermaRand != 0:
-		return "Perma", nil
+		cType = "MultiPart"
+	case c.AnchorRand != 0:
+		cType = "Perma"
+	case c.Anchor != "" || c.Multi != "":
+		cType = "Meta"
 	default:
-		return "Unknown", nil
+		cType = "Unknown"
 	}
+
+	return &copyR, cType, nil
 }

@@ -41,8 +41,9 @@ type Anchor struct {
 }
 
 type Meta struct {
-	Anchor       string    `json:"anchor"`
-	Multi        string    `json:"multi"`
+	Anchor string `json:"anchor"`
+	Multi  string `json:"multi"`
+
 	CreatedAt    time.Time `json:"createdAt"`
 	PreviousMeta string    `json:"previousMeta,omitempty"`
 
