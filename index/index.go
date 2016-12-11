@@ -60,12 +60,28 @@ type Result struct {
 type Results struct {
 	// See Index.Version() and Query.IndexVersion
 	IndexVersion string `json:"indexVersion"`
-	Hashes       []Hash `json:"hashes"`
+	Hashes       Hashes `json:"hashes"`
 }
 
 type Hash struct {
 	Entry int    `json:"entry"`
 	Hash  string `json:"hash"`
+}
+
+type Hashes []Hash
+
+func (hs Hashes) Len() int {
+	return len(hs)
+}
+
+func (hs Hashes) Less(i, j int) bool {
+	return hs[i].Entry < hs[j].Entry
+}
+
+func (hs Hashes) Swap(i, j int) {
+	h := hs[i]
+	hs[i] = hs[j]
+	hs[j] = h
 }
 
 func (q Query) IsZero() bool {

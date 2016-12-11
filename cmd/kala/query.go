@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -51,6 +52,8 @@ func queryCommand(c *cli.Context) error {
 	if err != nil {
 		return err
 	}
+
+	sort.Sort(results.Hashes)
 
 	for _, h := range results.Hashes {
 		Printlnf("#%d %s", h.Entry, h.Hash)
