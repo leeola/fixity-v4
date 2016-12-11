@@ -61,6 +61,7 @@ func (b *Bleve) Query(q index.Query) (index.Results, error) {
 
 	conjQuery := bleve.NewConjunctionQuery(queries...)
 	search := bleve.NewSearchRequest(conjQuery)
+	search.Size = q.Limit
 	search.Fields = []string{"index"}
 	searchResults, err := b.index.Search(search)
 	if err != nil {
