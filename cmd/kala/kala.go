@@ -69,6 +69,17 @@ func main() {
 			},
 		},
 		{
+			Name:   "edit",
+			Usage:  "download, edit and upload the given hash contents",
+			Action: editCommand,
+			Flags: []cli.Flag{
+				cli.StringFlag{
+					Name:  "e, editor",
+					Value: "vim",
+				},
+			},
+		},
+		{
 			Name:      "blob",
 			Usage:     "print a blob hash",
 			ArgsUsage: "<hash>",
