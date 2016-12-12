@@ -27,6 +27,16 @@ func main() {
 			Name:   "query",
 			Usage:  "query the index for matching hashes",
 			Action: queryCommand,
+			Flags: []cli.Flag{
+				cli.StringSliceFlag{
+					Name:  "a, ascending",
+					Usage: "a repeatable ascending field to sort by (default: [index])",
+				},
+				cli.StringSliceFlag{
+					Name:  "d, descending",
+					Usage: "a repeatable descending field to sort by",
+				},
+			},
 		},
 		{
 			Name:      "upload",

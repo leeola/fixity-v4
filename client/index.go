@@ -12,7 +12,7 @@ import (
 	"github.com/leeola/kala/index"
 )
 
-func (c *Client) Query(q index.Query) (index.Results, error) {
+func (c *Client) Query(q index.Query, ss []index.SortBy) (index.Results, error) {
 	u, err := url.Parse(c.kalaAddr)
 	if err != nil {
 		return index.Results{}, err
@@ -38,6 +38,15 @@ func (c *Client) Query(q index.Query) (index.Results, error) {
 					"unhandled non-string metadata query: %s=%s", k, kv)
 			}
 			v.Set(k, s)
+		}
+	}
+	if len(ss) > 0 {
+		for _, s := range ss {
+			if s.Descending {
+				v.Add("sortDescending", s.Field)
+			} else {
+				v.Add("sortAscending", s.Field)
+			}
 		}
 	}
 	u.RawQuery = v.Encode()
