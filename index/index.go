@@ -12,10 +12,12 @@ type Indexer interface {
 
 type Queryer interface {
 	// Query the index for a single result.
-	QueryOne(Query) (Result, error)
+	//
+	// SortBy must be optional.
+	QueryOne(Query, []SortBy) (Result, error)
 
 	// Query the Index with the given fields.
-	Query(Query) (Results, error)
+	Query(Query, []SortBy) (Results, error)
 }
 
 // Indexable converts any data type that can return a metadata type to be indexed.
@@ -42,6 +44,12 @@ type Query struct {
 	Limit int `json:"limit"`
 
 	Metadata Metadata `json:"metadata"`
+}
+
+// SortBy is a basic struct for passing sorting information to a Query.
+type SortBy struct {
+	Field      string `json:"field"`
+	Descending bool   `json:"descending"`
 }
 
 type Metadata map[string]interface{}

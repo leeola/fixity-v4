@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/leeola/kala/index"
 	"github.com/leeola/kala/store"
@@ -115,8 +116,9 @@ func (n *Node) GetQueryHandler(w http.ResponseWriter, r *http.Request) {
 		// default limit of 5
 		Limit: 5,
 	}
+	sorts := []index.SortBy{}
 	for k, v := range r.URL.Query() {
-		if len(v) != 1 {
+		if !strings.HasPrefix(k, "sort") && len(v) != 1 {
 			jsonutil.Error(w, "duplicate query values not supported",
 				http.StatusBadRequest)
 			return
@@ -138,6 +140,17 @@ func (n *Node) GetQueryHandler(w http.ResponseWriter, r *http.Request) {
 			q.Limit = i
 		case "indexVersion":
 			q.IndexVersion = v[0]
+		case "sortAscending":
+			for _, sort := range v {
+				sorts = append(sorts, index.SortBy{Field: sort})
+			}
+		case "sortDescending":
+			for _, field := range v {
+				sorts = append(sorts, index.SortBy{
+					Field:      field,
+					Descending: true,
+				})
+			}
 		default:
 			if q.Metadata == nil {
 				q.Metadata = map[string]interface{}{}
@@ -146,7 +159,7 @@ func (n *Node) GetQueryHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	result, err := n.index.Query(q)
+	result, err := n.index.Query(q, sorts)
 	switch err {
 	case index.ErrIndexVersionsDoNotMatch:
 		jsonutil.Error(w, "index Versions do not match", http.StatusBadRequest)
