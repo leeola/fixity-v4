@@ -68,7 +68,7 @@ func (m Meta) ToMetadata() index.Metadata {
 		im["multi"] = m.Multi
 	}
 	if !m.UploadedAt.IsZero() {
-		im["uploadedAt"] = m.UploadedAt.String()
+		im["uploadedAt"] = m.UploadedAt
 	}
 	if m.PreviousMeta != "" {
 		im["previousMeta"] = m.PreviousMeta
