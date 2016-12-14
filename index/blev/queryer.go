@@ -7,9 +7,9 @@ import (
 	"github.com/leeola/kala/index"
 )
 
-func (b *Bleve) QueryOne(q index.Query, sb []index.SortBy) (index.Result, error) {
+func (b *Bleve) QueryOne(q index.Query, sb ...index.SortBy) (index.Result, error) {
 	q.Limit = 1
-	results, err := b.Query(q, sb)
+	results, err := b.Query(q, sb...)
 	if err != nil {
 		return index.Result{}, err
 	}
@@ -28,7 +28,7 @@ func (b *Bleve) QueryOne(q index.Query, sb []index.SortBy) (index.Result, error)
 	}, nil
 }
 
-func (b *Bleve) Query(q index.Query, ss []index.SortBy) (index.Results, error) {
+func (b *Bleve) Query(q index.Query, ss ...index.SortBy) (index.Results, error) {
 	queries := []query.Query{}
 
 	if q.FromEntry != 0 {

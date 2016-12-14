@@ -140,9 +140,9 @@ func (p *Peer) checkPin(pin index.PinQuery) error {
 		FromEntry: lastEntry,
 		Limit:     p.pinQueryLimit,
 	}
-	s := []index.SortBy{{
+	s := index.SortBy{
 		Field: "indexEntry",
-	}}
+	}
 	res, err := p.Query(q, s)
 	if err != nil {
 		return err

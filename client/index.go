@@ -12,7 +12,7 @@ import (
 	"github.com/leeola/kala/index"
 )
 
-func (c *Client) Query(q index.Query, ss []index.SortBy) (index.Results, error) {
+func (c *Client) Query(q index.Query, ss ...index.SortBy) (index.Results, error) {
 	u, err := url.Parse(c.kalaAddr)
 	if err != nil {
 		return index.Results{}, err

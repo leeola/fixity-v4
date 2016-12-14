@@ -69,7 +69,7 @@ func queryCommand(c *cli.Context) error {
 		})
 	}
 
-	results, err := client.Query(q, sorts)
+	results, err := client.Query(q, sorts...)
 	if err != nil {
 		return err
 	}

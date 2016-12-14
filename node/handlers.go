@@ -159,7 +159,7 @@ func (n *Node) GetQueryHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	result, err := n.index.Query(q, sorts)
+	result, err := n.index.Query(q, sorts...)
 	switch err {
 	case index.ErrIndexVersionsDoNotMatch:
 		jsonutil.Error(w, "index Versions do not match", http.StatusBadRequest)

@@ -14,10 +14,10 @@ type Queryer interface {
 	// Query the index for a single result.
 	//
 	// SortBy must be optional.
-	QueryOne(Query, []SortBy) (Result, error)
+	QueryOne(Query, ...SortBy) (Result, error)
 
 	// Query the Index with the given fields.
-	Query(Query, []SortBy) (Results, error)
+	Query(Query, ...SortBy) (Results, error)
 }
 
 // Indexable converts any data type that can return a metadata type to be indexed.
