@@ -56,6 +56,14 @@ func FileUpload(s store.Store, i index.Indexer) contenttype.UploadFunc {
 		hashes = append(hashes, h)
 		c.SetMulti(h)
 
+		// Write the entries, not including the final metadata hash
+		// The last hash is metadata, and we'll add that manually.
+		for _, h := range hashes {
+			if err := i.Entry(h); err != nil {
+				return nil, errors.Stack(err)
+			}
+		}
+
 		// write a new anchor if specified
 		if newAnchor {
 			h, err := store.NewAnchor(s)
@@ -63,12 +71,7 @@ func FileUpload(s store.Store, i index.Indexer) contenttype.UploadFunc {
 				return nil, errors.Stack(err)
 			}
 			c.SetAnchor(h)
-			hashes = append(hashes, h)
-		}
 
-		// Write the entries, not including the final metadata hash
-		// The last hash is metadata, and we'll add that manually.
-		for _, h := range hashes {
 			if err := i.Entry(h); err != nil {
 				return nil, errors.Stack(err)
 			}
@@ -84,6 +87,11 @@ func FileUpload(s store.Store, i index.Indexer) contenttype.UploadFunc {
 
 		// Apply any of the requested value changes.
 		meta.ApplyChanges(c)
+
+		// if there is an anchor, always return the anchor for a consistent UX
+		if meta.Anchor != "" {
+			hashes = append(hashes, meta.Anchor)
+		}
 
 		// Now write the meta as well.
 		h, err = store.MarshalAndWrite(s, meta)
