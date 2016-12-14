@@ -34,7 +34,7 @@ func (b *Bleve) Query(q index.Query, ss []index.SortBy) (index.Results, error) {
 	if q.FromEntry != 0 {
 		min, max := float64(q.FromEntry), float64(q.FromEntry+q.Limit)
 		nQ := bleve.NewNumericRangeQuery(&min, &max)
-		nQ.SetField("index")
+		nQ.SetField("indexEntry")
 		queries = append(queries, nQ)
 	}
 
@@ -62,7 +62,7 @@ func (b *Bleve) Query(q index.Query, ss []index.SortBy) (index.Results, error) {
 	conjQuery := bleve.NewConjunctionQuery(queries...)
 	search := bleve.NewSearchRequest(conjQuery)
 	search.Size = q.Limit
-	search.Fields = []string{"index"}
+	search.Fields = []string{"indexEntry"}
 
 	if len(ss) > 0 {
 		sortBy := make([]string, len(ss))
@@ -84,14 +84,14 @@ func (b *Bleve) Query(q index.Query, ss []index.SortBy) (index.Results, error) {
 	hashes := make([]index.Hash, len(searchResults.Hits))
 
 	for i, documentMatch := range searchResults.Hits {
-		entryInterface, ok := documentMatch.Fields["index"]
+		entryInterface, ok := documentMatch.Fields["indexEntry"]
 		if !ok {
-			return index.Results{}, errors.New("entryIndex value not found")
+			return index.Results{}, errors.New("indexEntry value not found")
 		}
 
 		entry, ok := entryInterface.(float64)
 		if !ok {
-			return index.Results{}, errors.New("entryIndex value not int")
+			return index.Results{}, errors.New("indexEntry value not int")
 		}
 
 		hashes[i] = index.Hash{

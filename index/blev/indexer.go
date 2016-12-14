@@ -26,7 +26,7 @@ func (b *Bleve) Metadata(h string, i index.Indexable) error {
 	docCount += 1
 
 	m := i.ToMetadata()
-	m["index"] = docCount
+	m["indexEntry"] = docCount
 
 	return b.index.Index(h, m)
 }
@@ -52,7 +52,7 @@ func (b *Bleve) Entry(h string) error {
 	docCount += 1
 
 	m := index.Metadata{
-		"index": docCount,
+		"indexEntry": docCount,
 	}
 
 	return b.index.Index(h, m)
