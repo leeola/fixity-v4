@@ -9,6 +9,10 @@ import (
 	"github.com/leeola/kala/store/roller/camli"
 )
 
+const (
+	ContentType = "file"
+)
+
 type FileMeta struct {
 	store.Meta
 
@@ -106,7 +110,9 @@ func (f *File) StoreContent(rc io.ReadCloser, c store.MetaChanges) ([]string, er
 		}
 	}
 
-	// Apply any of the requested value changes.
+	// Apply the common and filemeta changes to the metadata.
+	// This maps the fields in the MetaChanges map to the Meta and FileMeta struct.
+	store.ApplyCommonChanges(&meta.Meta, c)
 	meta.ApplyChanges(c)
 
 	// if there is an anchor, always return the anchor for a consistent UX
@@ -114,28 +120,65 @@ func (f *File) StoreContent(rc io.ReadCloser, c store.MetaChanges) ([]string, er
 		hashes = append(hashes, meta.Anchor)
 	}
 
-	// Now write the meta as well.
-	h, err = store.MarshalAndWrite(f.store, meta)
+	h, err = WriteFileMeta(f.store, f.index, meta)
 	if err != nil {
 		return nil, errors.Stack(err)
 	}
 	hashes = append(hashes, h)
 
-	// Pass the changes as metadata to the indexer.
-	if err := f.index.Metadata(h, meta); err != nil {
+	return hashes, nil
+}
+
+func (f *File) Meta(c store.MetaChanges) ([]string, error) {
+	var (
+		meta   FileMeta
+		hashes []string
+	)
+
+	// If the previous hash exists, load that metadata hash and populate the above
+	// filemeta with the data in the hash.
+	if h, _ := c.GetPreviousMeta(); h != "" {
+		if err := store.ReadAndUnmarshal(f.store, h, &meta); err != nil {
+			return nil, errors.Stack(err)
+		}
+	}
+
+	// Apply the common and filemeta changes to the metadata.
+	// This maps the fields in the MetaChanges map to the Meta and FileMeta struct.
+	store.ApplyCommonChanges(&meta.Meta, c)
+	meta.ApplyChanges(c)
+
+	// if there is an anchor, always return the anchor so that the caller can easily
+	// track the anchor of the content. For a consistent UX.
+	if meta.Anchor != "" {
+		hashes = append(hashes, meta.Anchor)
+	}
+
+	h, err := WriteFileMeta(f.store, f.index, meta)
+	if err != nil {
 		return nil, errors.Stack(err)
 	}
+	hashes = append(hashes, h)
 
 	return hashes, nil
 }
 
-func (u *File) Meta(c store.MetaChanges) ([]string, error) {
-	return nil, errors.New("not implemented")
+func WriteFileMeta(s store.Store, i index.Indexer, m FileMeta) (string, error) {
+	// Now write the meta as well.
+	h, err := store.MarshalAndWrite(s, m)
+	if err != nil {
+		return "", errors.Stack(err)
+	}
+
+	// Pass the changes as metadata to the indexer.
+	if err := i.Metadata(h, m); err != nil {
+		return "", errors.Stack(err)
+	}
+
+	return h, nil
 }
 
 func (m *FileMeta) ApplyChanges(c store.MetaChanges) {
-	store.ApplyCommonChanges(&m.Meta, c)
-
 	if f, ok := c.GetString("filename"); ok {
 		m.Filename = f
 	}
@@ -145,6 +188,9 @@ func (m FileMeta) ToMetadata() index.Metadata {
 	im := m.Meta.ToMetadata()
 	if m.Filename != "" {
 		im["filename"] = m.Filename
+	}
+	if m.ContentType != "" {
+		im["contentType"] = m.ContentType
 	}
 	return im
 }

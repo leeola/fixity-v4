@@ -67,6 +67,10 @@ func (c MetaChanges) SetPreviousMeta(h string) {
 	c["previousMeta"] = h
 }
 
+func (c MetaChanges) SetContentType(t string) {
+	c["contentType"] = t
+}
+
 func (c MetaChanges) GetAnchor() (string, bool) {
 	return c.GetString("anchor")
 }
@@ -81,6 +85,10 @@ func (c MetaChanges) GetMulti() (string, bool) {
 
 func (c MetaChanges) GetPreviousMeta() (string, bool) {
 	return c.GetString("previousMeta")
+}
+
+func (c MetaChanges) GetContentType() (string, bool) {
+	return c.GetString("contentType")
 }
 
 // Note: this func may not belong here (as it is specific to the http api),
@@ -100,6 +108,8 @@ func NewMetaChangesFromValues(m url.Values) MetaChanges {
 			c.SetMulti(v[0])
 		case "previousMeta":
 			c.SetPreviousMeta(v[0])
+		case "contentType":
+			c.SetContentType(v[0])
 		default:
 			c[k] = v[0]
 		}
@@ -121,5 +131,9 @@ func ApplyCommonChanges(m *Meta, c MetaChanges) {
 
 	if v, ok := c.GetPreviousMeta(); ok {
 		m.PreviousMeta = v
+	}
+
+	if v, ok := c.GetContentType(); ok {
+		m.ContentType = v
 	}
 }

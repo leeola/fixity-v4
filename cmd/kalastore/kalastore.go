@@ -72,6 +72,7 @@ func main() {
 	// fill the nodeConfig with the instances it needs to init.
 	nodeConfig.Store = store
 	nodeConfig.Index = index
+	nodeConfig.Query = index
 	nodeConfig.Database = db
 
 	n, err := node.New(nodeConfig)

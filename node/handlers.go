@@ -159,7 +159,7 @@ func (n *Node) GetQueryHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	result, err := n.index.Query(q, sorts...)
+	result, err := n.query.Query(q, sorts...)
 	switch err {
 	case index.ErrIndexVersionsDoNotMatch:
 		jsonutil.Error(w, "index Versions do not match", http.StatusBadRequest)
@@ -189,8 +189,8 @@ func (n *Node) GetIndexContentHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (n *Node) PostUploadHandler(w http.ResponseWriter, r *http.Request) {
-	key := chi.URLParam(r, "handler")
-	log := GetLog(r).New("handler", key)
+	key := chi.URLParam(r, "contentType")
+	log := GetLog(r).New("contentType", key)
 
 	metaChanges := store.NewMetaChangesFromValues(r.URL.Query())
 
@@ -200,19 +200,19 @@ func (n *Node) PostUploadHandler(w http.ResponseWriter, r *http.Request) {
 		log.Info("newAnchor and anchor query fields both defined, rejecting request")
 		jsonutil.Error(w, "query params newAnchor and anchor must not be used together",
 			http.StatusBadRequest)
+		return
 	}
 
 	cs, ok := n.contentStorers[key]
 	if !ok {
-		log.Info("requested upload handler not found")
-		http.Error(w, "requested upload handler not found",
-			http.StatusBadRequest)
+		log.Info("requested contentType not found")
+		jsonutil.Error(w, "requested contentType not found", http.StatusBadRequest)
 		return
 	}
 
 	hashes, err := cs.StoreContent(r.Body, metaChanges)
 	if err != nil {
-		log.Error("uplad handler returned error", "err", err)
+		log.Error("StoreContent returned error", "err", err)
 		jsonutil.Error(w, "upload failed", http.StatusInternalServerError)
 		return
 	}
@@ -245,6 +245,89 @@ func (n *Node) GetDownloadHandler(w http.ResponseWriter, r *http.Request) {
 
 	if _, err := io.Copy(w, reader); err != nil {
 		log.Error("response write failed", "err", err)
+		jsonutil.Error(w, http.StatusText(http.StatusInternalServerError),
+			http.StatusInternalServerError)
+		return
+	}
+}
+
+func (n *Node) PostUploadMetaHandler(w http.ResponseWriter, r *http.Request) {
+	metaChanges := store.NewMetaChangesFromValues(r.URL.Query())
+
+	cType, ok := metaChanges.GetContentType()
+	if !ok {
+		// TODO(leeola): Load the previousMetaHash if there was one to automatically
+		// specify the contentType if the user didn't specify
+		cType = "data"
+		metaChanges.SetContentType(cType)
+	}
+
+	log := GetLog(r).New("contentType", cType)
+
+	anchorHash := urlutil.GetQueryString(r, "anchor")
+
+	// If there is no previous meta to base this mutation off of, then query the
+	// indexer for the most recent hash for this anchor.
+	if urlutil.GetQueryString(r, "previousMeta") == "" && anchorHash != "" {
+		q := index.Query{
+			Metadata: index.Metadata{
+				"anchor": anchorHash,
+			},
+		}
+		s := index.SortBy{
+			Field:      "uploadedAt",
+			Descending: true,
+		}
+
+		result, err := n.query.QueryOne(q, s)
+		if err != nil {
+			log.Error("failed to query for previous meta hash", "err", err)
+			jsonutil.Error(w, "previous meta query failed", http.StatusInternalServerError)
+			return
+		}
+
+		if result.Hash.Hash != "" {
+			metaChanges.SetPreviousMeta(result.Hash.Hash)
+		}
+	}
+
+	// write a new anchor if specified
+	if urlutil.GetQueryBool(r, "newAnchor") {
+		h, err := store.NewAnchor(n.store)
+		if err != nil {
+			log.Error("failed to create new anchor", "err", err)
+			jsonutil.Error(w, "newanchor failed", http.StatusInternalServerError)
+			return
+		}
+
+		if err := n.index.Entry(h); err != nil {
+			log.Error("failed to index new anchor", "err", err)
+			jsonutil.Error(w, "newanchor failed", http.StatusInternalServerError)
+			return
+		}
+
+		metaChanges.SetAnchor(h)
+	}
+
+	cs, ok := n.contentStorers[cType]
+	if !ok {
+		log.Info("requested contentType not found")
+		jsonutil.Error(w, "requested contentType not found", http.StatusBadRequest)
+		return
+	}
+
+	hashes, err := cs.Meta(metaChanges)
+	if err != nil {
+		log.Error("Meta returned error", "err", err)
+		jsonutil.Error(w, "meta failed", http.StatusInternalServerError)
+		return
+	}
+
+	_, err = jsonutil.MarshalToWriter(w, HashesResponse{
+		Hashes: hashes,
+	})
+	if err != nil {
+		log.Error("failed to marshal response", "err", err)
 		jsonutil.Error(w, http.StatusText(http.StatusInternalServerError),
 			http.StatusInternalServerError)
 		return

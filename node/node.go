@@ -24,8 +24,11 @@ type Config struct {
 	// The database to present this nodes id from.
 	Database database.Database `toml:"-"`
 
-	// The indexer to provide content queries for this Node.
-	Index index.Queryer `toml:"-"`
+	// The indexer to provide index for this Node.
+	Index index.Indexer `toml:"-"`
+
+	// The queryer to provide content queries for this Node.
+	Query index.Queryer `toml:"-"`
 
 	// optional
 	Router *chi.Mux     `toml:"-"`
@@ -35,7 +38,8 @@ type Config struct {
 type Node struct {
 	bindAddr string
 	log      log15.Logger
-	index    index.Queryer
+	index    index.Indexer
+	query    index.Queryer
 	store    store.Store
 	db       database.Database
 	router   *chi.Mux
@@ -49,6 +53,9 @@ func New(c Config) (*Node, error) {
 	}
 	if c.Index == nil {
 		return nil, errors.New("missing required Config field: Index")
+	}
+	if c.Query == nil {
+		return nil, errors.New("missing required Config field: Query")
 	}
 	if c.Store == nil {
 		return nil, errors.New("missing required Config field: Store")
@@ -69,6 +76,7 @@ func New(c Config) (*Node, error) {
 		bindAddr:       c.BindAddr,
 		log:            c.Log,
 		index:          c.Index,
+		query:          c.Query,
 		store:          c.Store,
 		db:             c.Database,
 		router:         c.Router,
