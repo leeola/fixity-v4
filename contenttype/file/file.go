@@ -52,12 +52,6 @@ func (f *File) StoreContent(rc io.ReadCloser, c store.MetaChanges) ([]string, er
 	}
 	defer rc.Close()
 
-	newAnchor, _ := c.GetNewAnchor()
-	_, providedAnchorHash := c.GetAnchor()
-	if newAnchor && providedAnchorHash {
-		return nil, errors.New("cannot request new anchor and use existing anchor")
-	}
-
 	roller, err := camli.New(rc)
 	if err != nil {
 		return nil, errors.Stack(err)
@@ -84,19 +78,6 @@ func (f *File) StoreContent(rc io.ReadCloser, c store.MetaChanges) ([]string, er
 	// Write the entries, not including the final metadata hash
 	// The last hash is metadata, and we'll add that manually.
 	for _, h := range hashes {
-		if err := f.index.Entry(h); err != nil {
-			return nil, errors.Stack(err)
-		}
-	}
-
-	// write a new anchor if specified
-	if newAnchor {
-		h, err := store.NewAnchor(f.store)
-		if err != nil {
-			return nil, errors.Stack(err)
-		}
-		c.SetAnchor(h)
-
 		if err := f.index.Entry(h); err != nil {
 			return nil, errors.Stack(err)
 		}

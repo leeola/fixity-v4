@@ -201,6 +201,50 @@ func (n *Node) PostUploadHandler(w http.ResponseWriter, r *http.Request) {
 
 	log := GetLog(r).New("contentType", cType)
 
+	anchorHash := urlutil.GetQueryString(r, "anchor")
+	// If there is no previous meta to base this mutation off of, then query the
+	// indexer for the most recent hash for this anchor.
+	if urlutil.GetQueryString(r, "previousMeta") == "" && anchorHash != "" {
+		q := index.Query{
+			Metadata: index.Metadata{
+				"anchor": anchorHash,
+			},
+		}
+		s := index.SortBy{
+			Field:      "uploadedAt",
+			Descending: true,
+		}
+
+		result, err := n.query.QueryOne(q, s)
+		if err != nil {
+			log.Error("failed to query for previous meta hash", "err", err)
+			jsonutil.Error(w, "previous meta query failed", http.StatusInternalServerError)
+			return
+		}
+
+		if result.Hash.Hash != "" {
+			metaChanges.SetPreviousMeta(result.Hash.Hash)
+		}
+	}
+
+	// write a new anchor if specified
+	if urlutil.GetQueryBool(r, "newAnchor") {
+		h, err := store.NewAnchor(n.store)
+		if err != nil {
+			log.Error("failed to create new anchor", "err", err)
+			jsonutil.Error(w, "newanchor failed", http.StatusInternalServerError)
+			return
+		}
+
+		if err := n.index.Entry(h); err != nil {
+			log.Error("failed to index new anchor", "err", err)
+			jsonutil.Error(w, "newanchor failed", http.StatusInternalServerError)
+			return
+		}
+
+		metaChanges.SetAnchor(h)
+	}
+
 	cs, ok := n.contentStorers[cType]
 	if !ok {
 		log.Info("requested contentType not found")
@@ -263,7 +307,6 @@ func (n *Node) PostUploadMetaHandler(w http.ResponseWriter, r *http.Request) {
 	log := GetLog(r).New("contentType", cType)
 
 	anchorHash := urlutil.GetQueryString(r, "anchor")
-
 	// If there is no previous meta to base this mutation off of, then query the
 	// indexer for the most recent hash for this anchor.
 	if urlutil.GetQueryString(r, "previousMeta") == "" && anchorHash != "" {
