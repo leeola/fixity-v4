@@ -40,7 +40,7 @@ type Node struct {
 	db       database.Database
 	router   *chi.Mux
 
-	upload map[string]contenttype.Uploader
+	contentStorers map[string]contenttype.ContentStorer
 }
 
 func New(c Config) (*Node, error) {
@@ -66,13 +66,13 @@ func New(c Config) (*Node, error) {
 	}
 
 	n := &Node{
-		bindAddr: c.BindAddr,
-		log:      c.Log,
-		index:    c.Index,
-		store:    c.Store,
-		db:       c.Database,
-		router:   c.Router,
-		upload:   map[string]contenttype.Uploader{},
+		bindAddr:       c.BindAddr,
+		log:            c.Log,
+		index:          c.Index,
+		store:          c.Store,
+		db:             c.Database,
+		router:         c.Router,
+		contentStorers: map[string]contenttype.ContentStorer{},
 	}
 
 	if err := n.initDatabase(); err != nil {
@@ -102,8 +102,8 @@ func (n *Node) initDatabase() error {
 	return nil
 }
 
-func (n *Node) AddUploader(t string, u contenttype.Uploader) {
-	n.upload[t] = u
+func (n *Node) AddUploader(t string, cs contenttype.ContentStorer) {
+	n.contentStorers[t] = cs
 }
 
 func (n *Node) ListenAndServe() error {

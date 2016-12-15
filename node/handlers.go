@@ -202,7 +202,7 @@ func (n *Node) PostUploadHandler(w http.ResponseWriter, r *http.Request) {
 			http.StatusBadRequest)
 	}
 
-	uploadHandler, ok := n.upload[key]
+	cs, ok := n.contentStorers[key]
 	if !ok {
 		log.Info("requested upload handler not found")
 		http.Error(w, "requested upload handler not found",
@@ -210,7 +210,7 @@ func (n *Node) PostUploadHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	hashes, err := uploadHandler.Upload(r.Body, metaChanges)
+	hashes, err := cs.StoreContent(r.Body, metaChanges)
 	if err != nil {
 		log.Error("uplad handler returned error", "err", err)
 		jsonutil.Error(w, "upload failed", http.StatusInternalServerError)

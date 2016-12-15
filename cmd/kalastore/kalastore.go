@@ -79,7 +79,9 @@ func main() {
 		panic(err)
 	}
 
-	addDefaultUploads(n, store, index)
+	if err := addDefaultUploads(n, store, index); err != nil {
+		panic(err)
+	}
 
 	if err := n.ListenAndServe(); err != nil {
 		panic(err)
@@ -104,6 +106,13 @@ func initStoreFromConfig(configPath string) (store.Store, error) {
 	return nil, nil
 }
 
-func addDefaultUploads(n *node.Node, s store.Store, i index.Indexer) {
-	n.AddUploader("file", file.FileUpload(s, i))
+func addDefaultUploads(n *node.Node, s store.Store, i index.Indexer) error {
+	f, err := file.New(file.Config{Store: s, Index: i})
+	if err != nil {
+		return err
+	}
+
+	n.AddUploader("file", f)
+
+	return nil
 }
