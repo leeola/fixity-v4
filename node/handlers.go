@@ -189,21 +189,19 @@ func (n *Node) GetIndexContentHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (n *Node) PostUploadHandler(w http.ResponseWriter, r *http.Request) {
-	key := chi.URLParam(r, "contentType")
-	log := GetLog(r).New("contentType", key)
-
 	metaChanges := store.NewMetaChangesFromValues(r.URL.Query())
 
-	newAnchor := urlutil.GetQueryBool(r, "newAnchor")
-	anchorHash := urlutil.GetQueryString(r, "anchor")
-	if newAnchor && anchorHash != "" {
-		log.Info("newAnchor and anchor query fields both defined, rejecting request")
-		jsonutil.Error(w, "query params newAnchor and anchor must not be used together",
-			http.StatusBadRequest)
-		return
+	cType, ok := metaChanges.GetContentType()
+	if !ok {
+		// TODO(leeola): Load the previousMetaHash if there was one to automatically
+		// specify the contentType if the user didn't specify
+		cType = "data"
+		metaChanges.SetContentType(cType)
 	}
 
-	cs, ok := n.contentStorers[key]
+	log := GetLog(r).New("contentType", cType)
+
+	cs, ok := n.contentStorers[cType]
 	if !ok {
 		log.Info("requested contentType not found")
 		jsonutil.Error(w, "requested contentType not found", http.StatusBadRequest)

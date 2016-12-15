@@ -10,7 +10,7 @@ func (n *Node) initRouter() {
 	n.router.Post("/blob", n.PostBlobHandler)
 	n.router.Get("/index/query", n.GetQueryHandler)
 	n.router.Get("/index/content", n.GetIndexContentHandler)
-	n.router.Post("/upload/meta", n.PostUploadMetaHandler)
-	n.router.Post("/upload/:contentType", n.PostUploadHandler)
 	n.router.Get("/download/:hash", n.GetDownloadHandler)
+	n.router.Post("/upload", n.PostUploadHandler)
+	n.router.Post("/upload/meta", n.PostUploadMetaHandler)
 }

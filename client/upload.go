@@ -13,12 +13,12 @@ import (
 	"github.com/leeola/kala/store"
 )
 
-func (c *Client) Upload(t string, r io.Reader, mc store.MetaChanges) ([]string, error) {
+func (c *Client) Upload(r io.Reader, mc store.MetaChanges) ([]string, error) {
 	u, err := url.Parse(c.kalaAddr)
 	if err != nil {
 		return nil, err
 	}
-	u.Path = path.Join(u.Path, "upload", t)
+	u.Path = path.Join(u.Path, "upload")
 
 	q := u.Query()
 	for k, v := range mc {

@@ -45,21 +45,8 @@ func main() {
 			Action:    uploadCommand,
 			Flags: []cli.Flag{
 				cli.StringFlag{
-					Name:  "c, content-type",
-					Usage: "the content type of the uploaded data",
-					Value: "file",
-				},
-				cli.StringFlag{
-					Name:  "f, filename",
-					Usage: "the filename to use in place of the filename on disk",
-				},
-				cli.StringFlag{
-					Name:  "a, anchor",
-					Usage: "the anchor to use, if any",
-				},
-				cli.BoolFlag{
-					Name:  "n, new-anchor",
-					Usage: "create a new anchor for this upload",
+					Name:  "f, file",
+					Usage: "a file to upload from disk",
 				},
 				cli.BoolFlag{
 					Name:  "i, stdin",
