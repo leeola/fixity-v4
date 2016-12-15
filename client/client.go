@@ -220,43 +220,6 @@ func (c *Client) PostBlob(r io.Reader) (string, error) {
 	return hashRes.Hash, nil
 }
 
-func (c *Client) Upload(t string, r io.Reader, mc store.MetaChanges) ([]string, error) {
-	u, err := url.Parse(c.kalaAddr)
-	if err != nil {
-		return nil, err
-	}
-	u.Path = path.Join(u.Path, "upload", t)
-
-	q := u.Query()
-	for k, v := range mc {
-		q.Set(k, v)
-	}
-	u.RawQuery = q.Encode()
-
-	res, err := c.httpClient.Post(u.String(), "plain/text", r)
-	if err != nil {
-		return nil, err
-	}
-	defer res.Body.Close()
-
-	if res.StatusCode != http.StatusOK {
-		return nil, errors.Errorf("unexpected kala response: %d %q",
-			res.StatusCode, res.Status)
-	}
-
-	b, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	var hashesRes node.HashesResponse
-	if err := json.Unmarshal(b, &hashesRes); err != nil {
-		return nil, err
-	}
-
-	return hashesRes.Hashes, nil
-}
-
 // TODO(leeola): support downloading with metadata on the cmd/kala side.
 // This may work by exposing an endpoint for metadata, and then having an Upload
 // implement a Download or Restore interface as well, which will write the metadata

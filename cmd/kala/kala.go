@@ -94,10 +94,6 @@ func main() {
 			Usage:  "change metadata for the given anchor",
 			Action: metaCommand,
 			Flags: []cli.Flag{
-				cli.BoolFlag{
-					Name:  "n, new",
-					Usage: "do not base the given metadata off of anything, new metadata only",
-				},
 				cli.StringFlag{
 					Name:  "a, anchor",
 					Usage: "specify an anchor to base the metadata change off of",
