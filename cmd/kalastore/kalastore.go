@@ -4,6 +4,8 @@ import (
 	"flag"
 
 	"github.com/leeola/errors"
+	"github.com/leeola/kala/contenttype"
+	"github.com/leeola/kala/contenttype/data"
 	"github.com/leeola/kala/contenttype/file"
 	"github.com/leeola/kala/database/bolt"
 	"github.com/leeola/kala/index"
@@ -108,12 +110,18 @@ func initStoreFromConfig(configPath string) (store.Store, error) {
 }
 
 func addDefaultUploads(n *node.Node, s store.Store, i index.Indexer) error {
-	f, err := file.New(file.Config{Store: s, Index: i})
+	var cs contenttype.ContentStorer
+	cs, err := data.New(data.Config{Store: s, Index: i})
 	if err != nil {
 		return err
 	}
+	n.AddUploader("data", cs)
 
-	n.AddUploader("file", f)
+	cs, err = file.New(file.Config{Store: s, Index: i})
+	if err != nil {
+		return err
+	}
+	n.AddUploader("file", cs)
 
 	return nil
 }
