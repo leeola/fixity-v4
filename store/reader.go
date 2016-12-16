@@ -10,6 +10,7 @@ import (
 )
 
 type readerData struct {
+	Multi   string   `json:"multi"`
 	Parts   []string `json:"parts"`
 	Content []byte   `json:"content"`
 }
@@ -75,6 +76,10 @@ func (r *Reader) Read(p []byte) (int, error) {
 	var d readerData
 	if err := json.Unmarshal(b, &d); err != nil {
 		return 0, errors.Stack(err)
+	}
+
+	if d.Multi != "" {
+		r.hashes = append(r.hashes, d.Multi)
 	}
 
 	if len(d.Parts) > 0 {
