@@ -9,11 +9,11 @@ import (
 	"github.com/leeola/kala/util"
 )
 
-// ContentType exists to get the content type from a blob.
+// contentType exists to get the content type from a blob.
 //
 // Note that this only matches the contentType field, and only applies to the Meta
 // struct (or anything defining contentType).
-type ContentType struct {
+type contentType struct {
 	ContentType string `json:"contentType"`
 }
 
@@ -161,7 +161,7 @@ func GetContentTypeWithBytes(s Store, h string) (string, []byte, error) {
 		return "", nil, errors.Stack(err)
 	}
 
-	var ct ContentType
+	var ct contentType
 	if err := json.Unmarshal(b, &ct); err != nil {
 		return "", nil, errors.Stack(err)
 	}
@@ -171,4 +171,13 @@ func GetContentTypeWithBytes(s Store, h string) (string, []byte, error) {
 
 func IsValidMeta(m Meta) bool {
 	return m.UploadedAt.IsZero() && (m.Anchor == "" || m.Multi == "")
+}
+
+func IsAnchor(s Store, h string) (bool, error) {
+	var a Anchor
+	if err := ReadAndUnmarshal(s, h, &a); err != nil {
+		return false, errors.Stack(err)
+	}
+
+	return a.AnchorRand != 0, nil
 }

@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/leeola/kala/index"
+	"github.com/leeola/kala/index/indexreader"
 	"github.com/leeola/kala/store"
 	"github.com/leeola/kala/util/jsonutil"
 	"github.com/leeola/kala/util/urlutil"
@@ -392,9 +393,17 @@ func (n *Node) GetDownloadHandler(w http.ResponseWriter, r *http.Request) {
 	hash := chi.URLParam(r, "hash")
 	log := GetLog(r).New("hash", hash)
 
-	reader, err := store.NewReader(store.ReaderConfig{
+	// Check if the hash is an anchor. If it is, do a query to get the most recent
+	// multi that points to this anchor.
+	//
+	// Note that Reader was originally implemented to automatically handle this,
+	// but querying logic in the store is being avoided as much as possible. As a
+	// result, it's being checked here first.
+
+	reader, err := indexreader.New(indexreader.Config{
 		Hash:  hash,
 		Store: n.store,
+		Query: n.query,
 	})
 	if err != nil {
 		log.Error("failed to marshal response", "err", err)

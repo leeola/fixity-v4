@@ -15,6 +15,12 @@ type readerData struct {
 	Content []byte   `json:"content"`
 }
 
+// HashWithBytes is used by Reader to return the data of a hash if needed.
+type HashWithBytes struct {
+	Hash  string
+	Bytes []byte
+}
+
 type ReaderConfig struct {
 	Hash  string
 	Store Store
@@ -42,19 +48,41 @@ func NewReader(c ReaderConfig) (*Reader, error) {
 }
 
 func (r *Reader) Read(p []byte) (int, error) {
+	n, hwb, err := r.ReadContentOnly(p)
+	if err == io.EOF {
+		return 0, io.EOF
+	}
+	if err != nil {
+		return 0, errors.Stack(err)
+	}
+
+	// okay if nil, will noop
+	if err := r.UnmarshalHashes(hwb.Bytes); err != nil {
+		return 0, errors.Stack(err)
+	}
+
+	return n, nil
+}
+
+// ReadContentOnly returns the read bytes if they do not contain store.Content.
+//
+// This allows another Reader (eg: indexreader.Reader) to create a reader for
+// additional structures, such as querying the index for an anchor and adding
+// it to the store.Reader.
+func (r *Reader) ReadContentOnly(p []byte) (int, HashWithBytes, error) {
 	if r.currentReader != nil {
 		n, err := r.currentReader.Read(p)
 		if err == io.EOF {
 			r.currentReader = nil
 		} else if err != nil {
-			return 0, errors.Stack(err)
+			return 0, HashWithBytes{}, errors.Stack(err)
 		}
 
-		return n, nil
+		return n, HashWithBytes{}, nil
 	}
 
 	if len(r.hashes) <= 0 {
-		return 0, io.EOF
+		return 0, HashWithBytes{}, io.EOF
 	}
 
 	// pop the first hash, as that has read priority.
@@ -64,31 +92,52 @@ func (r *Reader) Read(p []byte) (int, error) {
 	// Load the hash and unmarshal it.
 	rc, err := r.store.Read(h)
 	if err != nil {
-		return 0, errors.Stack(err)
+		return 0, HashWithBytes{}, errors.Stack(err)
 	}
 	defer rc.Close()
 
 	b, err := ioutil.ReadAll(rc)
 	if err != nil {
-		return 0, errors.Stack(err)
+		return 0, HashWithBytes{}, errors.Stack(err)
+	}
+
+	return 0, HashWithBytes{
+		Hash:  h,
+		Bytes: b,
+	}, nil
+}
+
+func (r *Reader) UnmarshalHashes(b []byte) error {
+	if len(b) == 0 {
+		return nil
 	}
 
 	var d readerData
 	if err := json.Unmarshal(b, &d); err != nil {
-		return 0, errors.Stack(err)
+		return errors.Stack(err)
 	}
 
-	if d.Multi != "" {
-		r.hashes = append(r.hashes, d.Multi)
+	switch {
+	case d.Multi != "":
+		r.AddHashes(d.Multi)
+
+	case len(d.Parts) > 0:
+		r.AddHashes(d.Parts...)
+
+	case len(d.Content) > 0:
+		r.SetCurrentReader(bytes.NewReader(d.Content))
+
+	default:
+		return errors.New("Reader: unhandled hash content")
 	}
 
-	if len(d.Parts) > 0 {
-		r.hashes = append(r.hashes, d.Parts...)
-	}
+	return nil
+}
 
-	if len(d.Content) > 0 {
-		r.currentReader = bytes.NewReader(d.Content)
-	}
+func (r *Reader) AddHashes(s ...string) {
+	r.hashes = append(r.hashes, s...)
+}
 
-	return 0, nil
+func (r *Reader) SetCurrentReader(cr io.Reader) {
+	r.currentReader = cr
 }
