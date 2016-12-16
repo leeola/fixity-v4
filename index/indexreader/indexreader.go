@@ -8,6 +8,7 @@ import (
 	"github.com/leeola/errors"
 	"github.com/leeola/kala/index"
 	"github.com/leeola/kala/store"
+	"github.com/leeola/kala/store/storereader"
 )
 
 type readerData struct {
@@ -24,7 +25,7 @@ type Config struct {
 }
 
 type Reader struct {
-	storeReader *store.Reader
+	storeReader *storereader.Reader
 	query       index.Queryer
 }
 
@@ -33,7 +34,7 @@ func New(c Config) (*Reader, error) {
 		return nil, errors.New("missing required config field: Query")
 	}
 
-	r, err := store.NewReader(store.ReaderConfig{
+	r, err := storereader.New(storereader.Config{
 		Hash:  c.Hash,
 		Store: c.Store,
 	})

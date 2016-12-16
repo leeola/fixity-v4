@@ -1,4 +1,4 @@
-package store
+package storereader
 
 import (
 	"bytes"
@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 
 	"github.com/leeola/errors"
+	"github.com/leeola/kala/store"
 )
 
 type readerData struct {
@@ -21,19 +22,19 @@ type HashWithBytes struct {
 	Bytes []byte
 }
 
-type ReaderConfig struct {
+type Config struct {
 	Hash  string
-	Store Store
+	Store store.Store
 }
 
 type Reader struct {
 	hashes []string
-	store  Store
+	store  store.Store
 
 	currentReader io.Reader
 }
 
-func NewReader(c ReaderConfig) (*Reader, error) {
+func New(c Config) (*Reader, error) {
 	if c.Hash == "" {
 		return nil, errors.New("missing required config field: Hash")
 	}

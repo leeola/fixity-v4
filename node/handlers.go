@@ -393,13 +393,6 @@ func (n *Node) GetDownloadHandler(w http.ResponseWriter, r *http.Request) {
 	hash := chi.URLParam(r, "hash")
 	log := GetLog(r).New("hash", hash)
 
-	// Check if the hash is an anchor. If it is, do a query to get the most recent
-	// multi that points to this anchor.
-	//
-	// Note that Reader was originally implemented to automatically handle this,
-	// but querying logic in the store is being avoided as much as possible. As a
-	// result, it's being checked here first.
-
 	reader, err := indexreader.New(indexreader.Config{
 		Hash:  hash,
 		Store: n.store,
