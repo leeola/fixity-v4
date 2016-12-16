@@ -110,7 +110,7 @@ func (n *Node) initDatabase() error {
 	return nil
 }
 
-func (n *Node) AddUploader(t string, cs contenttype.ContentStorer) {
+func (n *Node) AddContentStorer(t string, cs contenttype.ContentStorer) {
 	n.contentStorers[t] = cs
 }
 

@@ -115,13 +115,13 @@ func addDefaultUploads(n *node.Node, s store.Store, i index.Indexer) error {
 	if err != nil {
 		return err
 	}
-	n.AddUploader("data", cs)
+	n.AddContentStorer("data", cs)
 
 	cs, err = file.New(file.Config{Store: s, Index: i})
 	if err != nil {
 		return err
 	}
-	n.AddUploader("file", cs)
+	n.AddContentStorer("file", cs)
 
 	return nil
 }
