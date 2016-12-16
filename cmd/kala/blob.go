@@ -39,7 +39,7 @@ func blobCommand(c *cli.Context) error {
 
 		if cType == "Content" {
 			Printlnf(`To prevent large content bytes from spamming your console,
-viewing blobs of type "Content" or "Unknown" is disabled by default.
+viewing blobs of type "Content" is disabled by default.
 
 If you really want to display the full content of this blob,
 use the --allow-content flag.
