@@ -1,6 +1,7 @@
 package store
 
 import (
+	"bytes"
 	"encoding/json"
 	"io"
 	"io/ioutil"
@@ -8,6 +9,14 @@ import (
 	"github.com/leeola/errors"
 	"github.com/leeola/kala/util"
 )
+
+// ContentType exists to get the content type from a blob.
+//
+// Note that this only matches the contentType field, and only applies to the Meta
+// struct (or anything defining contentType).
+type ContentType struct {
+	ContentType string `json:"contentType"`
+}
 
 func NewAnchor(s Store) (string, error) {
 	return WriteAnchor(s, Anchor{
@@ -139,6 +148,26 @@ func ReadMeta(s Store, h string) (Meta, error) {
 	}
 
 	return m, nil
+}
+
+func GetContentTypeWithReader(s Store, h string) (string, io.ReadCloser, error) {
+	rc, err := s.Read(h)
+	if err != nil {
+		return "", nil, errors.Stack(err)
+	}
+	defer rc.Close()
+
+	b, err := ioutil.ReadAll(rc)
+	if err != nil {
+		return "", nil, errors.Stack(err)
+	}
+
+	var ct ContentType
+	if err := json.Unmarshal(b, &ct); err != nil {
+		return "", nil, errors.Stack(err)
+	}
+
+	return ct.ContentType, ioutil.NopCloser(bytes.NewReader(b)), nil
 }
 
 func IsValidMeta(m Meta) bool {

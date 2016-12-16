@@ -189,22 +189,14 @@ func (n *Node) GetIndexContentHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (n *Node) PostUploadHandler(w http.ResponseWriter, r *http.Request) {
+	log := GetLog(r)
 	metaChanges := store.NewMetaChangesFromValues(r.URL.Query())
 
-	cType, ok := metaChanges.GetContentType()
-	if !ok {
-		// TODO(leeola): Load the previousMetaHash if there was one to automatically
-		// specify the contentType if the user didn't specify
-		cType = "data"
-		metaChanges.SetContentType(cType)
-	}
-
-	log := GetLog(r).New("contentType", cType)
-
 	anchorHash := urlutil.GetQueryString(r, "anchor")
+	previousMeta := urlutil.GetQueryString(r, "previousMeta")
 	// If there is no previous meta to base this mutation off of, then query the
 	// indexer for the most recent hash for this anchor.
-	if urlutil.GetQueryString(r, "previousMeta") == "" && anchorHash != "" {
+	if previousMeta == "" && anchorHash != "" {
 		q := index.Query{
 			Metadata: index.Metadata{
 				"anchor": anchorHash,
@@ -223,9 +215,35 @@ func (n *Node) PostUploadHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if result.Hash.Hash != "" {
-			metaChanges.SetPreviousMeta(result.Hash.Hash)
+			previousMeta = result.Hash.Hash
+			metaChanges.SetPreviousMeta(previousMeta)
 		}
 	}
+
+	cType, ok := metaChanges.GetContentType()
+	if !ok {
+		// The caller did not specify the content type, so look it up from the
+		// previousMeta
+		if previousMeta != "" {
+			ct, rc, err := store.GetContentTypeWithReader(n.store, previousMeta)
+			if err != nil {
+				log.Error("failed to get previous content type", "err", err)
+				jsonutil.Error(w, "contenttype lookup failed", http.StatusInternalServerError)
+				return
+			}
+			cType = ct
+			// We're not currently using the meta content, so close it.
+			rc.Close()
+		}
+
+		// if even after loading the meta and checking for content type we *still*
+		// don't have the contentType, set it to the default.
+		if cType == "" {
+			cType = "data"
+			metaChanges.SetContentType(cType)
+		}
+	}
+	log = log.New("contentType", cType)
 
 	// write a new anchor if specified
 	if urlutil.GetQueryBool(r, "newAnchor") {
@@ -294,22 +312,14 @@ func (n *Node) GetDownloadHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (n *Node) PostUploadMetaHandler(w http.ResponseWriter, r *http.Request) {
+	log := GetLog(r)
 	metaChanges := store.NewMetaChangesFromValues(r.URL.Query())
 
-	cType, ok := metaChanges.GetContentType()
-	if !ok {
-		// TODO(leeola): Load the previousMetaHash if there was one to automatically
-		// specify the contentType if the user didn't specify
-		cType = "data"
-		metaChanges.SetContentType(cType)
-	}
-
-	log := GetLog(r).New("contentType", cType)
-
 	anchorHash := urlutil.GetQueryString(r, "anchor")
+	previousMeta := urlutil.GetQueryString(r, "previousMeta")
 	// If there is no previous meta to base this mutation off of, then query the
 	// indexer for the most recent hash for this anchor.
-	if urlutil.GetQueryString(r, "previousMeta") == "" && anchorHash != "" {
+	if previousMeta == "" && anchorHash != "" {
 		q := index.Query{
 			Metadata: index.Metadata{
 				"anchor": anchorHash,
@@ -328,9 +338,35 @@ func (n *Node) PostUploadMetaHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if result.Hash.Hash != "" {
-			metaChanges.SetPreviousMeta(result.Hash.Hash)
+			previousMeta = result.Hash.Hash
+			metaChanges.SetPreviousMeta(previousMeta)
 		}
 	}
+
+	cType, ok := metaChanges.GetContentType()
+	if !ok {
+		// The caller did not specify the content type, so look it up from the
+		// previousMeta
+		if previousMeta != "" {
+			ct, rc, err := store.GetContentTypeWithReader(n.store, previousMeta)
+			if err != nil {
+				log.Error("failed to get previous content type", "err", err)
+				jsonutil.Error(w, "contenttype lookup failed", http.StatusInternalServerError)
+				return
+			}
+			cType = ct
+			// We're not currently using the meta content, so close it.
+			rc.Close()
+		}
+
+		// if even after loading the meta and checking for content type we *still*
+		// don't have the contentType, set it to the default.
+		if cType == "" {
+			cType = "data"
+			metaChanges.SetContentType(cType)
+		}
+	}
+	log = log.New("contentType", cType)
 
 	// write a new anchor if specified
 	if urlutil.GetQueryBool(r, "newAnchor") {
