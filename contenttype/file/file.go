@@ -9,10 +9,6 @@ import (
 	"github.com/leeola/kala/store/roller/camli"
 )
 
-const (
-	ContentType = "file"
-)
-
 type FileMeta struct {
 	store.Meta
 
