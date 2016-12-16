@@ -23,13 +23,22 @@ type Importer interface {
 // or blob chunks need to be written, it is responsible for doing so!
 type ContentStorer interface {
 	// StoreContent stores content with the given meta changes.
-	StoreContent(io.ReadCloser, store.MetaChanges) ([]string, error)
+	//
+	// Optionally, the metadata can be passed in as a byte array. This is to allow
+	// the caller of this interface to read the metadata from the store while
+	// avoiding a double read on the metadata.
+	//
+	// The implementor *must* handle both an empty byte array, and a populated array.
+	StoreContent(io.ReadCloser, []byte, store.MetaChanges) ([]string, error)
 
 	// Meta applies just metadata changes.
 	//
-	// Note that this just changes metadata, but it can change the content that
-	// the metadata points to.
-	Meta(store.MetaChanges) ([]string, error)
+	// Optionally, the metadata can be passed in as a byte array. This is to allow
+	// the caller of this interface to read the metadata from the store while
+	// avoiding a double read on the metadata.
+	//
+	// The implementor *must* handle both an empty byte array, and a populated array.
+	Meta([]byte, store.MetaChanges) ([]string, error)
 }
 
 // Exporter is a general purpose interface for restoring data to it's original state.

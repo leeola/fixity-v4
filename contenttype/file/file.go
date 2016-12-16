@@ -1,6 +1,7 @@
 package file
 
 import (
+	"encoding/json"
 	"io"
 
 	"github.com/leeola/errors"
@@ -42,7 +43,7 @@ func New(c Config) (*File, error) {
 // TODO(leeola): centralize the common tasks in this method into helpers.
 // A lot of this (writing content roller and multipart, etc) is going to be
 // duplicated on every ContentType handler.
-func (f *File) StoreContent(rc io.ReadCloser, c store.MetaChanges) ([]string, error) {
+func (f *File) StoreContent(rc io.ReadCloser, mb []byte, c store.MetaChanges) ([]string, error) {
 	if rc == nil {
 		return nil, errors.New("missing ReadCloser")
 	}
@@ -58,8 +59,6 @@ func (f *File) StoreContent(rc io.ReadCloser, c store.MetaChanges) ([]string, er
 	if err != nil {
 		return nil, errors.Stack(err)
 	}
-
-	var meta FileMeta
 
 	// write the multipart
 	h, err := store.WriteMultiPart(f.store, store.MultiPart{
@@ -79,10 +78,17 @@ func (f *File) StoreContent(rc io.ReadCloser, c store.MetaChanges) ([]string, er
 		}
 	}
 
-	// If the previous hash exists, populate the above filemeta with the data
-	// in the hash.
-	if h, _ := c.GetPreviousMeta(); h != "" {
-		if err := store.ReadAndUnmarshal(f.store, h, &meta); err != nil {
+	var meta FileMeta
+	// If the previous hash exists, load that metadata hash and populate the above
+	// filemeta with the data in the hash.
+	if len(mb) == 0 {
+		if h, _ := c.GetPreviousMeta(); h != "" {
+			if err := store.ReadAndUnmarshal(f.store, h, &meta); err != nil {
+				return nil, errors.Stack(err)
+			}
+		}
+	} else {
+		if err := json.Unmarshal(mb, &meta); err != nil {
 			return nil, errors.Stack(err)
 		}
 	}
@@ -106,7 +112,7 @@ func (f *File) StoreContent(rc io.ReadCloser, c store.MetaChanges) ([]string, er
 	return hashes, nil
 }
 
-func (f *File) Meta(c store.MetaChanges) ([]string, error) {
+func (f *File) Meta(mb []byte, c store.MetaChanges) ([]string, error) {
 	var (
 		meta   FileMeta
 		hashes []string
@@ -114,8 +120,14 @@ func (f *File) Meta(c store.MetaChanges) ([]string, error) {
 
 	// If the previous hash exists, load that metadata hash and populate the above
 	// filemeta with the data in the hash.
-	if h, _ := c.GetPreviousMeta(); h != "" {
-		if err := store.ReadAndUnmarshal(f.store, h, &meta); err != nil {
+	if len(mb) == 0 {
+		if h, _ := c.GetPreviousMeta(); h != "" {
+			if err := store.ReadAndUnmarshal(f.store, h, &meta); err != nil {
+				return nil, errors.Stack(err)
+			}
+		}
+	} else {
+		if err := json.Unmarshal(mb, &meta); err != nil {
 			return nil, errors.Stack(err)
 		}
 	}

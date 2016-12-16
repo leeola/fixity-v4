@@ -220,20 +220,20 @@ func (n *Node) PostUploadHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	var metaBytes []byte
 	cType, ok := metaChanges.GetContentType()
 	if !ok {
 		// The caller did not specify the content type, so look it up from the
 		// previousMeta
 		if previousMeta != "" {
-			ct, rc, err := store.GetContentTypeWithReader(n.store, previousMeta)
+			ct, mb, err := store.GetContentTypeWithBytes(n.store, previousMeta)
 			if err != nil {
 				log.Error("failed to get previous content type", "err", err)
 				jsonutil.Error(w, "contenttype lookup failed", http.StatusInternalServerError)
 				return
 			}
 			cType = ct
-			// We're not currently using the meta content, so close it.
-			rc.Close()
+			metaBytes = mb
 		}
 
 		// if even after loading the meta and checking for content type we *still*
@@ -270,7 +270,7 @@ func (n *Node) PostUploadHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	hashes, err := cs.StoreContent(r.Body, metaChanges)
+	hashes, err := cs.StoreContent(r.Body, metaBytes, metaChanges)
 	if err != nil {
 		log.Error("StoreContent returned error", "err", err)
 		jsonutil.Error(w, "upload failed", http.StatusInternalServerError)
@@ -343,20 +343,20 @@ func (n *Node) PostUploadMetaHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	var metaBytes []byte
 	cType, ok := metaChanges.GetContentType()
 	if !ok {
 		// The caller did not specify the content type, so look it up from the
 		// previousMeta
 		if previousMeta != "" {
-			ct, rc, err := store.GetContentTypeWithReader(n.store, previousMeta)
+			ct, mb, err := store.GetContentTypeWithBytes(n.store, previousMeta)
 			if err != nil {
 				log.Error("failed to get previous content type", "err", err)
 				jsonutil.Error(w, "contenttype lookup failed", http.StatusInternalServerError)
 				return
 			}
 			cType = ct
-			// We're not currently using the meta content, so close it.
-			rc.Close()
+			metaBytes = mb
 		}
 
 		// if even after loading the meta and checking for content type we *still*
@@ -393,7 +393,7 @@ func (n *Node) PostUploadMetaHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	hashes, err := cs.Meta(metaChanges)
+	hashes, err := cs.Meta(metaBytes, metaChanges)
 	if err != nil {
 		log.Error("Meta returned error", "err", err)
 		jsonutil.Error(w, "meta failed", http.StatusInternalServerError)
