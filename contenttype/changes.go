@@ -67,7 +67,8 @@ func (c Changes) Set(k, v string) {
 }
 
 func (c Changes) Add(k, v string) {
-	c[k] = []string{v}
+	vs, _ := c[k]
+	c[k] = append(vs, v)
 }
 
 func (c Changes) SetAnchor(h string) {
