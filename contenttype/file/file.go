@@ -44,7 +44,7 @@ func New(c Config) (*File, error) {
 // TODO(leeola): centralize the common tasks in this method into helpers.
 // A lot of this (writing content roller and multipart, etc) is going to be
 // duplicated on every ContentType handler.
-func (f *File) StoreContent(rc io.ReadCloser, mb []byte, c contenttype.MetaChanges) ([]string, error) {
+func (f *File) StoreContent(rc io.ReadCloser, mb []byte, c contenttype.Changes) ([]string, error) {
 	if rc == nil {
 		return nil, errors.New("missing ReadCloser")
 	}
@@ -113,7 +113,7 @@ func (f *File) StoreContent(rc io.ReadCloser, mb []byte, c contenttype.MetaChang
 	return hashes, nil
 }
 
-func (f *File) Meta(mb []byte, c contenttype.MetaChanges) ([]string, error) {
+func (f *File) Meta(mb []byte, c contenttype.Changes) ([]string, error) {
 	var (
 		meta   FileMeta
 		hashes []string
@@ -168,7 +168,7 @@ func WriteFileMeta(s store.Store, i index.Indexer, m FileMeta) (string, error) {
 	return h, nil
 }
 
-func (m *FileMeta) ApplyChanges(c contenttype.MetaChanges) {
+func (m *FileMeta) ApplyChanges(c contenttype.Changes) {
 	if f, ok := c.GetString("filename"); ok {
 		m.Filename = f
 	}

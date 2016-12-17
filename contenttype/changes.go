@@ -36,9 +36,9 @@ import (
 // value of that field is a number. It would have to attempt to parse meaningful
 // values at random, for no reason. The File ContentType will know the key Size is
 // an int, and can convert as needed.
-type MetaChanges map[string]string
+type Changes map[string]string
 
-func (c MetaChanges) GetString(k string) (string, bool) {
+func (c Changes) GetString(k string) (string, bool) {
 	s, ok := c[k]
 	if !ok {
 		return "", false
@@ -47,7 +47,7 @@ func (c MetaChanges) GetString(k string) (string, bool) {
 	return s, true
 }
 
-func (c MetaChanges) GetBool(k string) (bool, bool) {
+func (c Changes) GetBool(k string) (bool, bool) {
 	s, ok := c[k]
 	if !ok {
 		return false, false
@@ -57,47 +57,47 @@ func (c MetaChanges) GetBool(k string) (bool, bool) {
 	return b, err == nil
 }
 
-func (c MetaChanges) SetAnchor(h string) {
+func (c Changes) SetAnchor(h string) {
 	c["anchor"] = h
 }
 
-func (c MetaChanges) SetMultiHash(h string) {
+func (c Changes) SetMultiHash(h string) {
 	c["multiHash"] = h
 }
 
-func (c MetaChanges) SetMultiPart(h string) {
+func (c Changes) SetMultiPart(h string) {
 	c["multiPart"] = h
 }
 
-func (c MetaChanges) SetPreviousMeta(h string) {
+func (c Changes) SetPreviousMeta(h string) {
 	c["previousMeta"] = h
 }
 
-func (c MetaChanges) SetContentType(t string) {
+func (c Changes) SetContentType(t string) {
 	c["contentType"] = t
 }
 
-func (c MetaChanges) GetAnchor() (string, bool) {
+func (c Changes) GetAnchor() (string, bool) {
 	return c.GetString("anchor")
 }
 
-func (c MetaChanges) GetNewAnchor() (bool, bool) {
+func (c Changes) GetNewAnchor() (bool, bool) {
 	return c.GetBool("newAnchor")
 }
 
-func (c MetaChanges) GetMultiHash() (string, bool) {
+func (c Changes) GetMultiHash() (string, bool) {
 	return c.GetString("multiHash")
 }
 
-func (c MetaChanges) GetMultiPart() (string, bool) {
+func (c Changes) GetMultiPart() (string, bool) {
 	return c.GetString("multiPart")
 }
 
-func (c MetaChanges) GetPreviousMeta() (string, bool) {
+func (c Changes) GetPreviousMeta() (string, bool) {
 	return c.GetString("previousMeta")
 }
 
-func (c MetaChanges) GetContentType() (string, bool) {
+func (c Changes) GetContentType() (string, bool) {
 	return c.GetString("contentType")
 }
 
@@ -105,8 +105,8 @@ func (c MetaChanges) GetContentType() (string, bool) {
 // but it's here because it's important to keep the switch statement accurate
 // to the state of this package. I'm open to moving this if a better solution
 // presents itself.
-func NewMetaChangesFromValues(m url.Values) MetaChanges {
-	c := MetaChanges{}
+func NewMetaChangesFromValues(m url.Values) Changes {
+	c := Changes{}
 	for k, v := range m {
 		if len(v) == 0 {
 			continue
@@ -129,7 +129,7 @@ func NewMetaChangesFromValues(m url.Values) MetaChanges {
 	return c
 }
 
-func ApplyCommonChanges(m *store.Meta, c MetaChanges) {
+func ApplyCommonChanges(m *store.Meta, c Changes) {
 	// Always set the timestamp
 	m.UploadedAt = time.Now()
 

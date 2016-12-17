@@ -13,7 +13,7 @@ import (
 	"github.com/leeola/kala/node"
 )
 
-func (c *Client) Upload(r io.Reader, mc contenttype.MetaChanges) ([]string, error) {
+func (c *Client) Upload(r io.Reader, mc contenttype.Changes) ([]string, error) {
 	u, err := url.Parse(c.kalaAddr)
 	if err != nil {
 		return nil, err
@@ -50,7 +50,7 @@ func (c *Client) Upload(r io.Reader, mc contenttype.MetaChanges) ([]string, erro
 	return hashesRes.Hashes, nil
 }
 
-func (c *Client) UploadMeta(mc contenttype.MetaChanges) ([]string, error) {
+func (c *Client) UploadMeta(mc contenttype.Changes) ([]string, error) {
 	u, err := url.Parse(c.kalaAddr)
 	if err != nil {
 		return nil, err

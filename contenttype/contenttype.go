@@ -3,7 +3,7 @@ package contenttype
 import "io"
 
 type Importer interface {
-	Import(map[string]string) (io.ReadCloser, MetaChanges, error)
+	Import(map[string]string) (io.ReadCloser, Changes, error)
 }
 
 // ContentStorer processes incoming data for a specific type with supplied metadata.
@@ -25,7 +25,7 @@ type ContentStorer interface {
 	// avoiding a double read on the metadata.
 	//
 	// The implementor *must* handle both an empty byte array, and a populated array.
-	StoreContent(io.ReadCloser, []byte, MetaChanges) ([]string, error)
+	StoreContent(io.ReadCloser, []byte, Changes) ([]string, error)
 
 	// Meta applies just metadata changes.
 	//
@@ -34,7 +34,7 @@ type ContentStorer interface {
 	// avoiding a double read on the metadata.
 	//
 	// The implementor *must* handle both an empty byte array, and a populated array.
-	Meta([]byte, MetaChanges) ([]string, error)
+	Meta([]byte, Changes) ([]string, error)
 }
 
 // Exporter is a general purpose interface for restoring data to it's original state.

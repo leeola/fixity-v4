@@ -40,7 +40,7 @@ func New(c Config) (*Folder, error) {
 	}, nil
 }
 
-func (f *Folder) StoreContent(rc io.ReadCloser, mb []byte, c contenttype.MetaChanges) ([]string, error) {
+func (f *Folder) StoreContent(rc io.ReadCloser, mb []byte, c contenttype.Changes) ([]string, error) {
 	// Folder doesn't allow content, so close any reader given and error.
 	if rc != nil {
 		rc.Close()
@@ -50,7 +50,7 @@ func (f *Folder) StoreContent(rc io.ReadCloser, mb []byte, c contenttype.MetaCha
 	return f.Meta(mb, c)
 }
 
-func (f *Folder) Meta(mb []byte, c contenttype.MetaChanges) ([]string, error) {
+func (f *Folder) Meta(mb []byte, c contenttype.Changes) ([]string, error) {
 	var (
 		meta   FolderMeta
 		hashes []string
@@ -138,7 +138,7 @@ func WriteMeta(s store.Store, i index.Indexer, m FolderMeta) (string, error) {
 	return h, nil
 }
 
-func (m *FolderMeta) ApplyChanges(c contenttype.MetaChanges) {
+func (m *FolderMeta) ApplyChanges(c contenttype.Changes) {
 	if n, ok := c.GetString("foldername"); ok {
 		m.Foldername = n
 	}

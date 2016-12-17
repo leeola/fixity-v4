@@ -27,8 +27,8 @@ func metaCommand(c *cli.Context) error {
 	return nil
 }
 
-func argsToMetaChanges(args []string) contenttype.MetaChanges {
-	mc := contenttype.MetaChanges{}
+func argsToMetaChanges(args []string) contenttype.Changes {
+	mc := contenttype.Changes{}
 	argLen := len(args)
 	for i := 0; i < argLen; i++ {
 		key, value := keyValue(args[i])
