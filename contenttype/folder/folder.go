@@ -5,6 +5,7 @@ import (
 	"io"
 
 	"github.com/leeola/errors"
+	"github.com/leeola/kala/contenttype"
 	"github.com/leeola/kala/index"
 	"github.com/leeola/kala/store"
 )
@@ -39,7 +40,7 @@ func New(c Config) (*Folder, error) {
 	}, nil
 }
 
-func (f *Folder) StoreContent(rc io.ReadCloser, mb []byte, c store.MetaChanges) ([]string, error) {
+func (f *Folder) StoreContent(rc io.ReadCloser, mb []byte, c contenttype.MetaChanges) ([]string, error) {
 	// Folder doesn't allow content, so close any reader given and error.
 	if rc != nil {
 		rc.Close()
@@ -49,7 +50,7 @@ func (f *Folder) StoreContent(rc io.ReadCloser, mb []byte, c store.MetaChanges) 
 	return f.Meta(mb, c)
 }
 
-func (f *Folder) Meta(mb []byte, c store.MetaChanges) ([]string, error) {
+func (f *Folder) Meta(mb []byte, c contenttype.MetaChanges) ([]string, error) {
 	var (
 		meta   FolderMeta
 		hashes []string
@@ -71,7 +72,7 @@ func (f *Folder) Meta(mb []byte, c store.MetaChanges) ([]string, error) {
 
 	// Apply the common and filemeta changes to the metadata.
 	// This maps the fields in the MetaChanges map to the Meta and FileMeta struct.
-	store.ApplyCommonChanges(&meta.Meta, c)
+	contenttype.ApplyCommonChanges(&meta.Meta, c)
 	meta.ApplyChanges(c)
 
 	var multiHash store.MultiHash
@@ -137,7 +138,7 @@ func WriteMeta(s store.Store, i index.Indexer, m FolderMeta) (string, error) {
 	return h, nil
 }
 
-func (m *FolderMeta) ApplyChanges(c store.MetaChanges) {
+func (m *FolderMeta) ApplyChanges(c contenttype.MetaChanges) {
 	if n, ok := c.GetString("foldername"); ok {
 		m.Foldername = n
 	}

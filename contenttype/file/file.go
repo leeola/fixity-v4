@@ -5,6 +5,7 @@ import (
 	"io"
 
 	"github.com/leeola/errors"
+	"github.com/leeola/kala/contenttype"
 	"github.com/leeola/kala/index"
 	"github.com/leeola/kala/store"
 	"github.com/leeola/kala/store/roller/camli"
@@ -43,7 +44,7 @@ func New(c Config) (*File, error) {
 // TODO(leeola): centralize the common tasks in this method into helpers.
 // A lot of this (writing content roller and multipart, etc) is going to be
 // duplicated on every ContentType handler.
-func (f *File) StoreContent(rc io.ReadCloser, mb []byte, c store.MetaChanges) ([]string, error) {
+func (f *File) StoreContent(rc io.ReadCloser, mb []byte, c contenttype.MetaChanges) ([]string, error) {
 	if rc == nil {
 		return nil, errors.New("missing ReadCloser")
 	}
@@ -95,7 +96,7 @@ func (f *File) StoreContent(rc io.ReadCloser, mb []byte, c store.MetaChanges) ([
 
 	// Apply the common and filemeta changes to the metadata.
 	// This maps the fields in the MetaChanges map to the Meta and FileMeta struct.
-	store.ApplyCommonChanges(&meta.Meta, c)
+	contenttype.ApplyCommonChanges(&meta.Meta, c)
 	meta.ApplyChanges(c)
 
 	// if there is an anchor, always return the anchor for a consistent UX
@@ -112,7 +113,7 @@ func (f *File) StoreContent(rc io.ReadCloser, mb []byte, c store.MetaChanges) ([
 	return hashes, nil
 }
 
-func (f *File) Meta(mb []byte, c store.MetaChanges) ([]string, error) {
+func (f *File) Meta(mb []byte, c contenttype.MetaChanges) ([]string, error) {
 	var (
 		meta   FileMeta
 		hashes []string
@@ -134,7 +135,7 @@ func (f *File) Meta(mb []byte, c store.MetaChanges) ([]string, error) {
 
 	// Apply the common and filemeta changes to the metadata.
 	// This maps the fields in the MetaChanges map to the Meta and FileMeta struct.
-	store.ApplyCommonChanges(&meta.Meta, c)
+	contenttype.ApplyCommonChanges(&meta.Meta, c)
 	meta.ApplyChanges(c)
 
 	// if there is an anchor, always return the anchor so that the caller can easily
@@ -167,7 +168,7 @@ func WriteFileMeta(s store.Store, i index.Indexer, m FileMeta) (string, error) {
 	return h, nil
 }
 
-func (m *FileMeta) ApplyChanges(c store.MetaChanges) {
+func (m *FileMeta) ApplyChanges(c contenttype.MetaChanges) {
 	if f, ok := c.GetString("filename"); ok {
 		m.Filename = f
 	}

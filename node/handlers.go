@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/leeola/kala/contenttype"
 	"github.com/leeola/kala/index"
 	"github.com/leeola/kala/index/indexreader"
 	"github.com/leeola/kala/store"
@@ -191,7 +192,7 @@ func (n *Node) GetIndexContentHandler(w http.ResponseWriter, r *http.Request) {
 
 func (n *Node) PostUploadHandler(w http.ResponseWriter, r *http.Request) {
 	log := GetLog(r)
-	metaChanges := store.NewMetaChangesFromValues(r.URL.Query())
+	metaChanges := contenttype.NewMetaChangesFromValues(r.URL.Query())
 
 	anchorHash := urlutil.GetQueryString(r, "anchor")
 	previousMeta := urlutil.GetQueryString(r, "previousMeta")
@@ -291,7 +292,7 @@ func (n *Node) PostUploadHandler(w http.ResponseWriter, r *http.Request) {
 
 func (n *Node) PostUploadMetaHandler(w http.ResponseWriter, r *http.Request) {
 	log := GetLog(r)
-	metaChanges := store.NewMetaChangesFromValues(r.URL.Query())
+	metaChanges := contenttype.NewMetaChangesFromValues(r.URL.Query())
 
 	anchorHash := urlutil.GetQueryString(r, "anchor")
 	previousMeta := urlutil.GetQueryString(r, "previousMeta")

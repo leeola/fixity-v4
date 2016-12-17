@@ -1,12 +1,14 @@
-package store
+package contenttype
 
 import (
 	"net/url"
 	"strconv"
 	"time"
+
+	"github.com/leeola/kala/store"
 )
 
-// MetaChanges is map of generic mutations to be handled by ContentType interfaces.
+// Changes is map of generic mutations to be handled by ContentType interfaces.
 //
 // It's generic because only a ContentType interface can know how to handle
 // an addition of certain metadata. For example, filenames are metadata that
@@ -17,9 +19,9 @@ import (
 // will need to ferry this change through the generic ContentType interface.
 //
 // For a concrete example, the api request:
-// 		POST /upload/file?filename=foo
+// 		POST /upload?contentType=file&filename=foo
 //
-// Might construct `metaChanges["filename"] = "foo"`, and then pass it to the
+// Might construct `changes["filename"] = "foo"`, and then pass it to the
 // `file` ContentType interface implementor. How it handles the actually setting
 // and storing the filename within the metadata is up to it. This type just
 // facilitates that data exchange, with some nicities for common change operations
@@ -127,7 +129,7 @@ func NewMetaChangesFromValues(m url.Values) MetaChanges {
 	return c
 }
 
-func ApplyCommonChanges(m *Meta, c MetaChanges) {
+func ApplyCommonChanges(m *store.Meta, c MetaChanges) {
 	// Always set the timestamp
 	m.UploadedAt = time.Now()
 

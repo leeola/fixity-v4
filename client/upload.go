@@ -9,11 +9,11 @@ import (
 	"path"
 
 	"github.com/leeola/errors"
+	"github.com/leeola/kala/contenttype"
 	"github.com/leeola/kala/node"
-	"github.com/leeola/kala/store"
 )
 
-func (c *Client) Upload(r io.Reader, mc store.MetaChanges) ([]string, error) {
+func (c *Client) Upload(r io.Reader, mc contenttype.MetaChanges) ([]string, error) {
 	u, err := url.Parse(c.kalaAddr)
 	if err != nil {
 		return nil, err
@@ -50,7 +50,7 @@ func (c *Client) Upload(r io.Reader, mc store.MetaChanges) ([]string, error) {
 	return hashesRes.Hashes, nil
 }
 
-func (c *Client) UploadMeta(mc store.MetaChanges) ([]string, error) {
+func (c *Client) UploadMeta(mc contenttype.MetaChanges) ([]string, error) {
 	u, err := url.Parse(c.kalaAddr)
 	if err != nil {
 		return nil, err

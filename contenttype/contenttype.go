@@ -1,13 +1,9 @@
 package contenttype
 
-import (
-	"io"
-
-	"github.com/leeola/kala/store"
-)
+import "io"
 
 type Importer interface {
-	Import(map[string]string) (io.ReadCloser, store.MetaChanges, error)
+	Import(map[string]string) (io.ReadCloser, MetaChanges, error)
 }
 
 // ContentStorer processes incoming data for a specific type with supplied metadata.
@@ -29,7 +25,7 @@ type ContentStorer interface {
 	// avoiding a double read on the metadata.
 	//
 	// The implementor *must* handle both an empty byte array, and a populated array.
-	StoreContent(io.ReadCloser, []byte, store.MetaChanges) ([]string, error)
+	StoreContent(io.ReadCloser, []byte, MetaChanges) ([]string, error)
 
 	// Meta applies just metadata changes.
 	//
@@ -38,7 +34,7 @@ type ContentStorer interface {
 	// avoiding a double read on the metadata.
 	//
 	// The implementor *must* handle both an empty byte array, and a populated array.
-	Meta([]byte, store.MetaChanges) ([]string, error)
+	Meta([]byte, MetaChanges) ([]string, error)
 }
 
 // Exporter is a general purpose interface for restoring data to it's original state.

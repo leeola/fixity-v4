@@ -3,7 +3,7 @@ package main
 import (
 	"strings"
 
-	"github.com/leeola/kala/store"
+	"github.com/leeola/kala/contenttype"
 	"github.com/urfave/cli"
 )
 
@@ -27,8 +27,8 @@ func metaCommand(c *cli.Context) error {
 	return nil
 }
 
-func argsToMetaChanges(args []string) store.MetaChanges {
-	mc := store.MetaChanges{}
+func argsToMetaChanges(args []string) contenttype.MetaChanges {
+	mc := contenttype.MetaChanges{}
 	argLen := len(args)
 	for i := 0; i < argLen; i++ {
 		key, value := keyValue(args[i])
