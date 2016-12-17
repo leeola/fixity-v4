@@ -192,7 +192,7 @@ func (n *Node) GetIndexContentHandler(w http.ResponseWriter, r *http.Request) {
 
 func (n *Node) PostUploadHandler(w http.ResponseWriter, r *http.Request) {
 	log := GetLog(r)
-	metaChanges := contenttype.NewMetaChangesFromValues(r.URL.Query())
+	metaChanges := contenttype.NewChangesFromValues(r.URL.Query())
 
 	anchorHash := urlutil.GetQueryString(r, "anchor")
 	previousMeta := urlutil.GetQueryString(r, "previousMeta")
@@ -292,7 +292,7 @@ func (n *Node) PostUploadHandler(w http.ResponseWriter, r *http.Request) {
 
 func (n *Node) PostUploadMetaHandler(w http.ResponseWriter, r *http.Request) {
 	log := GetLog(r)
-	metaChanges := contenttype.NewMetaChangesFromValues(r.URL.Query())
+	metaChanges := contenttype.NewChangesFromValues(r.URL.Query())
 
 	anchorHash := urlutil.GetQueryString(r, "anchor")
 	previousMeta := urlutil.GetQueryString(r, "previousMeta")

@@ -13,9 +13,9 @@ func metaCommand(c *cli.Context) error {
 		return err
 	}
 
-	metaChanges := argsToMetaChanges(c.Args())
+	changes := argsToChanges(c.Args())
 
-	hashes, err := client.UploadMeta(metaChanges)
+	hashes, err := client.UploadMeta(changes)
 	if err != nil {
 		return err
 	}
@@ -27,7 +27,7 @@ func metaCommand(c *cli.Context) error {
 	return nil
 }
 
-func argsToMetaChanges(args []string) contenttype.Changes {
+func argsToChanges(args []string) contenttype.Changes {
 	mc := contenttype.Changes{}
 	argLen := len(args)
 	for i := 0; i < argLen; i++ {

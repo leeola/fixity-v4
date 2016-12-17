@@ -9,7 +9,7 @@ import (
 )
 
 func uploadCommand(c *cli.Context) error {
-	metaChanges := argsToMetaChanges(c.Args())
+	metaChanges := argsToChanges(c.Args())
 
 	var r io.Reader
 	if c.Bool("stdin") {

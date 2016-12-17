@@ -118,7 +118,7 @@ func (c Changes) GetContentType() (string, bool) {
 // but it's here because it's important to keep the switch statement accurate
 // to the state of this package. I'm open to moving this if a better solution
 // presents itself.
-func NewMetaChangesFromValues(m url.Values) Changes {
+func NewChangesFromValues(m url.Values) Changes {
 	c := Changes{}
 	for k, v := range m {
 		if len(v) == 0 {

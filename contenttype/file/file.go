@@ -95,7 +95,7 @@ func (f *File) StoreContent(rc io.ReadCloser, mb []byte, c contenttype.Changes) 
 	}
 
 	// Apply the common and filemeta changes to the metadata.
-	// This maps the fields in the MetaChanges map to the Meta and FileMeta struct.
+	// This maps the fields in the Changes map to the Meta and FileMeta struct.
 	contenttype.ApplyCommonChanges(&meta.Meta, c)
 	meta.ApplyChanges(c)
 
@@ -134,7 +134,7 @@ func (f *File) Meta(mb []byte, c contenttype.Changes) ([]string, error) {
 	}
 
 	// Apply the common and filemeta changes to the metadata.
-	// This maps the fields in the MetaChanges map to the Meta and FileMeta struct.
+	// This maps the fields in the Changes map to the Meta and FileMeta struct.
 	contenttype.ApplyCommonChanges(&meta.Meta, c)
 	meta.ApplyChanges(c)
 
