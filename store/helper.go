@@ -61,7 +61,7 @@ func WriteHashReader(s Store, h string, r io.Reader) error {
 	return errors.Wrap(err, "store failed to write")
 }
 
-func WriteContentRoller(s Store, r ContentRoller) ([]string, error) {
+func WritePartRoller(s Store, r PartRoller) ([]string, error) {
 	var hashes []string
 	for {
 		c, err := r.Roll()
@@ -73,7 +73,7 @@ func WriteContentRoller(s Store, r ContentRoller) ([]string, error) {
 			break
 		}
 
-		h, err := WriteContent(s, c)
+		h, err := WritePart(s, c)
 		if err != nil {
 			return nil, errors.Stack(err)
 		}
@@ -109,7 +109,7 @@ func WriteMeta(s Store, m Meta) (string, error) {
 	return MarshalAndWrite(s, m)
 }
 
-func WriteContent(s Store, c Content) (string, error) {
+func WritePart(s Store, c Part) (string, error) {
 	return MarshalAndWrite(s, c)
 }
 
@@ -170,7 +170,7 @@ func GetContentTypeWithBytes(s Store, h string) (string, []byte, error) {
 }
 
 func IsValidMeta(m Meta) bool {
-	return m.UploadedAt.IsZero() && (m.Anchor == "" || m.Multi == "")
+	return m.UploadedAt.IsZero() && (m.Anchor == "" || m.MultiPart == "")
 }
 
 func IsAnchor(s Store, h string) (bool, error) {

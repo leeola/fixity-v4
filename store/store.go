@@ -32,8 +32,8 @@ type Store interface {
 	// List(max, offset int) (<-chan string, error)
 }
 
-type ContentRoller interface {
-	Roll() (Content, error)
+type PartRoller interface {
+	Roll() (Part, error)
 }
 
 type Anchor struct {
@@ -41,23 +41,28 @@ type Anchor struct {
 }
 
 type Meta struct {
-	ContentType string `json:"contentType"`
-	Anchor      string `json:"anchor"`
-	Multi       string `json:"multi"`
-
+	ContentType  string    `json:"contentType"`
+	PreviousMeta string    `json:"previousMeta"`
 	UploadedAt   time.Time `json:"uploadedAt"`
-	PreviousMeta string    `json:"previousMeta,omitempty"`
+
+	Anchor    string `json:"anchor,omitempty"`
+	MultiPart string `json:"multiPart,omitempty"`
+	MultiHash string `json:"multiHash,omitempty"`
 
 	ChangeType string `json:"changeType,omitempty"`
 	ChangeLog  string `json:"changeLog,omitempty"`
+}
+
+type MultiHash struct {
+	Hashes []string `json:"hashes"`
 }
 
 type MultiPart struct {
 	Parts []string `json:"parts"`
 }
 
-type Content struct {
-	Content []byte `json:"content"`
+type Part struct {
+	Part []byte `json:"part"`
 }
 
 func (m Meta) ToMetadata() index.Metadata {
@@ -65,8 +70,11 @@ func (m Meta) ToMetadata() index.Metadata {
 	if m.Anchor != "" {
 		im["anchor"] = m.Anchor
 	}
-	if m.Multi != "" {
-		im["multi"] = m.Multi
+	if m.MultiHash != "" {
+		im["multiHash"] = m.MultiHash
+	}
+	if m.MultiPart != "" {
+		im["multiPart"] = m.MultiPart
 	}
 	if !m.UploadedAt.IsZero() {
 		im["uploadedAt"] = m.UploadedAt

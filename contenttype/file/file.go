@@ -55,7 +55,7 @@ func (f *File) StoreContent(rc io.ReadCloser, mb []byte, c store.MetaChanges) ([
 	}
 
 	// write the actual content
-	hashes, err := store.WriteContentRoller(f.store, roller)
+	hashes, err := store.WritePartRoller(f.store, roller)
 	if err != nil {
 		return nil, errors.Stack(err)
 	}
@@ -68,7 +68,7 @@ func (f *File) StoreContent(rc io.ReadCloser, mb []byte, c store.MetaChanges) ([
 		return nil, errors.Stack(err)
 	}
 	hashes = append(hashes, h)
-	c.SetMulti(h)
+	c.SetMultiPart(h)
 
 	// Write the entries, not including the final metadata hash
 	// The last hash is metadata, and we'll add that manually.

@@ -13,9 +13,9 @@ import (
 
 type readerData struct {
 	AnchorRand int      `json:"anchorRand"`
-	Multi      string   `json:"multi"`
+	MultiPart  string   `json:"multiPart"`
 	Parts      []string `json:"parts"`
-	Content    []byte   `json:"content"`
+	Part       []byte   `json:"part"`
 }
 
 type Config struct {
@@ -91,14 +91,14 @@ func (r *Reader) Read(p []byte) (int, error) {
 
 		r.storeReader.AddHashes(result.Hash.Hash)
 
-	case d.Multi != "":
-		r.storeReader.AddHashes(d.Multi)
+	case d.MultiPart != "":
+		r.storeReader.AddHashes(d.MultiPart)
 
 	case len(d.Parts) > 0:
 		r.storeReader.AddHashes(d.Parts...)
 
-	case len(d.Content) > 0:
-		r.storeReader.SetCurrentReader(bytes.NewReader(d.Content))
+	case len(d.Part) > 0:
+		r.storeReader.SetCurrentReader(bytes.NewReader(d.Part))
 
 	default:
 		return 0, errors.New("Reader: unhandled hash content")

@@ -11,9 +11,9 @@ import (
 )
 
 type readerData struct {
-	Multi   string   `json:"multi"`
-	Parts   []string `json:"parts"`
-	Content []byte   `json:"content"`
+	MultiPart string   `json:"multiPart"`
+	Parts     []string `json:"parts"`
+	Part      []byte   `json:"part"`
 }
 
 // HashWithBytes is used by Reader to return the data of a hash if needed.
@@ -119,14 +119,14 @@ func (r *Reader) UnmarshalHashes(b []byte) error {
 	}
 
 	switch {
-	case d.Multi != "":
-		r.AddHashes(d.Multi)
+	case d.MultiPart != "":
+		r.AddHashes(d.MultiPart)
 
 	case len(d.Parts) > 0:
 		r.AddHashes(d.Parts...)
 
-	case len(d.Content) > 0:
-		r.SetCurrentReader(bytes.NewReader(d.Content))
+	case len(d.Part) > 0:
+		r.SetCurrentReader(bytes.NewReader(d.Part))
 
 	default:
 		return errors.New("Reader: unhandled hash content")

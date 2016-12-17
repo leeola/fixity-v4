@@ -59,8 +59,12 @@ func (c MetaChanges) SetAnchor(h string) {
 	c["anchor"] = h
 }
 
-func (c MetaChanges) SetMulti(h string) {
-	c["multi"] = h
+func (c MetaChanges) SetMultiHash(h string) {
+	c["multiHash"] = h
+}
+
+func (c MetaChanges) SetMultiPart(h string) {
+	c["multiPart"] = h
 }
 
 func (c MetaChanges) SetPreviousMeta(h string) {
@@ -79,8 +83,12 @@ func (c MetaChanges) GetNewAnchor() (bool, bool) {
 	return c.GetBool("newAnchor")
 }
 
-func (c MetaChanges) GetMulti() (string, bool) {
-	return c.GetString("multi")
+func (c MetaChanges) GetMultiHash() (string, bool) {
+	return c.GetString("multiHash")
+}
+
+func (c MetaChanges) GetMultiPart() (string, bool) {
+	return c.GetString("multiPart")
 }
 
 func (c MetaChanges) GetPreviousMeta() (string, bool) {
@@ -104,8 +112,10 @@ func NewMetaChangesFromValues(m url.Values) MetaChanges {
 		switch k {
 		case "anchor":
 			c.SetAnchor(v[0])
-		case "multi":
-			c.SetMulti(v[0])
+		case "multiHash":
+			c.SetMultiHash(v[0])
+		case "multiPart":
+			c.SetMultiPart(v[0])
 		case "previousMeta":
 			c.SetPreviousMeta(v[0])
 		case "contentType":
@@ -125,8 +135,8 @@ func ApplyCommonChanges(m *Meta, c MetaChanges) {
 		m.Anchor = v
 	}
 
-	if v, ok := c.GetMulti(); ok {
-		m.Multi = v
+	if v, ok := c.GetMultiPart(); ok {
+		m.MultiPart = v
 	}
 
 	if v, ok := c.GetPreviousMeta(); ok {

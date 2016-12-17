@@ -28,16 +28,16 @@ func New(r io.Reader) (*Roller, error) {
 	}, nil
 }
 
-func (r *Roller) Roll() (store.Content, error) {
+func (r *Roller) Roll() (store.Part, error) {
 	var byteContent bytes.Buffer
 	for {
 		if r.reader == nil {
-			return store.Content{}, io.EOF
+			return store.Part{}, io.EOF
 		}
 
 		c, err := r.reader.ReadByte()
 		if err != nil && err != io.EOF {
-			return store.Content{}, errors.Stack(err)
+			return store.Part{}, errors.Stack(err)
 		}
 
 		// if we're EOF, break so we can return the existing content.
@@ -48,7 +48,7 @@ func (r *Roller) Roll() (store.Content, error) {
 		}
 
 		if err := byteContent.WriteByte(c); err != nil {
-			return store.Content{}, errors.Stack(err)
+			return store.Part{}, errors.Stack(err)
 		}
 
 		r.rollSum.Roll(c)
@@ -58,5 +58,5 @@ func (r *Roller) Roll() (store.Content, error) {
 		}
 	}
 
-	return store.Content{Content: byteContent.Bytes()}, nil
+	return store.Part{Part: byteContent.Bytes()}, nil
 }
