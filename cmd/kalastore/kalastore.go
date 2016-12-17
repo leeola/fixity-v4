@@ -7,6 +7,7 @@ import (
 	"github.com/leeola/kala/contenttype"
 	"github.com/leeola/kala/contenttype/data"
 	"github.com/leeola/kala/contenttype/file"
+	"github.com/leeola/kala/contenttype/folder"
 	"github.com/leeola/kala/database/bolt"
 	"github.com/leeola/kala/index"
 	"github.com/leeola/kala/index/blev"
@@ -122,6 +123,12 @@ func addDefaultUploads(n *node.Node, s store.Store, i index.Indexer) error {
 		return err
 	}
 	n.AddContentStorer("file", cs)
+
+	cs, err = folder.New(folder.Config{Store: s, Index: i})
+	if err != nil {
+		return err
+	}
+	n.AddContentStorer("folder", cs)
 
 	return nil
 }

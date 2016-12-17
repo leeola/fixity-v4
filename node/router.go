@@ -13,4 +13,8 @@ func (n *Node) initRouter() {
 	n.router.Get("/download/:hash", n.GetDownloadHandler)
 	n.router.Post("/upload", n.PostUploadHandler)
 	n.router.Post("/upload/meta", n.PostUploadMetaHandler)
+	// multihash and meta currently do the same exact thing, but the
+	// api endpoint is being used to allow changes in UX specifically for
+	// multihash mutation.
+	n.router.Post("/upload/multihash", n.PostUploadMetaHandler)
 }

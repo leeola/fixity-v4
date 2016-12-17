@@ -101,12 +101,16 @@ func WriteAnchor(s Store, a Anchor) (string, error) {
 	return MarshalAndWrite(s, a)
 }
 
-func WriteMultiPart(s Store, mp MultiPart) (string, error) {
-	return MarshalAndWrite(s, mp)
-}
-
 func WriteMeta(s Store, m Meta) (string, error) {
 	return MarshalAndWrite(s, m)
+}
+
+func WriteMultiHash(s Store, mh MultiHash) (string, error) {
+	return MarshalAndWrite(s, mh)
+}
+
+func WriteMultiPart(s Store, mp MultiPart) (string, error) {
+	return MarshalAndWrite(s, mp)
 }
 
 func WritePart(s Store, c Part) (string, error) {

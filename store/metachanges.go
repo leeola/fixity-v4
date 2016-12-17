@@ -131,8 +131,16 @@ func ApplyCommonChanges(m *Meta, c MetaChanges) {
 	// Always set the timestamp
 	m.UploadedAt = time.Now()
 
+	if v, ok := c.GetContentType(); ok {
+		m.ContentType = v
+	}
+
 	if v, ok := c.GetAnchor(); ok {
 		m.Anchor = v
+	}
+
+	if v, ok := c.GetMultiHash(); ok {
+		m.MultiHash = v
 	}
 
 	if v, ok := c.GetMultiPart(); ok {
@@ -141,9 +149,5 @@ func ApplyCommonChanges(m *Meta, c MetaChanges) {
 
 	if v, ok := c.GetPreviousMeta(); ok {
 		m.PreviousMeta = v
-	}
-
-	if v, ok := c.GetContentType(); ok {
-		m.ContentType = v
 	}
 }

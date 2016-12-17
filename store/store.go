@@ -67,6 +67,9 @@ type Part struct {
 
 func (m Meta) ToMetadata() index.Metadata {
 	im := index.Metadata{}
+	if m.ContentType != "" {
+		im["contentType"] = m.ContentType
+	}
 	if m.Anchor != "" {
 		im["anchor"] = m.Anchor
 	}

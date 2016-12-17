@@ -178,8 +178,5 @@ func (m FileMeta) ToMetadata() index.Metadata {
 	if m.Filename != "" {
 		im["filename"] = m.Filename
 	}
-	if m.ContentType != "" {
-		im["contentType"] = m.ContentType
-	}
 	return im
 }
