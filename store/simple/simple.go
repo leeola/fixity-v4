@@ -61,7 +61,7 @@ func (s *Simple) Read(h string) (io.ReadCloser, error) {
 
 func (s *Simple) Hash(b []byte) string {
 	h := blake2b.Sum256(b)
-	return hex.EncodeToString(h[:])
+	return "blake2b-" + hex.EncodeToString(h[:])
 }
 
 func (s *Simple) Write(b []byte) (string, error) {
