@@ -55,7 +55,7 @@ func argsToMetaChanges(args []string) contenttype.Changes {
 			}
 		}
 
-		mc[key] = value
+		mc.Add(key, value)
 	}
 	return mc
 }

@@ -36,19 +36,24 @@ import (
 // value of that field is a number. It would have to attempt to parse meaningful
 // values at random, for no reason. The File ContentType will know the key Size is
 // an int, and can convert as needed.
-type Changes map[string]string
+type Changes map[string][]string
 
 func (c Changes) GetString(k string) (string, bool) {
-	s, ok := c[k]
+	v, ok := c[k]
 	if !ok {
 		return "", false
+	}
+
+	var s string
+	if len(v) >= 1 {
+		s = v[0]
 	}
 
 	return s, true
 }
 
 func (c Changes) GetBool(k string) (bool, bool) {
-	s, ok := c[k]
+	s, ok := c.GetString(k)
 	if !ok {
 		return false, false
 	}
@@ -57,24 +62,32 @@ func (c Changes) GetBool(k string) (bool, bool) {
 	return b, err == nil
 }
 
+func (c Changes) Set(k, v string) {
+	c[k] = []string{v}
+}
+
+func (c Changes) Add(k, v string) {
+	c[k] = []string{v}
+}
+
 func (c Changes) SetAnchor(h string) {
-	c["anchor"] = h
+	c.Set("anchor", h)
 }
 
 func (c Changes) SetMultiHash(h string) {
-	c["multiHash"] = h
+	c.Set("multiHash", h)
 }
 
 func (c Changes) SetMultiPart(h string) {
-	c["multiPart"] = h
+	c.Set("multiPart", h)
 }
 
 func (c Changes) SetPreviousMeta(h string) {
-	c["previousMeta"] = h
+	c.Set("previousMeta", h)
 }
 
 func (c Changes) SetContentType(t string) {
-	c["contentType"] = t
+	c.Set("contentType", t)
 }
 
 func (c Changes) GetAnchor() (string, bool) {
@@ -123,7 +136,7 @@ func NewMetaChangesFromValues(m url.Values) Changes {
 		case "contentType":
 			c.SetContentType(v[0])
 		default:
-			c[k] = v[0]
+			c[k] = v
 		}
 	}
 	return c

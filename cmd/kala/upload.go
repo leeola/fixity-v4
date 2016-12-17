@@ -26,7 +26,7 @@ func uploadCommand(c *cli.Context) error {
 		// If the user didn't specify metadata to add themselves,
 		// automatically set the filename and constenttype for an easy ux.
 		if _, ok := metaChanges["filename"]; !ok {
-			metaChanges["filename"] = p
+			metaChanges.Set("filename", p)
 		}
 		if _, ok := metaChanges.GetContentType(); !ok {
 			metaChanges.SetContentType("file")

@@ -22,7 +22,7 @@ func (c *Client) Upload(r io.Reader, mc contenttype.Changes) ([]string, error) {
 
 	q := u.Query()
 	for k, v := range mc {
-		q.Set(k, v)
+		q[k] = v
 	}
 	u.RawQuery = q.Encode()
 
@@ -59,7 +59,7 @@ func (c *Client) UploadMeta(mc contenttype.Changes) ([]string, error) {
 
 	q := u.Query()
 	for k, v := range mc {
-		q.Set(k, v)
+		q[k] = v
 	}
 	u.RawQuery = q.Encode()
 

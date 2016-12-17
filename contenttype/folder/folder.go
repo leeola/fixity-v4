@@ -76,10 +76,10 @@ func (f *Folder) Meta(mb []byte, c contenttype.Changes) ([]string, error) {
 	meta.ApplyChanges(c)
 
 	var multiHash store.MultiHash
-	if multiHashes, _ := c["hash"]; multiHashes != "" {
+	if multiHashes, ok := c["hash"]; ok {
 		// the caller specified the hashes to use manually, so overwrite the loaded
 		// hash values.
-		multiHash.Hashes = []string{multiHashes}
+		multiHash.Hashes = multiHashes
 	} else if mh := meta.MultiHash; mh != "" {
 		// the caller didn't explicitly set the hashes, so load the previous hashes
 		// if a multihash was specified.
@@ -89,14 +89,16 @@ func (f *Folder) Meta(mb []byte, c contenttype.Changes) ([]string, error) {
 	}
 
 	// add any hashes specified
-	if ah, _ := c["addHash"]; ah != "" {
-		multiHash.Hashes = append(multiHash.Hashes, ah)
+	if ah, _ := c["addHash"]; len(ah) > 0 {
+		multiHash.Hashes = append(multiHash.Hashes, ah...)
 	}
 
-	if rh, _ := c["delHash"]; rh != "" {
-		for i, h := range multiHash.Hashes {
-			if rh == h {
-				multiHash.Hashes = append(multiHash.Hashes[:i], multiHash.Hashes[i+1:]...)
+	if dhs, ok := c["delHash"]; ok {
+		for _, dh := range dhs {
+			for i, h := range multiHash.Hashes {
+				if dh == h {
+					multiHash.Hashes = append(multiHash.Hashes[:i], multiHash.Hashes[i+1:]...)
+				}
 			}
 		}
 	}
