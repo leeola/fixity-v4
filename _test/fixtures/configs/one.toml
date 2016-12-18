@@ -4,6 +4,9 @@ BindAddr = "127.0.0.1:4001"
 # may need to.
 CreateMissingPaths = true
 
+[web]
+BindAddr = "127.0.0.1:4000"
+
 [simpleStore]
 StorePath = "_stores/one/store"
 

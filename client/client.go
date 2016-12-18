@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"strings"
 
 	"github.com/leeola/errors"
 	"github.com/leeola/kala/node"
@@ -247,4 +248,18 @@ func (c *Client) Download(h string) (rc io.ReadCloser, err error) {
 	}
 
 	return res.Body, nil
+}
+
+// BindToHttp is a helper to convert a bind string into an http string.
+//
+// Eg, ":8000" is converted to "http://localhost:8000", and etc.
+func BindToHttp(bindAddr string) string {
+	switch {
+	case strings.HasPrefix(bindAddr, ":"):
+		// if the bindaddr is :8000
+		return "http://localhost" + bindAddr
+	default:
+		// if the bind addr is something like localhost:8000
+		return "http://" + bindAddr
+	}
 }
