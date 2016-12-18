@@ -24,7 +24,7 @@ func (n *Node) GetNodeId(w http.ResponseWriter, r *http.Request) {
 	id, err := n.db.GetNodeId()
 	if err != nil {
 		log.Error("database GetNodeId failed", "err", err)
-		http.Error(w, "database returned an error", http.StatusInternalServerError)
+		jsonutil.Error(w, "database returned an error", http.StatusInternalServerError)
 		return
 	}
 
@@ -38,13 +38,13 @@ func (n *Node) HeadBlobHandler(w http.ResponseWriter, r *http.Request) {
 	exists, err := n.store.Exists(hash)
 	if err != nil {
 		log.Error("store.Exists failed", "err", err)
-		http.Error(w, "store Exists failed", http.StatusInternalServerError)
+		jsonutil.Error(w, "store Exists failed", http.StatusInternalServerError)
 		return
 	}
 
 	// If it does not exist, return 404.
 	if !exists {
-		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		jsonutil.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 	}
 
 	// return 200 if it exists.
@@ -56,19 +56,19 @@ func (n *Node) GetBlobHandler(w http.ResponseWriter, r *http.Request) {
 
 	rc, err := n.store.Read(hash)
 	if err == store.HashNotFoundErr {
-		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		jsonutil.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 		return
 	}
 	if err != nil {
 		log.Error("store.Read failed", "err", err)
-		http.Error(w, "store Read failed", http.StatusInternalServerError)
+		jsonutil.Error(w, "store Read failed", http.StatusInternalServerError)
 		return
 	}
 	defer rc.Close()
 
 	if _, err := io.Copy(w, rc); err != nil {
 		log.Error("response write failed", "err", err)
-		http.Error(w, "response write failed", http.StatusInternalServerError)
+		jsonutil.Error(w, "response write failed", http.StatusInternalServerError)
 		return
 	}
 }
@@ -80,12 +80,12 @@ func (n *Node) PutBlobHandler(w http.ResponseWriter, r *http.Request) {
 	err := store.WriteHashReader(n.store, hash, r.Body)
 	if err == store.HashNotMatchContentErr {
 		log.Error("write of nonmatching content for hash attempted")
-		http.Error(w, "content does not match hash", http.StatusForbidden)
+		jsonutil.Error(w, "content does not match hash", http.StatusForbidden)
 		return
 	}
 	if err != nil {
 		log.Error("store write failed", "err", err)
-		http.Error(w, "store write failed", http.StatusInternalServerError)
+		jsonutil.Error(w, "store write failed", http.StatusInternalServerError)
 		return
 	}
 }
@@ -187,7 +187,7 @@ func (n *Node) GetQueryHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (n *Node) GetIndexContentHandler(w http.ResponseWriter, r *http.Request) {
-	http.Error(w, http.StatusText(http.StatusNotImplemented), http.StatusNotImplemented)
+	jsonutil.Error(w, http.StatusText(http.StatusNotImplemented), http.StatusNotImplemented)
 }
 
 func (n *Node) PostUploadHandler(w http.ResponseWriter, r *http.Request) {
