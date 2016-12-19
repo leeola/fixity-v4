@@ -61,28 +61,6 @@ func WriteHashReader(s Store, h string, r io.Reader) error {
 	return errors.Wrap(err, "store failed to write")
 }
 
-func WritePartRoller(s Store, r PartRoller) ([]string, error) {
-	var hashes []string
-	for {
-		c, err := r.Roll()
-		if err != nil && err != io.EOF {
-			return nil, errors.Stack(err)
-		}
-
-		if err == io.EOF {
-			break
-		}
-
-		h, err := WritePart(s, c)
-		if err != nil {
-			return nil, errors.Stack(err)
-		}
-		hashes = append(hashes, h)
-	}
-
-	return hashes, nil
-}
-
 func MarshalAndWrite(s Store, v interface{}) (string, error) {
 	b, err := json.Marshal(v)
 	if err != nil {

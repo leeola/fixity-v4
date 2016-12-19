@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/leeola/kala/contenttype"
 	"github.com/leeola/kala/index"
@@ -272,21 +273,23 @@ func (n *Node) PostUploadHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	hashes, err := cs.StoreContent(r.Body, metaBytes, metaChanges)
-	if err != nil {
-		log.Error("StoreContent returned error", "err", err)
-		jsonutil.Error(w, "upload failed", http.StatusInternalServerError)
-		return
-	}
-
-	_, err = jsonutil.MarshalToWriter(w, HashesResponse{
-		Hashes: hashes,
-	})
-	if err != nil {
-		log.Error("failed to marshal response", "err", err)
-		jsonutil.Error(w, http.StatusText(http.StatusInternalServerError),
-			http.StatusInternalServerError)
-		return
+	results := cs.StoreContent(r.Body, metaBytes, metaChanges)
+	first := true
+	for r := range results {
+		time.Sleep(3 * time.Second)
+		switch {
+		case r.Error != nil:
+			log.Error("StoreContent returned error", "err", r.Error)
+			// TODO(leeola): is there any meaningful return type for this?
+			// Ie, after already having written so much data.
+			jsonutil.Error(w, "upload failed", http.StatusInternalServerError)
+			return
+		case first:
+			first = false
+			w.Write([]byte(r.Hash))
+		default:
+			w.Write([]byte("," + r.Hash))
+		}
 	}
 }
 
@@ -372,21 +375,22 @@ func (n *Node) PostUploadMetaHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	hashes, err := cs.Meta(metaBytes, metaChanges)
-	if err != nil {
-		log.Error("Meta returned error", "err", err)
-		jsonutil.Error(w, "meta failed", http.StatusInternalServerError)
-		return
-	}
-
-	_, err = jsonutil.MarshalToWriter(w, HashesResponse{
-		Hashes: hashes,
-	})
-	if err != nil {
-		log.Error("failed to marshal response", "err", err)
-		jsonutil.Error(w, http.StatusText(http.StatusInternalServerError),
-			http.StatusInternalServerError)
-		return
+	results := cs.Meta(metaBytes, metaChanges)
+	var first bool
+	for r := range results {
+		switch {
+		case r.Error != nil:
+			log.Error("StoreContent returned error", "err", r.Error)
+			// TODO(leeola): is there any meaningful return type for this?
+			// Ie, after already having written so much data.
+			jsonutil.Error(w, "upload failed", http.StatusInternalServerError)
+			return
+		case first:
+			first = false
+			w.Write([]byte(r.Hash))
+		default:
+			w.Write([]byte("," + r.Hash))
+		}
 	}
 }
 

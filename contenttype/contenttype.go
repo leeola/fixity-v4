@@ -6,6 +6,11 @@ type Importer interface {
 	Import(map[string]string) (io.ReadCloser, Changes, error)
 }
 
+type Result struct {
+	Hash  string
+	Error error
+}
+
 // ContentStorer processes incoming data for a specific type with supplied metadata.
 //
 // This allows the caller of the /upload/:type api to inform Kala of metadata about
@@ -25,7 +30,7 @@ type ContentStorer interface {
 	// avoiding a double read on the metadata.
 	//
 	// The implementor *must* handle both an empty byte array, and a populated array.
-	StoreContent(io.ReadCloser, []byte, Changes) ([]string, error)
+	StoreContent(io.ReadCloser, []byte, Changes) <-chan Result
 
 	// Meta applies just metadata changes.
 	//
@@ -34,7 +39,7 @@ type ContentStorer interface {
 	// avoiding a double read on the metadata.
 	//
 	// The implementor *must* handle both an empty byte array, and a populated array.
-	Meta([]byte, Changes) ([]string, error)
+	Meta([]byte, Changes) <-chan Result
 }
 
 // Exporter is a general purpose interface for restoring data to it's original state.

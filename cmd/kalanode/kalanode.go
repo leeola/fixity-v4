@@ -5,9 +5,7 @@ import (
 
 	"github.com/leeola/errors"
 	"github.com/leeola/kala/contenttype"
-	"github.com/leeola/kala/contenttype/data"
 	"github.com/leeola/kala/contenttype/file"
-	"github.com/leeola/kala/contenttype/folder"
 	"github.com/leeola/kala/database/bolt"
 	"github.com/leeola/kala/index"
 	"github.com/leeola/kala/index/blev"
@@ -112,23 +110,23 @@ func initStoreFromConfig(configPath string) (store.Store, error) {
 
 func addDefaultUploads(n *node.Node, s store.Store, i index.Indexer) error {
 	var cs contenttype.ContentStorer
-	cs, err := data.New(data.Config{Store: s, Index: i})
-	if err != nil {
-		return err
-	}
-	n.AddContentStorer("data", cs)
+	// cs, err := data.New(data.Config{Store: s, Index: i})
+	// if err != nil {
+	// 	return err
+	// }
+	// n.AddContentStorer("data", cs)
 
-	cs, err = file.New(file.Config{Store: s, Index: i})
+	cs, err := file.New(file.Config{Store: s, Index: i})
 	if err != nil {
 		return err
 	}
 	n.AddContentStorer("file", cs)
 
-	cs, err = folder.New(folder.Config{Store: s, Index: i})
-	if err != nil {
-		return err
-	}
-	n.AddContentStorer("folder", cs)
+	// cs, err = folder.New(folder.Config{Store: s, Index: i})
+	// if err != nil {
+	// 	return err
+	// }
+	// n.AddContentStorer("folder", cs)
 
 	return nil
 }

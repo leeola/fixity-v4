@@ -6,6 +6,7 @@ import (
 
 	"github.com/leeola/errors"
 	"github.com/leeola/kala/contenttype"
+	ct "github.com/leeola/kala/contenttype"
 	"github.com/leeola/kala/index"
 	"github.com/leeola/kala/store"
 	"github.com/leeola/kala/store/roller/camli"
@@ -41,43 +42,49 @@ func New(c Config) (*File, error) {
 	}, nil
 }
 
+func (f *File) StoreContent(rc io.ReadCloser, mb []byte, c ct.Changes) <-chan ct.Result {
+	results := make(chan ct.Result, 1)
+	go func() {
+		if err := f.storeContent(rc, mb, c, results); err != nil {
+			results <- ct.Result{Error: err}
+			close(results)
+		}
+	}()
+	return results
+}
+
 // TODO(leeola): centralize the common tasks in this method into helpers.
 // A lot of this (writing content roller and multipart, etc) is going to be
 // duplicated on every ContentType handler.
-func (f *File) StoreContent(rc io.ReadCloser, mb []byte, c contenttype.Changes) ([]string, error) {
+func (f *File) storeContent(rc io.ReadCloser, mb []byte, c contenttype.Changes, ch chan ct.Result) error {
 	if rc == nil {
-		return nil, errors.New("missing ReadCloser")
+		return errors.New("missing ReadCloser")
 	}
 	defer rc.Close()
 
 	roller, err := camli.New(rc)
 	if err != nil {
-		return nil, errors.Stack(err)
+		return errors.Stack(err)
 	}
 
 	// write the actual content
-	hashes, err := store.WritePartRoller(f.store, roller)
+	parts, err := ct.WritePartRoller(f.store, f.index, roller, ch)
 	if err != nil {
-		return nil, errors.Stack(err)
+		return errors.Stack(err)
 	}
 
 	// write the multipart
 	h, err := store.WriteMultiPart(f.store, store.MultiPart{
-		Parts: hashes,
+		Parts: parts,
 	})
 	if err != nil {
-		return nil, errors.Stack(err)
+		return errors.Stack(err)
 	}
-	hashes = append(hashes, h)
+	if err := f.index.Entry(h); err != nil {
+		return errors.Stack(err)
+	}
+	ch <- ct.Result{Hash: h}
 	c.SetMultiPart(h)
-
-	// Write the entries, not including the final metadata hash
-	// The last hash is metadata, and we'll add that manually.
-	for _, h := range hashes {
-		if err := f.index.Entry(h); err != nil {
-			return nil, errors.Stack(err)
-		}
-	}
 
 	var meta FileMeta
 	// If the previous hash exists, load that metadata hash and populate the above
@@ -85,12 +92,12 @@ func (f *File) StoreContent(rc io.ReadCloser, mb []byte, c contenttype.Changes) 
 	if len(mb) == 0 {
 		if h, _ := c.GetPreviousMeta(); h != "" {
 			if err := store.ReadAndUnmarshal(f.store, h, &meta); err != nil {
-				return nil, errors.Stack(err)
+				return errors.Stack(err)
 			}
 		}
 	} else {
 		if err := json.Unmarshal(mb, &meta); err != nil {
-			return nil, errors.Stack(err)
+			return errors.Stack(err)
 		}
 	}
 
@@ -101,35 +108,44 @@ func (f *File) StoreContent(rc io.ReadCloser, mb []byte, c contenttype.Changes) 
 
 	// if there is an anchor, always return the anchor for a consistent UX
 	if meta.Anchor != "" {
-		hashes = append(hashes, meta.Anchor)
+		ch <- ct.Result{Hash: meta.Anchor}
 	}
 
 	h, err = WriteFileMeta(f.store, f.index, meta)
 	if err != nil {
-		return nil, errors.Stack(err)
+		return errors.Stack(err)
 	}
-	hashes = append(hashes, h)
+	ch <- ct.Result{Hash: meta.Anchor}
 
-	return hashes, nil
+	close(ch)
+	return nil
 }
 
-func (f *File) Meta(mb []byte, c contenttype.Changes) ([]string, error) {
-	var (
-		meta   FileMeta
-		hashes []string
-	)
+func (f *File) Meta(mb []byte, c contenttype.Changes) <-chan contenttype.Result {
+	results := make(chan contenttype.Result, 1)
+	go func() {
+		if err := f.meta(mb, c, results); err != nil {
+			results <- ct.Result{Error: err}
+		}
+		close(results)
+	}()
+	return results
+}
+
+func (f *File) meta(mb []byte, c contenttype.Changes, ch chan contenttype.Result) error {
+	var meta FileMeta
 
 	// If the previous hash exists, load that metadata hash and populate the above
 	// filemeta with the data in the hash.
 	if len(mb) == 0 {
 		if h, _ := c.GetPreviousMeta(); h != "" {
 			if err := store.ReadAndUnmarshal(f.store, h, &meta); err != nil {
-				return nil, errors.Stack(err)
+				return errors.Stack(err)
 			}
 		}
 	} else {
 		if err := json.Unmarshal(mb, &meta); err != nil {
-			return nil, errors.Stack(err)
+			return errors.Stack(err)
 		}
 	}
 
@@ -141,16 +157,16 @@ func (f *File) Meta(mb []byte, c contenttype.Changes) ([]string, error) {
 	// if there is an anchor, always return the anchor so that the caller can easily
 	// track the anchor of the content. For a consistent UX.
 	if meta.Anchor != "" {
-		hashes = append(hashes, meta.Anchor)
+		ch <- ct.Result{Hash: meta.Anchor}
 	}
 
 	h, err := WriteFileMeta(f.store, f.index, meta)
 	if err != nil {
-		return nil, errors.Stack(err)
+		return errors.Stack(err)
 	}
-	hashes = append(hashes, h)
+	ch <- ct.Result{Hash: h}
 
-	return hashes, nil
+	return nil
 }
 
 func WriteFileMeta(s store.Store, i index.Indexer, m FileMeta) (string, error) {
