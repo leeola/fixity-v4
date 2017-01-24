@@ -5,10 +5,8 @@ import (
 
 	"github.com/leeola/errors"
 	ct "github.com/leeola/kala/contenttype"
-	"github.com/leeola/kala/contenttype/ctutil"
 	"github.com/leeola/kala/index"
 	"github.com/leeola/kala/store"
-	"github.com/leeola/kala/store/roller/camli"
 )
 
 type Config struct {
@@ -38,42 +36,14 @@ func New(c Config) (*Data, error) {
 // TODO(leeola): centralize the common tasks in this method into helpers.
 // A lot of this (writing content roller and multipart, etc) is going to be
 // duplicated on every ContentType handler.
-func (f *Data) StoreContent(rc io.ReadCloser, v store.Version, c ct.Changes) ([]string, error) {
-	if rc == nil {
-		return nil, errors.New("missing ReadCloser")
-	}
-	defer rc.Close()
-
-	roller, err := camli.New(rc)
+func (d *Data) StoreContent(rc io.ReadCloser, v store.Version, c ct.Changes) ([]string, error) {
+	h, hashes, err := ct.WriteContent(d.store, d.index, rc)
 	if err != nil {
 		return nil, errors.Stack(err)
 	}
-
-	// write the actual content
-	hashes, err := ctutil.WritePartRoller(f.store, f.index, roller)
-	if err != nil {
-		return nil, errors.Stack(err)
-	}
-
-	// write the multipart
-	h, err := store.WriteMultiPart(f.store, store.MultiPart{
-		Parts: hashes,
-	})
-	if err != nil {
-		return nil, errors.Stack(err)
-	}
-	hashes = append(hashes, h)
 	c.SetMultiHash(h)
 
-	// Write the entries, not including the final metadata hash
-	// The last hash is metadata, and we'll add that manually.
-	for _, h := range hashes {
-		if err := f.index.Entry(h); err != nil {
-			return nil, errors.Stack(err)
-		}
-	}
-
-	metaHashes, err := f.StoreMeta(v, c)
+	metaHashes, err := d.StoreMeta(v, c)
 	if err != nil {
 		return nil, errors.Stack(err)
 	}
@@ -81,11 +51,11 @@ func (f *Data) StoreContent(rc io.ReadCloser, v store.Version, c ct.Changes) ([]
 	return append(hashes, metaHashes...), nil
 }
 
-func (f *Data) StoreMeta(v store.Version, c ct.Changes) ([]string, error) {
+func (d *Data) StoreMeta(v store.Version, c ct.Changes) ([]string, error) {
 	var meta ct.Meta
 
 	if v.Meta != "" {
-		if err := store.ReadAndUnmarshal(f.store, v.Meta, &meta); err != nil {
+		if err := store.ReadAndUnmarshal(d.store, v.Meta, &meta); err != nil {
 			return nil, errors.Stack(err)
 		}
 	}
@@ -93,7 +63,7 @@ func (f *Data) StoreMeta(v store.Version, c ct.Changes) ([]string, error) {
 	// update the meta with any changes matching the meta
 	meta.FromChanges(c)
 
-	mH, vH, err := ct.WriteMetaAndVersion(f.store, f.index, v, meta)
+	mH, vH, err := ct.WriteMetaAndVersion(d.store, d.index, v, meta)
 	if err != nil {
 		return nil, errors.Stack(err)
 	}
