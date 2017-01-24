@@ -33,10 +33,7 @@ func New(c Config) (*Data, error) {
 	}, nil
 }
 
-// TODO(leeola): centralize the common tasks in this method into helpers.
-// A lot of this (writing content roller and multipart, etc) is going to be
-// duplicated on every ContentType handler.
-func (d *Data) StoreContent(rc io.ReadCloser, v store.Version, c ct.Changes) ([]string, error) {
+func (d *Data) StoreContent(rc io.ReadCloser, v ct.Version, c ct.Changes) ([]string, error) {
 	h, hashes, err := ct.WriteContent(d.store, d.index, rc)
 	if err != nil {
 		return nil, errors.Stack(err)
@@ -51,8 +48,11 @@ func (d *Data) StoreContent(rc io.ReadCloser, v store.Version, c ct.Changes) ([]
 	return append(hashes, metaHashes...), nil
 }
 
-func (d *Data) StoreMeta(v store.Version, c ct.Changes) ([]string, error) {
+func (d *Data) StoreMeta(v ct.Version, c ct.Changes) ([]string, error) {
 	var meta ct.Meta
+
+	// Apply any changes to the version, as needed.
+	v.FromChanges(c)
 
 	if v.Meta != "" {
 		if err := store.ReadAndUnmarshal(d.store, v.Meta, &meta); err != nil {

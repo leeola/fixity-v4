@@ -1,10 +1,6 @@
 package contenttype
 
-import (
-	"io"
-
-	"github.com/leeola/kala/store"
-)
+import "io"
 
 // ContentType processes incoming data for a specific type with supplied metadata.
 //
@@ -19,10 +15,10 @@ import (
 // or blob chunks need to be written, it is responsible for doing so!
 type ContentType interface {
 	// StoreContent stores content with the given meta changes.
-	StoreContent(io.ReadCloser, store.Version, Changes) ([]string, error)
+	StoreContent(io.ReadCloser, Version, Changes) ([]string, error)
 
 	// StoreMeta applies just metadata changes.
-	StoreMeta(store.Version, Changes) ([]string, error)
+	StoreMeta(Version, Changes) ([]string, error)
 
 	// TODO(leeola): move the UnmarshallMetadata to this method.
 	// MetaToIndexable([]byte) (index.Indexable, error)

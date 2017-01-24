@@ -78,16 +78,12 @@ func (b *Bleve) Version(h string, v store.Version, m interface{}) error {
 	}
 	indexable["indexEntry"] = docCount
 
-	// TODO(leeola): enable this.
+	// if the version has an anchor set, index the indexable to the unique anchor
 	//
-	// if the metadata has an anchor set, index the metadata to the unique anchor
-	// if ahI, ok := m["anchor"]; ok {
-	// 	if ah, ok := ahI.(string); ok {
-	// 		if err := b.indexUniqueAnchor(h, ah, m); err != nil {
-	// 			return errors.Stack(err)
-	// 		}
-	// 	}
-	// }
+	// This will noop if there is no anchor in the version.
+	if err := b.indexUniqueAnchor(h, v, indexable); err != nil {
+		return errors.Stack(err)
+	}
 
 	return b.entryIndex.Index(h, indexable)
 }

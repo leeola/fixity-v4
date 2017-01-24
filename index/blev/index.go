@@ -1,11 +1,9 @@
 package blev
 
 import (
-	"time"
-
 	"github.com/blevesearch/bleve/document"
 	"github.com/leeola/errors"
-	"github.com/leeola/kala/index"
+	"github.com/leeola/kala/store"
 )
 
 func (b *Bleve) keyExists(k string) (bool, error) {
@@ -13,21 +11,17 @@ func (b *Bleve) keyExists(k string) (bool, error) {
 	return doc != nil, err
 }
 
-func (b *Bleve) indexUniqueAnchor(h, anchor string, m index.Metadata) error {
-	doc, err := b.anchorIndex.Document(anchor)
+func (b *Bleve) indexUniqueAnchor(h string, v store.Version, m map[string]interface{}) error {
+	if v.Anchor == "" {
+		return nil
+	}
+
+	doc, err := b.anchorIndex.Document(v.Anchor)
 	if err != nil {
 		return err
 	}
 
-	uploadedAtVal, ok := m["uploadedAt"]
-	if !ok {
-		return nil
-	}
-
-	newTime, ok := uploadedAtVal.(time.Time)
-	if !ok {
-		return nil
-	}
+	newTime := v.UploadedAt
 
 	if doc != nil {
 		for _, f := range doc.Fields {
@@ -71,5 +65,5 @@ func (b *Bleve) indexUniqueAnchor(h, anchor string, m index.Metadata) error {
 	// done and returned to the user.
 	uniqueM["_metaHash"] = h
 
-	return errors.Stack(b.anchorIndex.Index(anchor, uniqueM))
+	return errors.Stack(b.anchorIndex.Index(v.Anchor, uniqueM))
 }
