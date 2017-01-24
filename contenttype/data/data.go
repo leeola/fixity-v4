@@ -90,6 +90,9 @@ func (f *Data) StoreMeta(v store.Version, c ct.Changes) ([]string, error) {
 		}
 	}
 
+	// update the meta with any changes matching the meta
+	meta.FromChanges(c)
+
 	mH, vH, err := ct.WriteMetaAndVersion(f.store, f.index, v, meta)
 	if err != nil {
 		return nil, errors.Stack(err)
