@@ -1,0 +1,18 @@
+body #root {
+  height: 100%;
+}
+
+/* Not sure how to make semantic ui not double-pad, so removing it manually. */
+#search-header {
+  padding-bottom: 0;
+}
+
+.contenttype img {
+  width: 100%;
+  height: auto;
+}
+
+.contenttype video {
+  width: 100% !important;
+  height: auto !important;
+}

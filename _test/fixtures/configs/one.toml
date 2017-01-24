@@ -1,0 +1,17 @@
+BindAddr = "127.0.0.1:4001"
+
+# Create any missing paths for the various stores/databases that
+# may need to.
+CreateMissingPaths = true
+
+[simpleStore]
+StorePath = "one/store"
+
+[bleveIndex]
+BleveDir = "one/index"
+
+[boltDatabase]
+BoltPath = "one/db"
+
+[[peers]]
+Addr = "http://127.0.0.1:4002"
