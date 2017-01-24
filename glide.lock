@@ -1,12 +1,12 @@
-hash: 2eaa5a4167136ccc3a0b7c01bf66c5709ec99655224fe677954e27be193fc05e
-updated: 2016-12-19T17:38:30.816129455-08:00
+hash: 631ccdbc49d7fc43ee3ae030cb1680bcb9971f10c97e2f9b863d523e7af12fb3
+updated: 2017-01-24T05:42:02.054579515-08:00
 imports:
 - name: camlistore.org
-  version: fbf9f3747ebf7f7481325835fd24bb5b133eaedc
+  version: d1fd51fddc255f04b553250a2655580c2bafd729
   subpackages:
   - pkg/rollsum
 - name: github.com/blevesearch/bleve
-  version: 3b2bc30b544cd4589cf3ad8c04030329b143dce9
+  version: f94a790156bd63f67fddd91f89585babace39edb
   subpackages:
   - analysis
   - analysis/analyzer/standard
@@ -44,9 +44,11 @@ imports:
   version: db70c57796cc8c310613541dfade3dce627d09c7
   repo: https://github.com/blevesearch/segment
 - name: github.com/boltdb/bolt
-  version: 0d9f544bb94aac29c185968483459ef74d6deb5d
+  version: a705895fdad108f053eae7ee011ed94a0541ee13
 - name: github.com/BurntSushi/toml
   version: 99064174e013895bbd9b025c31100bd1d9b590ca
+- name: github.com/fatih/structs
+  version: a720dfa8df582c51dee1b36feabb906bde1588bd
 - name: github.com/golang/protobuf
   version: 655cdfa588ea190e901bc5590e65d5621688847c
   repo: https://github.com/golang/protobuf
@@ -69,7 +71,7 @@ imports:
 - name: github.com/pressly/chi
   version: fc6251083a856d5093f4b96d71252c5e56d9c1b5
 - name: github.com/rakyll/statik
-  version: e383bbf6b2ec1a2fb8492dfd152d945fb88919b6
+  version: a2b9c3533409cccb4bb188346bcfc789629a424d
   subpackages:
   - fs
 - name: github.com/steveyen/gtreap

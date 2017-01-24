@@ -17,3 +17,4 @@ import:
   subpackages:
   - fs
 - package: github.com/mitchellh/ioprogress
+- package: github.com/fatih/structs

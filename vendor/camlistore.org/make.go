@@ -80,7 +80,7 @@ var (
 	// Our temporary source tree root and build dir, i.e: buildGoPath + "src/camlistore.org"
 	buildSrcDir string
 	// files mirrored from camRoot to buildSrcDir
-	rxMirrored = regexp.MustCompile(`^([a-zA-Z0-9\-\_]+\.(?:blobs|camli|css|eot|err|gif|go|s|pb\.go|gpg|html|ico|jpg|js|json|xml|min\.css|min\.js|mp3|otf|png|svg|pdf|psd|tiff|ttf|woff|xcf|tar\.gz|gz|tar\.xz|tbz2|zip|sh))$`)
+	rxMirrored = regexp.MustCompile(`^([a-zA-Z0-9\-\_\.]+\.(?:blobs|camli|css|eot|err|gif|go|s|pb\.go|gpg|html|ico|jpg|js|json|xml|min\.css|min\.js|mp3|otf|png|svg|pdf|psd|tiff|ttf|woff|xcf|tar\.gz|gz|tar\.xz|tbz2|zip|sh))$`)
 	// base file exceptions for the above matching, so as not to complicate the regexp any further
 	mirrorIgnored = map[string]bool{
 		"publisher.js": true, // because this file is (re)generated after the mirroring
@@ -874,6 +874,9 @@ func verifyGoVersion() {
 	}
 	minorChar := strings.TrimPrefix(version, "go1.")[0]
 	if minorChar >= goVersionMinor && minorChar <= '9' {
+		if minorChar != goVersionMinor {
+			verifyGopherjsGoroot()
+		}
 		return
 	}
 	log.Fatalf("Your version of Go (%s) is too old. Camlistore requires Go 1.%c or later.", version, goVersionMinor)

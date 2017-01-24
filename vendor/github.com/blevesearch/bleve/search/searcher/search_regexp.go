@@ -21,7 +21,12 @@ import (
 	"github.com/blevesearch/bleve/search"
 )
 
-func NewRegexpSearcher(indexReader index.IndexReader, pattern *regexp.Regexp, field string, boost float64, explain bool) (search.Searcher, error) {
+// NewRegexpSearcher creates a searcher which will match documents that
+// contain terms which match the pattern regexp.  The match must be EXACT
+// matching the entire term.  The provided regexp SHOULD NOT start with ^
+// or end with $ as this can intefere with the implementation.  Separately,
+// matches will be checked to ensure they match the entire term.
+func NewRegexpSearcher(indexReader index.IndexReader, pattern *regexp.Regexp, field string, boost float64, options search.SearcherOptions) (search.Searcher, error) {
 
 	prefixTerm, complete := pattern.LiteralPrefix()
 	var candidateTerms []string
@@ -44,7 +49,7 @@ func NewRegexpSearcher(indexReader index.IndexReader, pattern *regexp.Regexp, fi
 		}
 	}
 	for _, cterm := range candidateTerms {
-		qsearcher, err := NewTermSearcher(indexReader, cterm, field, boost, explain)
+		qsearcher, err := NewTermSearcher(indexReader, cterm, field, boost, options)
 		if err != nil {
 			qsearchersClose()
 			return nil, err
@@ -53,7 +58,7 @@ func NewRegexpSearcher(indexReader index.IndexReader, pattern *regexp.Regexp, fi
 	}
 
 	// build disjunction searcher of these ranges
-	searcher, err := NewDisjunctionSearcher(indexReader, qsearchers, 0, explain)
+	searcher, err := NewDisjunctionSearcher(indexReader, qsearchers, 0, options)
 	if err != nil {
 		qsearchersClose()
 		return nil, err
@@ -79,7 +84,8 @@ func findRegexpCandidateTerms(indexReader index.IndexReader, pattern *regexp.Reg
 	// enumerate the terms and check against regexp
 	tfd, err := fieldDict.Next()
 	for err == nil && tfd != nil {
-		if pattern.MatchString(tfd.Term) {
+		matchPos := pattern.FindStringIndex(tfd.Term)
+		if matchPos != nil && matchPos[0] == 0 && matchPos[1] == len(tfd.Term) {
 			rv = append(rv, tfd.Term)
 			if tooManyClauses(len(rv)) {
 				return rv, tooManyClausesErr()
