@@ -17,8 +17,7 @@ func (n *Node) RebuildIndex() error {
 		return errors.Wrap(err, "failed to reset index")
 	}
 
-	n.log.Warn("rebuilding disabled for refactoring!")
-	return nil
+	n.log.Warn("full rebuilding disabled for refactoring!")
 
 	// ch, err := n.store.List()
 	// if err != nil {
@@ -58,10 +57,10 @@ func (n *Node) RebuildIndex() error {
 	// 	}
 	// }
 
-	// // Now that we're done indexing, store the new index version in the node db.
-	// if err := n.db.SetNodeIndexVersion(n.index.Version()); err != nil {
-	// 	return errors.Wrap(err, "failed to store new index version")
-	// }
+	// Now that we're done indexing, store the new index version in the node db.
+	if err := n.db.SetNodeIndexVersion(n.index.IndexVersion()); err != nil {
+		return errors.Wrap(err, "failed to store new index version")
+	}
 
-	// return nil
+	return nil
 }
