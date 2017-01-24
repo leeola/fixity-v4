@@ -12,6 +12,7 @@ import (
 
 	"github.com/leeola/kala/client"
 	"github.com/leeola/kala/index"
+	"github.com/leeola/kala/store"
 	"github.com/leeola/kala/util/strutil"
 	"github.com/urfave/cli"
 )
@@ -143,22 +144,44 @@ func queryCommand(ctx *cli.Context) error {
 	return w.Flush()
 }
 
-func hashToMap(c *client.Client, h string) (map[string]interface{}, error) {
-	rc, err := c.GetBlob(h)
+func hashToMap(c *client.Client, versionH string) (map[string]interface{}, error) {
+	versionRc, err := c.GetBlob(versionH)
 	if err != nil {
 		return nil, err
 	}
-	defer rc.Close()
+	defer versionRc.Close()
 
-	b, err := ioutil.ReadAll(rc)
+	b, err := ioutil.ReadAll(versionRc)
 	if err != nil {
 		return nil, err
 	}
 
-	blob := map[string]interface{}{}
-	if err := json.Unmarshal(b, &blob); err != nil {
+	var version store.Version
+	if err := json.Unmarshal(b, &version); err != nil {
 		return nil, err
 	}
 
-	return blob, nil
+	metaFields := map[string]interface{}{}
+
+	// If we can't load a Meta for the version, we can't get any metadata from it.
+	if version.Meta == "" {
+		return metaFields, nil
+	}
+
+	metaRc, err := c.GetBlob(version.Meta)
+	if err != nil {
+		return nil, err
+	}
+	defer metaRc.Close()
+
+	b, err = ioutil.ReadAll(metaRc)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := json.Unmarshal(b, &metaFields); err != nil {
+		return nil, err
+	}
+
+	return metaFields, nil
 }
