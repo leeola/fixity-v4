@@ -11,9 +11,17 @@ import (
 )
 
 type readerData struct {
-	MultiPart string   `json:"multiPart"`
-	Parts     []string `json:"parts"`
-	Part      []byte   `json:"part"`
+	// the reader data is a Version
+	Meta string `json:"meta"`
+
+	// the reader data is a meta
+	MultiPart string `json:"multiPart"`
+
+	// the reader data is a multi part
+	Parts []string `json:"parts"`
+
+	// the reader data is a part
+	Part []byte `json:"part"`
 }
 
 // HashWithBytes is used by Reader to return the data of a hash if needed.
@@ -119,6 +127,9 @@ func (r *Reader) UnmarshalHashes(b []byte) error {
 	}
 
 	switch {
+	case d.Meta != "":
+		r.AddHashes(d.Meta)
+
 	case d.MultiPart != "":
 		r.AddHashes(d.MultiPart)
 

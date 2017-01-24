@@ -23,7 +23,7 @@ func (n *Node) initRouter() {
 	n.router.Put("/blob/:hash", handlers.PutBlobHandler)
 	n.router.Get("/blob/:hash/contenttype", handlers.GetBlobContentTypeHandler)
 
-	// n.router.Get("/download/:hash", handlers.GetDownloadHandler)
+	n.router.Get("/download/:hash", handlers.GetDownloadHandler)
 	// n.router.Get("/download/:hash/blob",
 	// 	handlers.GetDownloadBlobHandler(n.store, n.index))
 	// n.router.Get("/download/:hash/meta/export", handlers.GetMetaExportHandler)

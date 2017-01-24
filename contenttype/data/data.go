@@ -38,7 +38,7 @@ func (d *Data) StoreContent(rc io.ReadCloser, v ct.Version, c ct.Changes) ([]str
 	if err != nil {
 		return nil, errors.Stack(err)
 	}
-	c.SetMultiHash(h)
+	c.SetMultiPart(h)
 
 	metaHashes, err := d.StoreMeta(v, c)
 	if err != nil {
