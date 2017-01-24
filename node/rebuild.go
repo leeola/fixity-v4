@@ -13,11 +13,12 @@ func (n *Node) IsNewIndex() bool {
 func (n *Node) RebuildIndex() error {
 	n.log.Info("rebuilding index")
 
-	return errors.New("disabled for refactoring")
+	if err := n.index.Reset(); err != nil {
+		return errors.Wrap(err, "failed to reset index")
+	}
 
-	// if err := n.index.Reset(); err != nil {
-	// 	return errors.Wrap(err, "failed to reset index")
-	// }
+	n.log.Warn("rebuilding disabled for refactoring!")
+	return nil
 
 	// ch, err := n.store.List()
 	// if err != nil {
