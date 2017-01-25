@@ -22,17 +22,6 @@ type Index interface {
 // the ContentType Uploaders as they are the furthest downstream and know the
 // most about the data being uploaded.
 type Indexer interface {
-	// Meta indexes the given metadata to match the given hash.
-	//
-	// Note that indexing *just* metadata is less useful, as a Version should likely
-	// be included in the indexed values otherwise the indexer can't present
-	// the latest version.
-	//
-	// Ie, Metadata commonly has no ordering or linking data between "mutations"
-	// of the metadata. The store.Version struct is responsible for that, and should
-	// be indexed via Indexer.Version.
-	Meta(h string, m interface{}) error
-
 	// Version indexes the given Version and Metadata together.
 	//
 	// This will be the main use case of
