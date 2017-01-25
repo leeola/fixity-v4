@@ -44,7 +44,7 @@ type Version struct {
 	PreviousVersionCount int       `json:"previousVersionCount"`
 	PreviousVersion      string    `json:"previousVersion"`
 
-	ChangeLog string `json:"changeLog"`
+	ChangeLog string `json:"changeLog,omitempty"`
 }
 
 type Meta struct {
