@@ -37,14 +37,7 @@ func (b *Bleve) Version(h string, v store.Version, m interface{}) error {
 	// i'm using for bleve.. improvements welcome.
 	indexable := map[string]interface{}{}
 
-	for _, f := range structs.Fields(m) {
-		// trim the omitempty suffix, as in: `json:"foo,omitempty"` or `json:",omitempty"`
-		key := strings.TrimSuffix(f.Tag("json"), ",omitempty")
-		if key == "" {
-			key = f.Name()
-		}
-		indexable[key] = f.Value()
-	}
+	mapFields(indexable, structs.Fields(m))
 
 	if _, ok := indexable["anchor"]; ok {
 		return errors.New("Version and Meta field overlap: anchor")
@@ -151,4 +144,26 @@ func (b *Bleve) Entry(h string) error {
 	}
 
 	return b.entryIndex.Index(h, m)
+}
+
+func mapFields(m map[string]interface{}, fs []*structs.Field) {
+	for _, f := range fs {
+		mapField(m, f)
+	}
+}
+
+func mapField(m map[string]interface{}, f *structs.Field) {
+	if f.IsEmbedded() {
+		mapFields(m, f.Fields())
+		return
+	}
+
+	// trim the omitempty suffix, as in:
+	// `json:"foo,omitempty"` or `json:",omitempty"`
+	key := strings.TrimSuffix(f.Tag("json"), ",omitempty")
+	if key == "" {
+		key = f.Name()
+	}
+
+	m[key] = f.Value()
 }
