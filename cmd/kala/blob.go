@@ -29,13 +29,16 @@ func blobCommand(c *cli.Context) error {
 	}
 	defer rc.Close()
 
-	var r io.Reader = rc
+	b, err := ioutil.ReadAll(rc)
+	if err != nil {
+		return err
+	}
+
 	if !c.Bool("allow-content") {
-		teeR, cType, err := getContentType(r)
+		cType, err := getContentType(b)
 		if err != nil {
 			return err
 		}
-		r = teeR
 
 		if cType == "Part" {
 			Printlnf(`To prevent large content bytes from spamming your console,
@@ -48,47 +51,39 @@ use the --allow-content flag.
 		}
 	}
 
-	io.Copy(os.Stdout, r)
+	var buf bytes.Buffer
+	if err := json.Indent(&buf, b, "", "\t"); err != nil {
+		return err
+	}
 
-	return nil
+	_, err = io.Copy(os.Stdout, &buf)
+	return err
 }
 
-func getContentType(r io.Reader) (io.Reader, string, error) {
-	var copyR bytes.Buffer
-
-	// Tee the reader so we can check it's type.
-	teeR := io.TeeReader(r, &copyR)
-
-	b, err := ioutil.ReadAll(teeR)
-	if err != nil {
-		return nil, "", err
-	}
-
+func getContentType(b []byte) (string, error) {
 	var c struct {
-		AnchorRand int
-		Parts      []string
-		Part       []byte
-
-		Anchor string
-		Multi  string
+		Meta   string
+		Parts  []string
+		Part   []byte
+		Hashes []string
 	}
 	if err := json.Unmarshal(b, &c); err != nil {
-		return nil, "", err
+		return "", err
 	}
 
 	var cType string
 	switch {
+	case c.Meta != "":
+		cType = "Version"
 	case len(c.Part) != 0:
 		cType = "Part"
 	case len(c.Parts) != 0:
 		cType = "MultiPart"
-	case c.AnchorRand != 0:
-		cType = "Perma"
-	case c.Anchor != "" || c.Multi != "":
-		cType = "Meta"
+	case len(c.Hashes) != 0:
+		cType = "MultiHash"
 	default:
 		cType = "Unknown"
 	}
 
-	return &copyR, cType, nil
+	return cType, nil
 }
