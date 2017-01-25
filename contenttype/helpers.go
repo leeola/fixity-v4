@@ -38,35 +38,57 @@ func WriteMetaAndVersion(s store.Store, i index.Indexer, v Version, m interface{
 	return metaH, versionH, nil
 }
 
-func VersionFromChanges(s store.Store, q index.Queryer, c Changes) (Version, error) {
-	var version store.Version
-
-	// TODO(leeola): enable anchor lookups.
+func ReadVersionFromChanges(s store.Store, q index.Queryer, c Changes) (Version, error) {
 	anchor, _ := c.GetAnchor()
-	newAnchor, _ := c.GetNewAnchor()
-	if anchor != "" || newAnchor {
-		return Version{}, errors.New("anchor versioning is not implemented")
-	}
+	previousVersion, _ := c.GetPreviousVersion()
+	// If there is no previous version to base this mutation off of, then query the
+	// indexer for the most recent hash for this anchor.
+	if previousVersion == "" && anchor != "" {
+		qu := index.Query{
+			SearchVersions: false,
+			Metadata: index.Metadata{
+				// NOTE: Putting the hash in quotes because the querystring in bleve
+				// has issues with a hyphenated hashstring. This is annoying, and
+				// should be fixed somehow...
+				"anchor": `"` + anchor + `"`,
+			},
+		}
 
-	prevVer, ok := c.GetPreviousVersion()
-	if ok {
-		v, err := store.ReadVersion(s, prevVer)
+		result, err := q.QueryOne(qu)
 		if err != nil {
 			return Version{}, errors.Stack(err)
 		}
-		version = v
-	}
-	version.PreviousVersion = prevVer
-	version.PreviousVersionCount += 1
 
-	meta, ok := c.GetMeta()
-	if ok {
-		version.Meta = meta
+		if result.Hash.Hash != "" {
+			c.SetPreviousVersion(result.Hash.Hash)
+		}
+	}
+
+	var version Version
+	// if a previous version is specified, read it from the store.
+	// This could be from a the caller or queried from the anchor.
+	if previousVersion, ok := c.GetPreviousVersion(); ok && previousVersion != "" {
+		if err := store.ReadAndUnmarshal(s, previousVersion, &version); err != nil {
+			return Version{}, errors.Stack(err)
+		}
+		version.PreviousVersionCount += 1
+	}
+
+	// modify the version struct with the fields defined in the changes map.
+	// Note that this will include the PreviousVersion from above.
+	version.FromChanges(c)
+
+	if newAnchor, _ := c.GetNewAnchor(); newAnchor {
+		a, err := store.NewAnchor()
+		if err != nil {
+			return Version{}, errors.Stack(err)
+		}
+		version.Anchor = a
 	}
 
 	// We might be returning a zero value version, and that's intended. It depends
 	// on if the user supplied change info to locate the version or not.
-	return Version{}, nil
+	return version, nil
 }
 
 // WriteContent stores and indexes the given readcloser, returning the hashes.

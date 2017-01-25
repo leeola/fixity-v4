@@ -22,6 +22,9 @@ func (ver *Version) FromChanges(c Changes) {
 	if v, ok := c.GetPreviousVersion(); ok {
 		ver.PreviousVersion = v
 	}
+	if v, ok := c.GetMeta(); ok {
+		ver.Meta = v
+	}
 
 	// TODO(leeola): enabled uploaded at setting. Optional! If not supplied,
 	// automatic.

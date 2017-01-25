@@ -51,9 +51,6 @@ func (d *Data) StoreContent(rc io.ReadCloser, v ct.Version, c ct.Changes) ([]str
 func (d *Data) StoreMeta(v ct.Version, c ct.Changes) ([]string, error) {
 	var meta ct.Meta
 
-	// Apply any changes to the version, as needed.
-	v.FromChanges(c)
-
 	if v.Meta != "" {
 		if err := store.ReadAndUnmarshal(d.store, v.Meta, &meta); err != nil {
 			return nil, errors.Stack(err)
