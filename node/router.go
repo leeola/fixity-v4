@@ -23,15 +23,21 @@ func (n *Node) initRouter() {
 	n.router.Put("/blob/:hash", handlers.PutBlobHandler)
 	n.router.Get("/blob/:hash/contenttype", handlers.GetBlobContentTypeHandler)
 
-	n.router.Get("/download/:hash", handlers.GetDownloadHandler)
-	// n.router.Get("/download/:hash/blob",
-	// 	handlers.GetDownloadBlobHandler(n.store, n.index))
-	// n.router.Get("/download/:hash/meta/export", handlers.GetMetaExportHandler)
+	// these routes exists for historical reasons, will be removing them once
+	// the routes get changes in the client.
+	n.router.Get("/download/:anchor", handlers.GetDownloadHandler)
+	n.router.Get("/download/:anchor/blob",
+		handlers.GetDownloadBlobHandler(n.store, n.index))
+
+	n.router.Get("/resolve/:anchor/download", handlers.GetDownloadHandler)
+	n.router.Get("/resolve/:anchor/blob",
+		handlers.GetDownloadBlobHandler(n.store, n.index))
+	// n.router.Get("/anchor/:hash/meta/export", handlers.GetMetaExportHandler)
 
 	n.router.Post("/upload", handlers.PostUploadHandler)
 	n.router.Post("/upload/meta", handlers.PostUploadMetaHandler)
 	// multihash and meta currently do the same exact thing, but the
 	// api endpoint is being used to allow changes in UX specifically for
 	// multihash mutation.
-	// n.router.Post("/upload/multihash", n.PostUploadMetaHandler)
+	n.router.Post("/upload/multihash", handlers.PostUploadMetaHandler)
 }

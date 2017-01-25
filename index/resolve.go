@@ -22,7 +22,7 @@ func ResolveHashOrAnchor(s store.Store, i Queryer, a string) (string, error) {
 
 	q := Query{
 		Metadata: Metadata{
-			"anchor": a,
+			"anchor": `"` + a + `"`,
 		},
 	}
 
