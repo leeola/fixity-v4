@@ -18,3 +18,4 @@ import:
   - fs
 - package: github.com/mitchellh/ioprogress
 - package: github.com/fatih/structs
+- package: github.com/nwidger/jsoncolor
