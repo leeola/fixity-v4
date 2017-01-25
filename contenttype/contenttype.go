@@ -22,16 +22,6 @@ type ContentType interface {
 
 	// TODO(leeola): move the UnmarshallMetadata to this method.
 	// MetaToIndexable([]byte) (index.Indexable, error)
-
-	// MetaToChanges unmarshalls the given bytes into changes.
-	//
-	// The purpose of this (similar to  MetaToIndexable), is to export metadata
-	// to be imported at a future time and passed in as StoreContent.
-	//
-	// Note that the format of Changes is up to the ContentType implementor.
-	// The only requirement is that the produced Changes struct is deterministic
-	// when returned and uploaded again.
-	MetaToChanges([]byte) (Changes, error)
 }
 
 // // TODO(leeola): deprecate, move into ContentType interface
