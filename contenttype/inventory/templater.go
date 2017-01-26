@@ -189,27 +189,29 @@ func (tr *Templater) FetchChildren(parent string) ([]Meta, error) {
 }
 
 func (tr *Templater) FetchSiblings(currentChild, parent string) ([]Meta, error) {
-	q := index.Query{
-		Metadata: index.Metadata{
-			"container": `"` + parent + `"`,
-		},
-	}
-	results, err := tr.client.Query(q)
-	if err != nil {
-		return nil, err
-	}
+	// Disabled until it can be updated to the new anchor spec/etc.
+	// q := index.Query{
+	// 	Metadata: index.Metadata{
+	// 		"container": `"` + parent + `"`,
+	// 	},
+	// }
+	// results, err := tr.client.Query(q)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
 	var children []Meta
-	for _, h := range results.Hashes {
-		var m Meta
-		if err := tr.getAndUnmarshal(h.Hash, &m); err != nil {
-			return nil, err
-		}
-		if m.Anchor == currentChild {
-			continue
-		}
-		children = append(children, m)
-	}
+	// Disabled until it can be updated to the new anchor spec/etc.
+	// for _, h := range results.Hashes {
+	// 	var m Meta
+	// 	if err := tr.getAndUnmarshal(h.Hash, &m); err != nil {
+	// 		return nil, err
+	// 	}
+	// 	if m.Anchor == currentChild {
+	// 		continue
+	// 	}
+	// 	children = append(children, m)
+	// }
 
 	return children, nil
 }

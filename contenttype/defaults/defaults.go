@@ -5,6 +5,7 @@ import (
 	"github.com/leeola/kala/contenttype/data"
 	"github.com/leeola/kala/contenttype/file"
 	"github.com/leeola/kala/contenttype/image"
+	"github.com/leeola/kala/contenttype/inventory"
 	"github.com/leeola/kala/index"
 	"github.com/leeola/kala/store"
 )
@@ -17,13 +18,13 @@ func DefaultTypes(s store.Store, i index.Indexer) (map[string]ct.ContentType, er
 	if err != nil {
 		return nil, err
 	}
-	m["data"] = cs
+	m[inventory.TypeKey] = cs
 
-	// cs, err := inventory.New(inventory.Config{Store: s, Index: i})
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// m[inventory.TypeKey] = cs
+	cs, err = inventory.New(inventory.Config{Store: s, Index: i})
+	if err != nil {
+		return nil, err
+	}
+	m[inventory.TypeKey] = cs
 
 	cs, err = file.New(file.Config{Store: s, Index: i})
 	if err != nil {
@@ -41,7 +42,7 @@ func DefaultTypes(s store.Store, i index.Indexer) (map[string]ct.ContentType, er
 	if err != nil {
 		return nil, err
 	}
-	m["image"] = cs
+	m[image.TypeKey] = cs
 
 	// cs, err = folder.New(folder.Config{Store: s, Index: i})
 	// if err != nil {

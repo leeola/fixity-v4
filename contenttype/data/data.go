@@ -10,6 +10,9 @@ import (
 	"github.com/leeola/kala/store"
 )
 
+// The key used to address this contenttype by in maps.
+const TypeKey = "inventory"
+
 type Config struct {
 	Store store.Store
 	Index index.Indexer
