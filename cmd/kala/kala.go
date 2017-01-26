@@ -120,19 +120,6 @@ func main() {
 			Usage:  "print the id of the connected node",
 			Action: idCommand,
 		},
-		{
-			Name: "export",
-			Flags: []cli.Flag{
-				cli.StringFlag{
-					Name: "d, dest",
-				},
-			},
-			Action: exportCommand,
-		},
-		{
-			Name:   "import",
-			Action: importCommand,
-		},
 	}
 
 	app.Run(os.Args)
