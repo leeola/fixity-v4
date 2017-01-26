@@ -1,9 +1,6 @@
 package file
 
-import (
-	ct "github.com/leeola/kala/contenttype"
-	"github.com/leeola/kala/index"
-)
+import ct "github.com/leeola/kala/contenttype"
 
 type Meta struct {
 	ct.Meta
@@ -18,22 +15,15 @@ func (m *Meta) FromChanges(c ct.Changes) {
 	m.Meta.FromChanges(c)
 	m.FileMeta.FromChanges(c)
 
-	// If the name wasn't explicitly set (ie, to an empty value), and
-	// the name is empty and the filename is not empty, default the name to
-	// the filename.
-	if _, ok := c.GetString("name"); !ok && m.Name == "" && m.Filename != "" {
-		m.Name = m.Filename
-	}
+	// apply common mutations to the various embedded structs.
+	// these exist because some of the embedded values will be decided based
+	// on other values, of which they may not be in scope. These methods
+	// will do nothing as needed.
+	m.Meta.NameFromFilename(m.Filename)
 }
 
 func (m *FileMeta) FromChanges(c ct.Changes) {
 	if f, ok := c.GetString("filename"); ok {
 		m.Filename = f
-	}
-}
-
-func (m FileMeta) ToMetadata(im index.Metadata) {
-	if m.Filename != "" {
-		im["filename"] = m.Filename
 	}
 }

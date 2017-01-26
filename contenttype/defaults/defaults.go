@@ -4,6 +4,7 @@ import (
 	ct "github.com/leeola/kala/contenttype"
 	"github.com/leeola/kala/contenttype/data"
 	"github.com/leeola/kala/contenttype/file"
+	"github.com/leeola/kala/contenttype/image"
 	"github.com/leeola/kala/index"
 	"github.com/leeola/kala/store"
 )
@@ -36,11 +37,11 @@ func DefaultTypes(s store.Store, i index.Indexer) (map[string]ct.ContentType, er
 	// }
 	// m["video"] = cs
 
-	// cs, err = image.New(image.Config{Store: s, Index: i})
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// m["image"] = cs
+	cs, err = image.New(image.Config{Store: s, Index: i})
+	if err != nil {
+		return nil, err
+	}
+	m["image"] = cs
 
 	// cs, err = folder.New(folder.Config{Store: s, Index: i})
 	// if err != nil {

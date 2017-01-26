@@ -1,7 +1,6 @@
 package contenttype
 
 import (
-	"github.com/leeola/kala/index"
 	"github.com/leeola/kala/store"
 	"github.com/leeola/kala/util/strutil"
 )
@@ -63,18 +62,11 @@ func (m Meta) ToChanges(c Changes) {
 	}
 }
 
-// ToMetadata implements index.ToMetadata()
-func (m Meta) ToMetadata(im index.Metadata) {
-	if m.MultiHash != "" {
-		im["multiHash"] = m.MultiHash
-	}
-	if m.MultiPart != "" {
-		im["multiPart"] = m.MultiPart
-	}
-	if m.Name != "" {
-		im["name"] = m.Name
-	}
-	if m.Tags != nil {
-		im["tags"] = m.Tags
+func (m *Meta) NameFromFilename(filename string) {
+	// If the name wasn't explicitly set (ie, to an empty value), and
+	// the name is empty and the filename is not empty, default the name to
+	// the filename.
+	if m.Name == "" && filename != "" {
+		m.Name = filename
 	}
 }

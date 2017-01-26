@@ -37,14 +37,14 @@ func New(c Config) (*File, error) {
 	}, nil
 }
 
-func (d *File) StoreContent(rc io.ReadCloser, v ct.Version, c ct.Changes) ([]string, error) {
-	h, hashes, err := ct.WriteContent(d.store, d.index, rc)
+func (t *File) StoreContent(rc io.ReadCloser, v ct.Version, c ct.Changes) ([]string, error) {
+	h, hashes, err := ct.WriteContent(t.store, t.index, rc)
 	if err != nil {
 		return nil, errors.Stack(err)
 	}
 	c.SetMultiPart(h)
 
-	metaHashes, err := d.StoreMeta(v, c)
+	metaHashes, err := t.StoreMeta(v, c)
 	if err != nil {
 		return nil, errors.Stack(err)
 	}
@@ -52,11 +52,11 @@ func (d *File) StoreContent(rc io.ReadCloser, v ct.Version, c ct.Changes) ([]str
 	return append(hashes, metaHashes...), nil
 }
 
-func (d *File) StoreMeta(v ct.Version, c ct.Changes) ([]string, error) {
+func (t *File) StoreMeta(v ct.Version, c ct.Changes) ([]string, error) {
 	var meta Meta
 
 	if v.Meta != "" {
-		if err := store.ReadAndUnmarshal(d.store, v.Meta, &meta); err != nil {
+		if err := store.ReadAndUnmarshal(t.store, v.Meta, &meta); err != nil {
 			return nil, errors.Stack(err)
 		}
 	}
@@ -64,7 +64,7 @@ func (d *File) StoreMeta(v ct.Version, c ct.Changes) ([]string, error) {
 	// update the meta with any changes matching the meta
 	meta.FromChanges(c)
 
-	mH, vH, err := ct.WriteMetaAndVersion(d.store, d.index, v, meta)
+	mH, vH, err := ct.WriteMetaAndVersion(t.store, t.index, v, meta)
 	if err != nil {
 		return nil, errors.Stack(err)
 	}
@@ -72,7 +72,7 @@ func (d *File) StoreMeta(v ct.Version, c ct.Changes) ([]string, error) {
 	return []string{mH, vH}, nil
 }
 
-func (t *File) UnmarshalMeta(b []byte) (interface{}, error) {
+func (*File) UnmarshalMeta(b []byte) (interface{}, error) {
 	var meta Meta
 
 	if err := json.Unmarshal(b, &meta); err != nil {
