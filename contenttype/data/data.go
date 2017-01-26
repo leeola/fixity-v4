@@ -1,6 +1,7 @@
 package data
 
 import (
+	"encoding/json"
 	"io"
 
 	"github.com/leeola/errors"
@@ -68,6 +69,12 @@ func (d *Data) StoreMeta(v ct.Version, c ct.Changes) ([]string, error) {
 	return []string{mH, vH}, nil
 }
 
-func (d *Data) MetaToChanges([]byte) (ct.Changes, error) {
-	return nil, errors.New("not implemented")
+func (t *Data) UnmarshalMeta(b []byte) (interface{}, error) {
+	var meta ct.Meta
+
+	if err := json.Unmarshal(b, &meta); err != nil {
+		return nil, errors.Stack(err)
+	}
+
+	return meta, nil
 }

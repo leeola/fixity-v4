@@ -13,14 +13,14 @@ import (
 // IsVersionWithBytes checks if the given hash is a Version, and returns the bytes.
 //
 // By returning the bytes, the caller can check if the content is a contentType.
-func IsVersionWithBytes(s Store, h string) (bool, []byte, error) {
-	var a Version
-	b, err := ReadAndUnmarshalWithBytes(s, h, &a)
+func IsVersionWithBytes(s Store, h string) (bool, Version, []byte, error) {
+	var v Version
+	b, err := ReadAndUnmarshalWithBytes(s, h, &v)
 	if err != nil {
-		return false, nil, errors.Stack(err)
+		return false, Version{}, nil, errors.Stack(err)
 	}
 
-	return a.Meta != "", b, nil
+	return v.Meta != "", v, b, nil
 }
 
 // NewAnchor generates random bytes and returns the hex of those bytes.
@@ -126,19 +126,23 @@ func MultiPartFromReader(io.Reader) (MultiPart, error) {
 	return MultiPart{}, errors.New("not implemented")
 }
 
-func ReadAndUnmarshal(s Store, h string, v interface{}) error {
-	_, err := ReadAndUnmarshalWithBytes(s, h, v)
-	return err
-}
-
-func ReadAndUnmarshalWithBytes(s Store, h string, v interface{}) ([]byte, error) {
+func ReadAll(s Store, h string) ([]byte, error) {
 	rc, err := s.Read(h)
 	if err != nil {
 		return nil, errors.Stack(err)
 	}
 	defer rc.Close()
 
-	b, err := ioutil.ReadAll(rc)
+	return ioutil.ReadAll(rc)
+}
+
+func ReadAndUnmarshal(s Store, h string, v interface{}) error {
+	_, err := ReadAndUnmarshalWithBytes(s, h, v)
+	return err
+}
+
+func ReadAndUnmarshalWithBytes(s Store, h string, v interface{}) ([]byte, error) {
+	b, err := ReadAll(s, h)
 	if err != nil {
 		return nil, errors.Stack(err)
 	}

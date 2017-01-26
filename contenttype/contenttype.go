@@ -14,23 +14,14 @@ import "io"
 // The ContentType is responsible for writing raw blobs as needed. If multipart
 // or blob chunks need to be written, it is responsible for doing so!
 type ContentType interface {
-	// StoreContent stores content with the given meta changes.
+	// StoreContent stores and indexes content with the given meta changes.
 	StoreContent(io.ReadCloser, Version, Changes) ([]string, error)
 
-	// StoreMeta applies just metadata changes.
+	// StoreMeta stores and indexes the version and meta changes.
 	StoreMeta(Version, Changes) ([]string, error)
 
-	// TODO(leeola): move the UnmarshallMetadata to this method.
-	// MetaToIndexable([]byte) (index.Indexable, error)
+	// UnmarshalMeta indexes already stored version and given metadata bytes.
+	//
+	// The purpose of this is to restore an index for the given Metadata.
+	UnmarshalMeta([]byte) (interface{}, error)
 }
-
-// // TODO(leeola): deprecate, move into ContentType interface
-// type MetadataUnmarshaller interface {
-// 	UnmarshalMetadata([]byte) (index.Indexable, error)
-// }
-//
-// type MetadataUnmarshallerFunc func([]byte) (index.Indexable, error)
-//
-// func (fn MetadataUnmarshallerFunc) UnmarshalMetadata(b []byte) (index.Indexable, error) {
-// 	return fn(b)
-// }

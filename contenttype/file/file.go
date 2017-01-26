@@ -1,6 +1,7 @@
 package file
 
 import (
+	"encoding/json"
 	"io"
 
 	"github.com/leeola/errors"
@@ -71,28 +72,12 @@ func (d *File) StoreMeta(v ct.Version, c ct.Changes) ([]string, error) {
 	return []string{mH, vH}, nil
 }
 
-func (f *File) MetaToChanges(b []byte) (ct.Changes, error) {
-	return nil, errors.New("not implemented")
-	// m := FileMeta{}
-	// if len(b) != 0 {
-	// 	if err := json.Unmarshal(b, &m); err != nil {
-	// 		return nil, errors.Stack(err)
-	// 	}
-	// }
+func (t *File) UnmarshalMeta(b []byte) (interface{}, error) {
+	var meta Meta
 
-	// c := contenttype.Changes{}
-	// m.ToChanges(c)
-	// return c, nil
+	if err := json.Unmarshal(b, &meta); err != nil {
+		return nil, errors.Stack(err)
+	}
+
+	return meta, nil
 }
-
-// func UnmarshalMetadata(b []byte) (index.Indexable, error) {
-// 	m := FileMeta{}
-//
-// 	if len(b) != 0 {
-// 		if err := json.Unmarshal(b, &m); err != nil {
-// 			return nil, errors.Stack(err)
-// 		}
-// 	}
-//
-// 	return m, nil
-// }
