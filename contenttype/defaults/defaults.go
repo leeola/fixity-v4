@@ -8,15 +8,7 @@ import (
 	"github.com/leeola/kala/store"
 )
 
-// func DefaultUnmarshallers() map[string]ct.MetadataUnmarshaller {
-// 	m := map[string]ct.MetadataUnmarshaller{
-// 	// "file": ct.MetadataUnmarshallerFunc(file.UnmarshalMetadata),
-// 	}
-//
-// 	return m
-// }
-
-func DefaultStorers(s store.Store, i index.Indexer) (map[string]ct.ContentType, error) {
+func DefaultTypes(s store.Store, i index.Indexer) (map[string]ct.ContentType, error) {
 	m := map[string]ct.ContentType{}
 
 	var cs ct.ContentType

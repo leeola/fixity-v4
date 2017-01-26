@@ -30,22 +30,19 @@ type Config struct {
 	Index index.Index `toml:"-"`
 
 	// optional
-	ContentStorers map[string]ct.ContentType
-	// Unmarshallers  map[string]contenttype.MetadataUnmarshaller
-	Router *chi.Mux     `toml:"-"`
-	Log    log15.Logger `toml:"-"`
+	ContentTypes map[string]ct.ContentType
+	Router       *chi.Mux     `toml:"-"`
+	Log          log15.Logger `toml:"-"`
 }
 
 type Node struct {
-	bindAddr string
-	log      log15.Logger
-	index    index.Index
-	store    store.Store
-	db       database.Database
-	router   *chi.Mux
-
-	contentStorers map[string]contenttype.ContentType
-	//metadataUnmarshallers map[string]contenttype.MetadataUnmarshaller
+	bindAddr     string
+	log          log15.Logger
+	index        index.Index
+	store        store.Store
+	db           database.Database
+	router       *chi.Mux
+	contentTypes map[string]contenttype.ContentType
 }
 
 func New(c Config) (*Node, error) {
@@ -63,16 +60,13 @@ func New(c Config) (*Node, error) {
 		c.BindAddr = ":7001"
 	}
 
-	if c.ContentStorers == nil {
-		css, err := defaults.DefaultStorers(c.Store, c.Index)
+	if c.ContentTypes == nil {
+		css, err := defaults.DefaultTypes(c.Store, c.Index)
 		if err != nil {
 			return nil, err
 		}
-		c.ContentStorers = css
+		c.ContentTypes = css
 	}
-	// if c.Unmarshallers == nil {
-	// 	c.Unmarshallers = defaults.DefaultUnmarshallers()
-	// }
 
 	if c.Log == nil {
 		c.Log = log15.New()
@@ -83,14 +77,13 @@ func New(c Config) (*Node, error) {
 	}
 
 	n := &Node{
-		bindAddr:       c.BindAddr,
-		log:            c.Log,
-		index:          c.Index,
-		store:          c.Store,
-		db:             c.Database,
-		router:         c.Router,
-		contentStorers: c.ContentStorers,
-		//metadataUnmarshallers: c.Unmarshallers,
+		bindAddr:     c.BindAddr,
+		log:          c.Log,
+		index:        c.Index,
+		store:        c.Store,
+		db:           c.Database,
+		router:       c.Router,
+		contentTypes: c.ContentTypes,
 	}
 
 	if err := n.initDatabase(); err != nil {

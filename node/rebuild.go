@@ -44,7 +44,7 @@ func (n *Node) RebuildIndex() error {
 			return errors.Wrapf(err, "failed to read meta from hash: %s", h)
 		}
 
-		mu, ok := n.contentStorers[v.ContentType]
+		mu, ok := n.contentTypes[v.ContentType]
 
 		if !ok {
 			n.log.Warn("couldn't index content type", "type", v.ContentType)

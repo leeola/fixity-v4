@@ -7,7 +7,7 @@ import (
 
 func (n *Node) initRouter() {
 	n.router.Use(nodeware.LoggingMiddleware("node", n.log))
-	n.router.Use(nodeware.ContentStorersMiddleware(n.contentStorers))
+	n.router.Use(nodeware.ContentStorersMiddleware(n.contentTypes))
 	n.router.Use(nodeware.DatabaseMiddleware(n.db))
 	n.router.Use(nodeware.IndexMiddleware(n.index))
 	n.router.Use(nodeware.StoreMiddleware(n.store))
