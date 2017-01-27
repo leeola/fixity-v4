@@ -1,11 +1,15 @@
 package contenttype
 
-import "html/template"
+import (
+	"html/template"
+
+	"github.com/leeola/kala/store"
+)
 
 type ContentDisplayer interface {
-	Display(string, []byte, *template.Template) (interface{}, error)
+	Display(string, store.Version, *template.Template) (interface{}, error)
 }
 
 type ContentFormer interface {
-	Form(string, []byte, *template.Template) (interface{}, error)
+	Form(string, store.Version, *template.Template) (interface{}, error)
 }

@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"io/ioutil"
 	"net/http"
 
 	"github.com/leeola/kala/contenttype"
@@ -32,45 +31,28 @@ func GetHashEdit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rc, err := nodeClient.GetDownloadBlob(hash)
-	if err != nil {
+	var v store.Version
+	if err := nodeClient.GetAndUnmarshalResolve(hash, &v); err != nil {
 		log.Error("failed to get blob content type", "err", err)
-		http.Error(w, http.StatusText(http.StatusInternalServerError),
-			http.StatusInternalServerError)
-		return
-	}
-	defer rc.Close()
-
-	metaB, err := ioutil.ReadAll(rc)
-	if err != nil {
-		log.Error("failed to read hash data", "err", err)
-		http.Error(w, http.StatusText(http.StatusInternalServerError),
-			http.StatusInternalServerError)
-		return
-	}
-
-	cType, err := store.UnmarshalContentType(metaB)
-	if err != nil {
-		log.Error("failed to get hash content type", "err", err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError),
 			http.StatusInternalServerError)
 		return
 	}
 
 	var cTemplater contenttype.ContentFormer
-	if cType != "" {
-		t, _ := webware.GetContentTemplater(r, cType)
+	if v.ContentType != "" {
+		t, _ := webware.GetContentTemplater(r, v.ContentType)
 		cTemplater, _ = t.(contenttype.ContentFormer)
 	}
 	// If the templater still isn't set, set it to the default.
 	if cTemplater == nil {
 		cTemplater = templates.NoContentTemplater{
-			ContentType:   cType,
+			ContentType:   v.ContentType,
 			TemplaterType: "form",
 		}
 	}
 
-	meta, err := cTemplater.Form(hash, metaB, tmpl)
+	meta, err := cTemplater.Form(hash, v, tmpl)
 	if err != nil {
 		log.Error("content templater failed", "err", err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError),
@@ -92,8 +74,8 @@ func GetHashEdit(w http.ResponseWriter, r *http.Request) {
 }
 
 func PostHashEdit(w http.ResponseWriter, r *http.Request) {
-	hash := chi.URLParam(r, "hash")
-	log := nodeware.GetLog(r).New("hash", hash)
+	//hash := chi.URLParam(r, "hash")
+	//log := nodeware.GetLog(r).New("hash", hash)
 
 	// r.
 }

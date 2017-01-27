@@ -1,29 +1,33 @@
 package inventory
 
 import (
-	"encoding/json"
 	"html/template"
 
 	"github.com/leeola/errors"
 	"github.com/leeola/kala/client"
 	"github.com/leeola/kala/index"
-	"github.com/leeola/kala/util/jsonutil"
+	"github.com/leeola/kala/store"
 )
+
+type verMeta struct {
+	Meta
+	Version store.Version
+}
 
 type templateMeta struct {
 	Meta
 
 	// The primary container that this inventory item is in.
-	Container Meta
+	Container verMeta
 
 	// A slice of containers that this item is under. Eg, [box12, closet, home]
-	Containers []Meta
+	Containers []verMeta
 
 	// Any children items that this inventory item contains.
-	Children []Meta
+	Children []verMeta
 
 	// If the item has no children, we display it's siblings, if any.
-	Siblings []Meta
+	Siblings []verMeta
 }
 
 var displayTemplate = `
@@ -36,7 +40,7 @@ var displayTemplate = `
 		<div class="ui mini breadcrumb">
 		{{ range $i, $element := .Meta.Containers }}
 			{{ if $i }} <div class="divider"> / </div> {{ end }}
-			<a href="/hash/{{$element.Anchor}}">{{$element.Name}}</a>
+			<a href="/hash/{{$element.Version.Anchor}}">{{$element.Name}}</a>
 		{{ end }}
 		</div>
 	{{ end }}
@@ -55,7 +59,7 @@ var displayTemplate = `
 			<tbody>
 				{{ range $elm := .Meta.Children }}
 					<tr>
-						<td><a href="/hash/{{$elm.Anchor}}">{{$elm.Name}}</a></td>
+						<td><a href="/hash/{{$elm.Version.Anchor}}">{{$elm.Name}}</a></td>
 						<td>{{$elm.Description}}</td>
 					</tr>
 				{{ end }}
@@ -73,7 +77,7 @@ var displayTemplate = `
 			<tbody>
 				{{ range $elm := .Meta.Siblings }}
 					<tr>
-						<td><a href="/hash/{{$elm.Anchor}}">{{$elm.Name}}</a></td>
+						<td><a href="/hash/{{$elm.Version.Anchor}}">{{$elm.Name}}</a></td>
 						<td>{{$elm.Description}}</td>
 					</tr>
 				{{ end }}
@@ -95,14 +99,14 @@ func NewTemplater(c *client.Client) *Templater {
 	}
 }
 
-func (tr *Templater) Display(h string, b []byte, t *template.Template) (interface{}, error) {
+func (tr *Templater) Display(h string, v store.Version, t *template.Template) (interface{}, error) {
 	_, err := t.New("contentType").Parse(displayTemplate)
 	if err != nil {
 		return nil, errors.Stack(err)
 	}
 
 	var meta templateMeta
-	if err := json.Unmarshal(b, &meta); err != nil {
+	if err := tr.client.GetAndUnmarshalResolve(v.Meta, &meta); err != nil {
 		return nil, errors.Stack(err)
 	}
 
@@ -134,14 +138,14 @@ func (tr *Templater) Display(h string, b []byte, t *template.Template) (interfac
 	return meta, nil
 }
 
-func (tr *Templater) FetchContainers(startingContainer string) ([]Meta, error) {
+func (tr *Templater) FetchContainers(startingContainer string) ([]verMeta, error) {
 	var (
 		// containerHashes is used to check each container against and ensure we
 		// are not ever fetching a container we already fetched - if that were to
 		// happen, an endless loop would occur.
 		containerHashes = map[string]struct{}{}
 
-		containers    []Meta
+		containers    []verMeta
 		nextContainer = startingContainer
 	)
 
@@ -152,20 +156,24 @@ func (tr *Templater) FetchContainers(startingContainer string) ([]Meta, error) {
 		}
 		containerHashes[nextContainer] = struct{}{}
 
-		var meta Meta
-		if err := tr.getAndUnmarshal(nextContainer, &meta); err != nil {
+		var vm verMeta
+		if err := tr.client.GetAndUnmarshalResolve(nextContainer, &vm.Version); err != nil {
 			return nil, err
 		}
 
-		nextContainer = meta.Container
+		if err := tr.client.GetAndUnmarshalResolve(vm.Version.Meta, &vm.Meta); err != nil {
+			return nil, err
+		}
 
-		containers = append(containers, meta)
+		nextContainer = vm.Container
+
+		containers = append(containers, vm)
 	}
 
 	return containers, nil
 }
 
-func (tr *Templater) FetchChildren(parent string) ([]Meta, error) {
+func (tr *Templater) FetchChildren(parent string) ([]verMeta, error) {
 	q := index.Query{
 		Metadata: index.Metadata{
 			"container": `"` + parent + `"`,
@@ -176,61 +184,53 @@ func (tr *Templater) FetchChildren(parent string) ([]Meta, error) {
 		return nil, err
 	}
 
-	children := make([]Meta, len(results.Hashes))
+	children := make([]verMeta, len(results.Hashes))
 	for i, h := range results.Hashes {
-		var m Meta
-		if err := tr.getAndUnmarshal(h.Hash, &m); err != nil {
+		var vm verMeta
+		if err := tr.client.GetAndUnmarshalResolve(h.Hash, &vm.Version); err != nil {
 			return nil, err
 		}
-		children[i] = m
+		if err := tr.client.GetAndUnmarshalResolve(vm.Version.Meta, &vm.Meta); err != nil {
+			return nil, err
+		}
+		children[i] = vm
 	}
 
 	return children, nil
 }
 
-func (tr *Templater) FetchSiblings(currentChild, parent string) ([]Meta, error) {
-	// Disabled until it can be updated to the new anchor spec/etc.
-	// q := index.Query{
-	// 	Metadata: index.Metadata{
-	// 		"container": `"` + parent + `"`,
-	// 	},
-	// }
-	// results, err := tr.client.Query(q)
-	// if err != nil {
-	// 	return nil, err
-	// }
-
-	var children []Meta
-	// Disabled until it can be updated to the new anchor spec/etc.
-	// for _, h := range results.Hashes {
-	// 	var m Meta
-	// 	if err := tr.getAndUnmarshal(h.Hash, &m); err != nil {
-	// 		return nil, err
-	// 	}
-	// 	if m.Anchor == currentChild {
-	// 		continue
-	// 	}
-	// 	children = append(children, m)
-	// }
-
-	return children, nil
-}
-
-func (tr *Templater) getAndUnmarshal(h string, m *Meta) error {
-	rc, err := tr.client.GetDownloadBlob(h)
+func (tr *Templater) FetchSiblings(currentChild, parent string) ([]verMeta, error) {
+	q := index.Query{
+		Metadata: index.Metadata{
+			"container": `"` + parent + `"`,
+		},
+	}
+	results, err := tr.client.Query(q)
 	if err != nil {
-		return err
-	}
-	defer rc.Close()
-
-	if err := jsonutil.UnmarshalReader(rc, m); err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	var children []verMeta
+	for _, h := range results.Hashes {
+		var vm verMeta
+		if err := tr.client.GetAndUnmarshalResolve(h.Hash, &vm.Version); err != nil {
+			return nil, err
+		}
+		if vm.Version.Anchor == currentChild {
+			continue
+		}
+
+		if err := tr.client.GetAndUnmarshalResolve(vm.Version.Meta, &vm.Meta); err != nil {
+			return nil, err
+		}
+
+		children = append(children, vm)
+	}
+
+	return children, nil
 }
 
-func reverseMetas(m []Meta) {
+func reverseMetas(m []verMeta) {
 	for i := 0; i < len(m)/2; i++ {
 		j := len(m) - i - 1
 		m[i], m[j] = m[j], m[i]

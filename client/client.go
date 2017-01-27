@@ -255,35 +255,40 @@ func (c *Client) Download(h string) (rc io.ReadCloser, err error) {
 	return res.Body, nil
 }
 
-func (c *Client) GetBlobContentType(h string) (string, error) {
+func (c *Client) GetAndUnmarshalResolve(h string, m interface{}) error {
 	u, err := url.Parse(c.kalaAddr)
 	if err != nil {
-		return "", err
+		return err
 	}
-	u.Path = path.Join(u.Path, "blob", h, "contenttype")
+	u.Path = path.Join(u.Path, "resolve", h, "blob")
 
 	res, err := c.httpClient.Get(u.String())
 	if err != nil {
-		return "", err
+		return err
 	}
 	defer res.Body.Close()
 
 	if res.StatusCode != http.StatusOK {
-		return "", errors.Errorf("unexpected kala response: %d %q",
+		return errors.Errorf("unexpected kala response: %d %q",
 			res.StatusCode, res.Status)
 	}
 
 	b, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		return "", err
+		return err
 	}
 
-	var ctRes handlers.BlobContentTypeResponse
-	if err := json.Unmarshal(b, &ctRes); err != nil {
-		return "", err
+	if err := json.Unmarshal(b, &m); err != nil {
+		return err
 	}
 
-	return ctRes.ContentType, nil
+	return nil
+}
+
+func (c *Client) GetResolveVersion(h string) (store.Version, error) {
+	var v store.Version
+	err := c.GetAndUnmarshalResolve(h, &v)
+	return v, err
 }
 
 // BindToHttp is a helper to convert a bind string into an http string.

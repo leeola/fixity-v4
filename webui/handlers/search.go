@@ -6,7 +6,6 @@ import (
 	"github.com/leeola/kala/index"
 	"github.com/leeola/kala/node/nodeware"
 	"github.com/leeola/kala/store"
-	"github.com/leeola/kala/util/jsonutil"
 	"github.com/leeola/kala/util/strutil"
 	"github.com/leeola/kala/webui/templates"
 	"github.com/leeola/kala/webui/webware"
@@ -19,6 +18,7 @@ type SearchPage struct {
 
 type MetaResult struct {
 	index.Hash
+	store.Version
 	store.Meta
 
 	ShortAnchor string
@@ -77,22 +77,21 @@ func GetSearch(w http.ResponseWriter, r *http.Request) {
 
 	metaResults := make([]MetaResult, len(results.Hashes))
 	for i, hash := range results.Hashes {
-		rc, err := nodeClient.GetBlob(hash.Hash)
-		if err != nil {
+		mr := MetaResult{Hash: hash}
+		if err := nodeClient.GetAndUnmarshalResolve(hash.Hash, &mr.Version); err != nil {
 			log.Error("failed to get blob of hash", "err", err)
 			http.Error(w, http.StatusText(http.StatusInternalServerError),
 				http.StatusInternalServerError)
 			return
 		}
-		defer rc.Close()
 
-		mr := MetaResult{Hash: hash}
-		if err := jsonutil.UnmarshalReader(rc, &mr.Meta); err != nil {
-			log.Error("failed to read and unmarshal", "err", err)
+		if err := nodeClient.GetAndUnmarshalResolve(mr.Version.Meta, &mr.Meta); err != nil {
+			log.Error("failed to get blob of hash", "err", err)
 			http.Error(w, http.StatusText(http.StatusInternalServerError),
 				http.StatusInternalServerError)
 			return
 		}
+
 		if !mr.UploadedAt.IsZero() {
 			mr.HumanTime = mr.UploadedAt.Format("Mon Jan _2 03:04PM")
 		}

@@ -1,6 +1,10 @@
 package templates
 
-import "html/template"
+import (
+	"html/template"
+
+	"github.com/leeola/kala/store"
+)
 
 var (
 	TmplErrTemplaterNotFound = `
@@ -26,7 +30,7 @@ type NoContentTemplater struct {
 	TemplaterType string
 }
 
-func (n NoContentTemplater) errorTmpler(t *template.Template, b []byte) (interface{}, error) {
+func (n NoContentTemplater) errorTmpler(t *template.Template, v store.Version) (interface{}, error) {
 	_, err := t.New("contentType").Parse(TmplErrTemplaterNotFound)
 	tmplData := struct {
 		Type   string
@@ -38,10 +42,10 @@ func (n NoContentTemplater) errorTmpler(t *template.Template, b []byte) (interfa
 	return tmplData, err
 }
 
-func (n NoContentTemplater) Display(h string, b []byte, t *template.Template) (interface{}, error) {
-	return n.errorTmpler(t, b)
+func (n NoContentTemplater) Display(h string, v store.Version, t *template.Template) (interface{}, error) {
+	return n.errorTmpler(t, v)
 }
 
-func (n NoContentTemplater) Form(h string, b []byte, t *template.Template) (interface{}, error) {
-	return n.errorTmpler(t, b)
+func (n NoContentTemplater) Form(h string, v store.Version, t *template.Template) (interface{}, error) {
+	return n.errorTmpler(t, v)
 }

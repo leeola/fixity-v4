@@ -10,33 +10,6 @@ import (
 	"github.com/pressly/chi"
 )
 
-func GetBlobContentTypeHandler(w http.ResponseWriter, r *http.Request) {
-	hash := chi.URLParam(r, "hash")
-	log := nodeware.GetLog(r).New("hash", hash)
-
-	s, ok := GetStoreWithError(w, r)
-	if !ok {
-		return
-	}
-
-	v, err := store.ReadVersion(s, hash)
-	if err != nil {
-		log.Error("failed to get previous content type", "err", err)
-		jsonutil.Error(w, "contenttype lookup failed", http.StatusInternalServerError)
-		return
-	}
-
-	_, err = jsonutil.MarshalToWriter(w, BlobContentTypeResponse{
-		ContentType: v.ContentType,
-	})
-	if err != nil {
-		log.Error("failed to marshal response", "err", err)
-		jsonutil.Error(w, http.StatusText(http.StatusInternalServerError),
-			http.StatusInternalServerError)
-		return
-	}
-}
-
 func GetBlobHandler(w http.ResponseWriter, r *http.Request) {
 	hash := chi.URLParam(r, "hash")
 	log := nodeware.GetLog(r).New("hash", hash)
