@@ -1,6 +1,9 @@
 package handlers
 
-import "github.com/leeola/kala/contenttype"
+import (
+	ct "github.com/leeola/kala/contenttype"
+	"github.com/leeola/kala/store"
+)
 
 type ErrorResponse struct {
 	Error string `json:"error,omitempty"`
@@ -22,6 +25,18 @@ type BlobContentTypeResponse struct {
 }
 
 type ChangesResponse struct {
-	Changes contenttype.Changes `json:"changes"`
-	Error   string              `json:"error,omitempty"`
+	Changes ct.Changes `json:"changes"`
+	Error   string     `json:"error,omitempty"`
+}
+
+type ResolveBlobResponse struct {
+	Hash  string `json:"hash"`
+	Blob  []byte `json:"blob"`
+	Error string `json:"error,omitempty"`
+}
+
+type ResolveVersionResponse struct {
+	Hash    string        `json:"hash"`
+	Version store.Version `json:"version"`
+	Error   string        `json:"error,omitempty"`
 }

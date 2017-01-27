@@ -22,15 +22,12 @@ func (n *Node) initRouter() {
 	n.router.Get("/blob/:hash", handlers.GetBlobHandler)
 	n.router.Put("/blob/:hash", handlers.PutBlobHandler)
 
-	// these routes exists for historical reasons, will be removing them once
-	// the routes get changes in the client.
 	n.router.Get("/download/:anchor", handlers.GetDownloadHandler)
-	n.router.Get("/download/:anchor/blob",
-		handlers.GetResolveBlobHandler(n.store, n.index))
 
-	n.router.Get("/resolve/:anchor/download", handlers.GetDownloadHandler)
-	n.router.Get("/resolve/:anchor/blob",
+	n.router.Get("/resolve/:resolve/blob",
 		handlers.GetResolveBlobHandler(n.store, n.index))
+	n.router.Get("/resolve/:resolve/version",
+		handlers.GetResolveVersionHandler(n.store, n.index))
 
 	n.router.Post("/upload", handlers.PostUploadHandler)
 	n.router.Post("/upload/meta", handlers.PostUploadMetaHandler)

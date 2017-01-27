@@ -255,12 +255,12 @@ func (c *Client) Download(h string) (rc io.ReadCloser, err error) {
 	return res.Body, nil
 }
 
-func (c *Client) GetAndUnmarshalResolve(h string, m interface{}) error {
+func (c *Client) GetBlobAndUnmarshal(h string, m interface{}) error {
 	u, err := url.Parse(c.kalaAddr)
 	if err != nil {
 		return err
 	}
-	u.Path = path.Join(u.Path, "resolve", h, "blob")
+	u.Path = path.Join(u.Path, "blob", h)
 
 	res, err := c.httpClient.Get(u.String())
 	if err != nil {
@@ -285,10 +285,70 @@ func (c *Client) GetAndUnmarshalResolve(h string, m interface{}) error {
 	return nil
 }
 
-func (c *Client) GetResolveVersion(h string) (store.Version, error) {
-	var v store.Version
-	err := c.GetAndUnmarshalResolve(h, &v)
-	return v, err
+func (c *Client) GetResolveBlobAndUnmarshal(h string, m interface{}) (string, error) {
+	u, err := url.Parse(c.kalaAddr)
+	if err != nil {
+		return "", err
+	}
+	u.Path = path.Join(u.Path, "resolve", h, "blob")
+
+	res, err := c.httpClient.Get(u.String())
+	if err != nil {
+		return "", err
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != http.StatusOK {
+		return "", errors.Errorf("unexpected kala response: %d %q",
+			res.StatusCode, res.Status)
+	}
+
+	b, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return "", err
+	}
+
+	var blobRes handlers.ResolveBlobResponse
+	if err := json.Unmarshal(b, &blobRes); err != nil {
+		return "", err
+	}
+
+	if err := json.Unmarshal(blobRes.Blob, &m); err != nil {
+		return "", err
+	}
+
+	return blobRes.Hash, nil
+}
+
+func (c *Client) GetResolveVersion(h string) (string, store.Version, error) {
+	u, err := url.Parse(c.kalaAddr)
+	if err != nil {
+		return "", store.Version{}, err
+	}
+	u.Path = path.Join(u.Path, "resolve", h, "version")
+
+	res, err := c.httpClient.Get(u.String())
+	if err != nil {
+		return "", store.Version{}, err
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != http.StatusOK {
+		return "", store.Version{}, errors.Errorf("unexpected kala response: %d %q",
+			res.StatusCode, res.Status)
+	}
+
+	b, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return "", store.Version{}, err
+	}
+
+	var verRes handlers.ResolveVersionResponse
+	if err := json.Unmarshal(b, &verRes); err != nil {
+		return "", store.Version{}, err
+	}
+
+	return verRes.Hash, verRes.Version, nil
 }
 
 // BindToHttp is a helper to convert a bind string into an http string.

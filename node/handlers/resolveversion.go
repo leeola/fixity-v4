@@ -10,7 +10,7 @@ import (
 	"github.com/pressly/chi"
 )
 
-func GetResolveBlobHandler(s store.Store, q index.Queryer) http.HandlerFunc {
+func GetResolveVersionHandler(s store.Store, q index.Queryer) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 
@@ -26,7 +26,7 @@ func GetResolveBlobHandler(s store.Store, q index.Queryer) http.HandlerFunc {
 		}
 		log = log.New("hash", hash)
 
-		b, err := store.ReadAll(s, hash)
+		v, err := store.ReadVersion(s, hash)
 		if err != nil {
 			log.Error("failed to read blob hash from store", "err", err)
 			jsonutil.Error(w, http.StatusText(http.StatusInternalServerError),
@@ -34,9 +34,9 @@ func GetResolveBlobHandler(s store.Store, q index.Queryer) http.HandlerFunc {
 			return
 		}
 
-		res := ResolveBlobResponse{
-			Hash: hash,
-			Blob: b,
+		res := ResolveVersionResponse{
+			Hash:    hash,
+			Version: v,
 		}
 
 		if _, err = jsonutil.MarshalToWriter(w, res); err != nil {
