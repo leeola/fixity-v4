@@ -5,7 +5,6 @@ import (
 
 	"github.com/leeola/kala/contenttype"
 	"github.com/leeola/kala/node/nodeware"
-	"github.com/leeola/kala/store"
 	"github.com/leeola/kala/webui/templates"
 	"github.com/leeola/kala/webui/webware"
 	"github.com/pressly/chi"
@@ -31,8 +30,10 @@ func GetHashEdit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var v store.Version
-	if err := nodeClient.GetAndUnmarshalResolve(hash, &v); err != nil {
+	// overwriting hash here, as this url supports a resolve anchor or hash.
+	// The ux of this needs to be refined though, right now it's *very* implicit.
+	hash, v, err := nodeClient.GetResolveVersion(hash)
+	if err != nil {
 		log.Error("failed to get blob content type", "err", err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError),
 			http.StatusInternalServerError)

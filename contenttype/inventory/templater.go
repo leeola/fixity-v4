@@ -11,7 +11,8 @@ import (
 
 type verMeta struct {
 	Meta
-	Version store.Version
+	VersionHash string
+	Version     store.Version
 }
 
 type templateMeta struct {
@@ -40,7 +41,7 @@ var displayTemplate = `
 		<div class="ui mini breadcrumb">
 		{{ range $i, $element := .Meta.Containers }}
 			{{ if $i }} <div class="divider"> / </div> {{ end }}
-			<a href="/hash/{{$element.Version.Anchor}}">{{$element.Name}}</a>
+			<a href="/hash/{{$element.VersionHash}}">{{$element.Name}}</a>
 		{{ end }}
 		</div>
 	{{ end }}
@@ -59,7 +60,7 @@ var displayTemplate = `
 			<tbody>
 				{{ range $elm := .Meta.Children }}
 					<tr>
-						<td><a href="/hash/{{$elm.Version.Anchor}}">{{$elm.Name}}</a></td>
+						<td><a href="/hash/{{$elm.VersionHash}}">{{$elm.Name}}</a></td>
 						<td>{{$elm.Description}}</td>
 					</tr>
 				{{ end }}
@@ -77,7 +78,7 @@ var displayTemplate = `
 			<tbody>
 				{{ range $elm := .Meta.Siblings }}
 					<tr>
-						<td><a href="/hash/{{$elm.Version.Anchor}}">{{$elm.Name}}</a></td>
+						<td><a href="/hash/{{$elm.VersionHash}}">{{$elm.Name}}</a></td>
 						<td>{{$elm.Description}}</td>
 					</tr>
 				{{ end }}
@@ -106,7 +107,7 @@ func (tr *Templater) Display(h string, v store.Version, t *template.Template) (i
 	}
 
 	var meta templateMeta
-	if err := tr.client.GetAndUnmarshalResolve(v.Meta, &meta); err != nil {
+	if err := tr.client.GetBlobAndUnmarshal(v.Meta, &meta); err != nil {
 		return nil, errors.Stack(err)
 	}
 
@@ -121,7 +122,7 @@ func (tr *Templater) Display(h string, v store.Version, t *template.Template) (i
 		meta.Container = containers[0]
 	}
 
-	children, err := tr.FetchChildren(h)
+	children, err := tr.FetchChildren(v.Anchor)
 	if err != nil {
 		return nil, err
 	}
@@ -157,11 +158,13 @@ func (tr *Templater) FetchContainers(startingContainer string) ([]verMeta, error
 		containerHashes[nextContainer] = struct{}{}
 
 		var vm verMeta
-		if err := tr.client.GetAndUnmarshalResolve(nextContainer, &vm.Version); err != nil {
+		verHash, err := tr.client.GetResolveBlobAndUnmarshal(nextContainer, &vm.Version)
+		if err != nil {
 			return nil, err
 		}
+		vm.VersionHash = verHash
 
-		if err := tr.client.GetAndUnmarshalResolve(vm.Version.Meta, &vm.Meta); err != nil {
+		if err := tr.client.GetBlobAndUnmarshal(vm.Version.Meta, &vm.Meta); err != nil {
 			return nil, err
 		}
 
@@ -186,11 +189,11 @@ func (tr *Templater) FetchChildren(parent string) ([]verMeta, error) {
 
 	children := make([]verMeta, len(results.Hashes))
 	for i, h := range results.Hashes {
-		var vm verMeta
-		if err := tr.client.GetAndUnmarshalResolve(h.Hash, &vm.Version); err != nil {
+		vm := verMeta{VersionHash: h.Hash}
+		if err := tr.client.GetBlobAndUnmarshal(h.Hash, &vm.Version); err != nil {
 			return nil, err
 		}
-		if err := tr.client.GetAndUnmarshalResolve(vm.Version.Meta, &vm.Meta); err != nil {
+		if err := tr.client.GetBlobAndUnmarshal(vm.Version.Meta, &vm.Meta); err != nil {
 			return nil, err
 		}
 		children[i] = vm
@@ -212,15 +215,16 @@ func (tr *Templater) FetchSiblings(currentChild, parent string) ([]verMeta, erro
 
 	var children []verMeta
 	for _, h := range results.Hashes {
-		var vm verMeta
-		if err := tr.client.GetAndUnmarshalResolve(h.Hash, &vm.Version); err != nil {
-			return nil, err
-		}
-		if vm.Version.Anchor == currentChild {
+		if h.Hash == currentChild {
 			continue
 		}
 
-		if err := tr.client.GetAndUnmarshalResolve(vm.Version.Meta, &vm.Meta); err != nil {
+		vm := verMeta{VersionHash: h.Hash}
+		if err := tr.client.GetBlobAndUnmarshal(h.Hash, &vm.Version); err != nil {
+			return nil, err
+		}
+
+		if err := tr.client.GetBlobAndUnmarshal(vm.Version.Meta, &vm.Meta); err != nil {
 			return nil, err
 		}
 

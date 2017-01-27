@@ -78,14 +78,14 @@ func GetSearch(w http.ResponseWriter, r *http.Request) {
 	metaResults := make([]MetaResult, len(results.Hashes))
 	for i, hash := range results.Hashes {
 		mr := MetaResult{Hash: hash}
-		if err := nodeClient.GetAndUnmarshalResolve(hash.Hash, &mr.Version); err != nil {
+		if err := nodeClient.GetBlobAndUnmarshal(hash.Hash, &mr.Version); err != nil {
 			log.Error("failed to get blob of hash", "err", err)
 			http.Error(w, http.StatusText(http.StatusInternalServerError),
 				http.StatusInternalServerError)
 			return
 		}
 
-		if err := nodeClient.GetAndUnmarshalResolve(mr.Version.Meta, &mr.Meta); err != nil {
+		if err := nodeClient.GetBlobAndUnmarshal(mr.Version.Meta, &mr.Meta); err != nil {
 			log.Error("failed to get blob of hash", "err", err)
 			http.Error(w, http.StatusText(http.StatusInternalServerError),
 				http.StatusInternalServerError)
