@@ -17,10 +17,10 @@ type Constraint struct {
 // to be used by the underlying indexer implementation. FullTextSearch for
 // example is a more niche feature, and not supported by many indexers.
 type Query struct {
-	SortField      string
-	SortDescending string
-	SkipBy         int
-	LimitBy        int
+	SortBy      string
+	SortDescending bool
+	Skip         int
+	Limit        int
 	Constraint     Constraint
 }
 
@@ -29,17 +29,17 @@ func New() *Query {
 }
 
 func (q *Query) Limit(l int) *Query {
-	q.LimitBy = l
+	q.Limit = l
 	return q
 }
 
 func (q *Query) Skip(s int) *Query {
-	q.SkipBy = s
+	q.Skip = s
 	return q
 }
 
 func (q *Query) Sort(field string, descending bool) *Query {
-	q.SortField = field
+	q.SortBy = field
 	q.SortDescending = descending
 	return q
 }
