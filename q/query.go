@@ -1,5 +1,7 @@
 package q
 
+
+
 import "github.com/leeola/kala/q/operators"
 
 type Constraint struct {

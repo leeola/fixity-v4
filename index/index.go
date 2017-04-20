@@ -4,13 +4,14 @@ import "github.com/leeola/kala/q"
 
 type Options map[string]interface{}
 
+type Field struct {
+	Field    string `json:"field"`
+	Value    interface{} `json:"value"`
+	Options  Options `json:"options"`
+}
+
 // Index implements indexing and searching functionality for a kala store.
 type Index interface {
-	// Index the given data with Options describing how to index the data.
-	//
-	// Note that Options may or may not be required, it depends on the indexer
-	// and the desired features. For example, if FullTextSearch is desired
-	// one may specify `Options["fullTextSearch"] = "all"` and etc.
-	Index(data interface{}, opts Options) error
+	Index(id string, []Field) error
 	Search(q.Query) ([][]byte, error)
 }
