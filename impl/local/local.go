@@ -5,8 +5,8 @@ import (
 	"encoding/hex"
 	"io"
 
-	"github.com/asdine/storm/index"
 	"github.com/leeola/errors"
+	"github.com/leeola/kala/index"
 	"github.com/leeola/kala/store"
 )
 
