@@ -1,4 +1,4 @@
-package simple
+package disk
 
 import (
 	"encoding/hex"
