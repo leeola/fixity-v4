@@ -1,7 +1,5 @@
 package q
 
-
-
 import "github.com/leeola/kala/q/operators"
 
 type Constraint struct {
@@ -19,24 +17,24 @@ type Constraint struct {
 // to be used by the underlying indexer implementation. FullTextSearch for
 // example is a more niche feature, and not supported by many indexers.
 type Query struct {
-	SortBy      string
+	SortBy         string
 	SortDescending bool
-	Skip         int
-	Limit        int
+	SkipBy         int
+	LimitBy        int
 	Constraint     Constraint
 }
 
 func New() *Query {
-    return &Query{}
+	return &Query{}
 }
 
 func (q *Query) Limit(l int) *Query {
-	q.Limit = l
+	q.LimitBy = l
 	return q
 }
 
 func (q *Query) Skip(s int) *Query {
-	q.Skip = s
+	q.SkipBy = s
 	return q
 }
 
@@ -61,9 +59,9 @@ func (q *Query) Or(c ...Constraint) *Query {
 	return q
 }
 
-func And(c ..Constraint) Constraint {
+func And(c ...Constraint) Constraint {
 	return Constraint{
-		Operator: operators.Equal,
+		Operator:    operators.Equal,
 		Constraints: c,
 	}
 }
@@ -126,7 +124,7 @@ func Not(field string, value interface{}) Constraint {
 
 func Or(c ...Constraint) Constraint {
 	return Constraint{
-		Operator: operators.Or,
+		Operator:    operators.Or,
 		Constraints: c,
 	}
 }

@@ -57,9 +57,10 @@ func (s *Disk) Read(h string) (io.ReadCloser, error) {
 	var rc io.ReadCloser
 	rc, err := os.Open(p)
 	if os.IsNotExist(err) {
-		return nil, store.HashNotFoundErr
+		return nil, store.ErrHashNotFound
 	}
 
+	return rc, err
 }
 
 func (s *Disk) Hash(b []byte) string {
@@ -78,7 +79,7 @@ func (s *Disk) Write(b []byte) (string, error) {
 func (s *Disk) WriteHash(h string, b []byte) error {
 	expectedH := s.Hash(b)
 	if h != expectedH {
-		return store.HashNotMatchContentErr
+		return store.ErrHashNotMatchContent
 	}
 	return s.writeHash(h, b)
 }
@@ -88,9 +89,6 @@ func (s *Disk) WriteHash(h string, b []byte) error {
 // Verification of the content *must be done* before using this method to write.
 func (s *Disk) writeHash(h string, b []byte) error {
 	p := filepath.Join(s.path, h)
-
-	b = eb
-	}
 
 	err := ioutil.WriteFile(p, b, 0644)
 	return errors.Wrap(err, "failed to write to disk")
@@ -128,15 +126,4 @@ func (s *Disk) List() (<-chan string, error) {
 	}()
 
 	return ch, nil
-}
-
-func (c Config) IsZero() bool {
-	switch {
-	case c.Log != nil:
-		return false
-	case c.StorePath != "":
-		return false
-	default:
-		return true
-	}
 }
