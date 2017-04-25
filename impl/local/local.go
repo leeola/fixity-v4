@@ -5,7 +5,9 @@ import (
 	"encoding/hex"
 	"io"
 
+	"github.com/fatih/structs"
 	"github.com/leeola/errors"
+	"github.com/leeola/kala"
 	"github.com/leeola/kala/index"
 	"github.com/leeola/kala/store"
 )
@@ -36,7 +38,7 @@ func New(c Config) (*Local, error) {
 	}, nil
 }
 
-func (k *Local) Write(c Commit, m Meta, r io.Reader) ([]string, error) {
+func (k *Local) Write(c kala.Commit, m kala.Meta, r io.Reader) ([]string, error) {
 	// For quicker prototyping, only supporting metadata atm
 	if r != nil {
 		return nil, errors.New("reader not yet implemented")
@@ -69,7 +71,7 @@ func (k *Local) Write(c Commit, m Meta, r io.Reader) ([]string, error) {
 	// version = previousVersion
 	// }
 
-	versionHash, err := store.WriteVersion(s, version)
+	versionHash, err := store.WriteVersion(k.store, version)
 	if err != nil {
 		return nil, errors.Stack(err)
 	}
@@ -93,7 +95,7 @@ func (k *Local) Write(c Commit, m Meta, r io.Reader) ([]string, error) {
 //
 // Note that the Id is encoded as hex to easily interact with it, rather
 // than plain bytes.
-func NewId() string {
+func NewId() (string, error) {
 	b := make([]byte, 32)
 	if _, err := io.ReadFull(rand.Reader, b); err != nil {
 		return "", err
