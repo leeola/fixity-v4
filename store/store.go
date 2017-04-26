@@ -1,6 +1,7 @@
 package store
 
 import (
+	"encoding/json"
 	"io"
 	"time"
 )
@@ -32,7 +33,7 @@ type Store interface {
 }
 
 type Version struct {
-	MetaHash      string `json:"metaHash,omitempty"`
+	JsonHash      string `json:"metaHash,omitempty"`
 	MultiBlobHash string `json:"multiBlobHash,omitempty"`
 
 	Id                   string    `json:"id,omitempty"`
@@ -43,8 +44,13 @@ type Version struct {
 	ChangeLog string `json:"changeLog,omitempty"`
 }
 
-type Meta struct {
-	Meta []byte `json:"meta"`
+type Json struct {
+	Meta JsonMeta        `json:"jsonMeta,omitempty"`
+	Json json.RawMessage `json:"json"`
+}
+
+type JsonMeta struct {
+	IndexedFields []Field
 }
 
 type MultiBlob struct {

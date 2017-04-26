@@ -12,7 +12,8 @@ import (
 // This interface will be implemented for multiple stores, such as a local on
 // disk store and a remote over network store.
 type Kala interface {
-	Write(Commit, Meta, io.Reader) ([]string, error)
+	// Write the given  Commit, Meta and Reader to the Kala store.
+	Write(Commit, Json, io.Reader) ([]string, error)
 }
 
 type Commit struct {
@@ -23,4 +24,4 @@ type Commit struct {
 }
 
 // Meta is a type alias for store.Meta for the UX of Kala package users.
-type Meta store.Meta
+type Json store.Json

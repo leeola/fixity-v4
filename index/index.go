@@ -2,16 +2,16 @@ package index
 
 import "github.com/leeola/kala/q"
 
-type Options map[string]interface{}
-
 type Field struct {
-	Field   string      `json:"field"`
-	Value   interface{} `json:"value"`
-	Options Options     `json:"options"`
+	Field   string       `json:"field"`
+	Value   interface{}  `json:"value,omitempty"`
+	Options FieldOptions `json:"options,omitempty"`
 }
+
+type FieldOptions map[string]interface{}
 
 // Index implements indexing and searching functionality for a kala store.
 type Index interface {
-	Index(id string, fields []Field) error
+	Index([]Field) error
 	Search(q.Query) ([]string, error)
 }
