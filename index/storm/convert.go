@@ -3,9 +3,10 @@ package storm
 import (
 	"github.com/asdine/storm"
 	sq "github.com/asdine/storm/q"
+	"github.com/fatih/structs"
 	"github.com/leeola/errors"
 	kq "github.com/leeola/kala/q"
-	"github.com/leeola/kala/q/operators"
+	ops "github.com/leeola/kala/q/operators"
 )
 
 func ConvertQuery(db storm.DB, kq kq.Query) (storm.Query, error) {
@@ -21,7 +22,7 @@ func ConvertQuery(db storm.DB, kq kq.Query) (storm.Query, error) {
 
 	// TODO(leeola): Storm may not accept an empty set of constraints, so we may need to
 	// reject kala queries without constraints.
-	stormQuery := storm.Select(ms...)
+	stormQuery := db.Select(ms...)
 
 	if kq.SortBy != "" {
 		stormQuery.OrderBy(kq.SortBy)
@@ -29,11 +30,11 @@ func ConvertQuery(db storm.DB, kq kq.Query) (storm.Query, error) {
 	if kq.SortDescending {
 		stormQuery.Reverse()
 	}
-	if kq.Skip != 0 {
-		stormQuery.Skip(kq.Skip)
+	if kq.SkipBy != 0 {
+		stormQuery.Skip(kq.SkipBy)
 	}
-	if kq.Limit != 0 {
-		stormQuery.Limit(kq.Limit)
+	if kq.LimitBy != 0 {
+		stormQuery.Limit(kq.LimitBy)
 	}
 
 	return stormQuery, nil
@@ -41,46 +42,56 @@ func ConvertQuery(db storm.DB, kq kq.Query) (storm.Query, error) {
 
 func ConvertConstraint(c kq.Constraint) (sq.Matcher, error) {
 	switch c.Operator {
-	case operators.Equal:
-		return sq.Eq(c.Field, c.Value)
+	case ops.Equal:
+		return sq.Eq(c.Field, c.Value), nil
 
-	case operators.GreaterThan:
-		return sq.Gt(c.Field, c.Value)
+	case ops.GreaterThan:
+		return sq.Gt(c.Field, c.Value), nil
 
-	case operators.GreaterThanOrEqual:
-		return sq.Gte(c.Field, c.Value)
+	case ops.GreaterThanOrEqual:
+		return sq.Gte(c.Field, c.Value), nil
 
-	case operators.In:
-		return sq.In(c.Field, c.Value)
+	case ops.In:
+		return sq.In(c.Field, c.Value), nil
 
-	case operators.LessThan:
-		return sq.Lt(c.Field, c.Value)
+	case ops.LessThan:
+		return sq.Lt(c.Field, c.Value), nil
 
-	case operators.LessThanOrEqual:
-		return sq.Lte(c.Field, c.Value)
+	case ops.LessThanOrEqual:
+		return sq.Lte(c.Field, c.Value), nil
 
-	case operators.Not:
-		return sq.Not(c.Field, c.Value)
+	case ops.Regex:
+		v, ok := c.Value.(string)
+		if !ok {
+			return nil, errors.New("unexpected Regex field value")
+		}
 
-	case operators.Regex:
-		return sq.Re(c.Field, c.Value)
+		return sq.Re(c.Field, v), nil
 
-	case operators.And, operators.Or:
+	case ops.And, ops.Or, ops.Not:
 		matchers := make([]sq.Matcher, len(c.Constraints))
 		for i, subc := range c.Constraints {
 			m, err := ConvertConstraint(subc)
 			if err != nil {
-				return err
+				return nil, err
 			}
 			matchers[i] = m
 		}
 
-		if c.Operator == operators.And {
-			return sq.And(matchers...)
-		} else {
-			return sq.Or(matchers...)
+		switch c.Operator {
+		case ops.And:
+			return sq.And(matchers...), nil
+		case ops.Or:
+			return sq.Or(matchers...), nil
+		case ops.Not:
+			return sq.Not(matchers...), nil
+		default:
+			// should never happen
+			return nil, errors.Errorf(
+				"unexpected operator inside And/Or/Not case: %s", c.Operator)
 		}
+
 	default:
-		return errors.Errorf("unsupported operator: %s", c.Operator)
+		return nil, errors.Errorf("unsupported operator: %s", c.Operator)
 	}
 }
