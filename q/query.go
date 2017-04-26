@@ -114,18 +114,16 @@ func Lte(field string, value interface{}) Constraint {
 	}
 }
 
-func Not(field string, value interface{}) Constraint {
+func Not(c ...Constraint) Constraint {
 	return Constraint{
-		Operator: operators.Not,
-		Field:    field,
-		Value:    value,
+		Operator:    operators.Not,
+		Constraints: c,
 	}
 }
 
 func Or(c ...Constraint) Constraint {
 	return Constraint{
-		Operator:    operators.Or,
-		Constraints: c,
+		Operator: operators.Or,
 	}
 }
 
