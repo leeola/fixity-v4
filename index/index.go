@@ -13,5 +13,5 @@ type Field struct {
 // Index implements indexing and searching functionality for a kala store.
 type Index interface {
 	Index(id string, fields []Field) error
-	Search(q.Query) ([][]byte, error)
+	Search(q.Query) ([]string, error)
 }
