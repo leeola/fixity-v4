@@ -4,7 +4,7 @@ import (
 	"errors"
 
 	"github.com/asdine/storm"
-	"github.com/leeola/kala/index"
+	"github.com/leeola/kala"
 	"github.com/leeola/kala/q"
 )
 
@@ -29,10 +29,8 @@ func New(c Config) (*Storm, error) {
 	}, nil
 }
 
-func (s *Storm) Index(id string, fields []index.Field) error {
+func (s *Storm) Index(fields []kala.Field) error {
 	row := map[string]interface{}{}
-	row["id"] = id
-
 	for _, f := range fields {
 		// TODO(leeola): implement options
 		row[f.Field] = f.Value

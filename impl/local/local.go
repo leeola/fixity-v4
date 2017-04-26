@@ -8,19 +8,17 @@ import (
 	"github.com/fatih/structs"
 	"github.com/leeola/errors"
 	"github.com/leeola/kala"
-	"github.com/leeola/kala/index"
-	"github.com/leeola/kala/store"
 )
 
 type Config struct {
-	Index index.Index
-	Store store.Store
+	Index kala.Index
+	Store kala.Store
 }
 
 type Local struct {
 	config Config
-	index  index.Index
-	store  store.Store
+	index  kala.Index
+	store  kala.Store
 }
 
 func New(c Config) (*Local, error) {
@@ -38,7 +36,7 @@ func New(c Config) (*Local, error) {
 	}, nil
 }
 
-func (k *Local) Write(c kala.Commit, m kala.Meta, r io.Reader) ([]string, error) {
+func (k *Local) Write(c kala.Commit, m kala.Json, r io.Reader) ([]string, error) {
 	// For quicker prototyping, only supporting metadata atm
 	if r != nil {
 		return nil, errors.New("reader not yet implemented")
@@ -48,7 +46,7 @@ func (k *Local) Write(c kala.Commit, m kala.Meta, r io.Reader) ([]string, error)
 		return nil, errors.New("No data given to write")
 	}
 
-	metaHash, err := store.MarshalAndWrite(k.store, store.Meta(m))
+	metaHash, err := kala.MarshalAndWrite(k.store, m)
 	if err != nil {
 		return nil, errors.Stack(err)
 	}
@@ -60,8 +58,8 @@ func (k *Local) Write(c kala.Commit, m kala.Meta, r io.Reader) ([]string, error)
 	// return nil, errors.Stack(err)
 	// }
 
-	version := store.Version{
-		MetaHash:      metaHash,
+	version := kala.Version{
+		JsonHash:      metaHash,
 		MultiBlobHash: multiBlobHash,
 	}
 
@@ -71,7 +69,7 @@ func (k *Local) Write(c kala.Commit, m kala.Meta, r io.Reader) ([]string, error)
 	// version = previousVersion
 	// }
 
-	versionHash, err := store.WriteVersion(k.store, version)
+	versionHash, err := kala.MarshalAndWrite(k.store, version)
 	if err != nil {
 		return nil, errors.Stack(err)
 	}

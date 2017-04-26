@@ -9,7 +9,7 @@ import (
 
 	"github.com/inconshreveable/log15"
 	"github.com/leeola/errors"
-	"github.com/leeola/kala/store"
+	"github.com/leeola/kala"
 	blake2b "github.com/minio/blake2b-simd"
 )
 
@@ -57,7 +57,7 @@ func (s *Disk) Read(h string) (io.ReadCloser, error) {
 	var rc io.ReadCloser
 	rc, err := os.Open(p)
 	if os.IsNotExist(err) {
-		return nil, store.ErrHashNotFound
+		return nil, kala.ErrHashNotFound
 	}
 
 	return rc, err
@@ -79,7 +79,7 @@ func (s *Disk) Write(b []byte) (string, error) {
 func (s *Disk) WriteHash(h string, b []byte) error {
 	expectedH := s.Hash(b)
 	if h != expectedH {
-		return store.ErrHashNotMatchContent
+		return kala.ErrHashNotMatchContent
 	}
 	return s.writeHash(h, b)
 }

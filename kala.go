@@ -3,8 +3,6 @@ package kala
 import (
 	"io"
 	"time"
-
-	"github.com/leeola/kala/store"
 )
 
 // Kala implements writing, indexing and reading with a Kala store.
@@ -22,6 +20,3 @@ type Commit struct {
 	UploadedAt          time.Time `json:"uploadedAt,omitempty"`
 	ChangeLog           string    `json:"changeLog,omitempty"`
 }
-
-// Meta is a type alias for store.Meta for the UX of Kala package users.
-type Json store.Json

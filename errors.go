@@ -1,4 +1,4 @@
-package store
+package kala
 
 import "github.com/leeola/errors"
 

@@ -1,4 +1,4 @@
-package index
+package kala
 
 import "github.com/leeola/kala/q"
 
