@@ -15,3 +15,5 @@ type Index interface {
 	Index([]Field) error
 	Search(q.Query) ([]string, error)
 }
+
+type Fields []Field

@@ -36,10 +36,10 @@ type Version struct {
 	JsonHash      string `json:"metaHash,omitempty"`
 	MultiBlobHash string `json:"multiBlobHash,omitempty"`
 
-	Id                   string    `json:"id,omitempty"`
-	UploadedAt           time.Time `json:"uploadedAt,omitempty"`
-	PreviousVersionCount int       `json:"previousVersionCount,omitempty"`
-	PreviousVersionHash  string    `json:"previousVersion,omitempty"`
+	Id                   string     `json:"id,omitempty"`
+	UploadedAt           *time.Time `json:"uploadedAt,omitempty"`
+	PreviousVersionCount int        `json:"previousVersionCount,omitempty"`
+	PreviousVersionHash  string     `json:"previousVersion,omitempty"`
 
 	ChangeLog string `json:"changeLog,omitempty"`
 }
@@ -50,7 +50,7 @@ type Json struct {
 }
 
 type JsonMeta struct {
-	IndexedFields []Field
+	IndexedFields Fields
 }
 
 type MultiBlob struct {

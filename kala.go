@@ -15,8 +15,8 @@ type Kala interface {
 }
 
 type Commit struct {
-	Id                  string    `json:"id,omitempty"`
-	PreviousVersionHash string    `json:"previousVersion,omitempty"`
-	UploadedAt          time.Time `json:"uploadedAt,omitempty"`
-	ChangeLog           string    `json:"changeLog,omitempty"`
+	Id                  string     `json:"id,omitempty"`
+	PreviousVersionHash string     `json:"previousVersion,omitempty"`
+	UploadedAt          *time.Time `json:"uploadedAt,omitempty"`
+	ChangeLog           string     `json:"changeLog,omitempty"`
 }
