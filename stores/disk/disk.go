@@ -14,6 +14,9 @@ import (
 )
 
 type Config struct {
+	// Path is the *directory* to contain the store content and metadata.
+	//
+	// This will be created if it does not exist.
 	Path string
 	Log  log15.Logger
 }
@@ -27,6 +30,10 @@ type Disk struct {
 func New(c Config) (*Disk, error) {
 	if c.Path == "" {
 		return nil, errors.New("missing required Config field: Path")
+	}
+
+	if err := os.MkdirAll(c.Path, 0755); err != nil {
+		return nil, err
 	}
 
 	if c.Log == nil {
