@@ -3,6 +3,8 @@ package kala
 import (
 	"io"
 	"time"
+
+	"github.com/leeola/kala/q"
 )
 
 // Kala implements writing, indexing and reading with a Kala store.
@@ -12,6 +14,9 @@ import (
 type Kala interface {
 	// Write the given  Commit, Meta and Reader to the Kala store.
 	Write(Commit, Json, io.Reader) ([]string, error)
+
+	// Search for documents matching the given query.
+	Search(q.Query) ([]string, error)
 }
 
 type Commit struct {

@@ -52,7 +52,7 @@ func (s *Storm) Index(fields []kala.Field) error {
 		row[f.Field] = f.Value
 	}
 
-	return s.db.Save(row)
+	return s.db.Save(&row)
 }
 
 func (s *Storm) Search(q.Query) ([]string, error) {

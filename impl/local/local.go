@@ -8,6 +8,7 @@ import (
 	"github.com/fatih/structs"
 	"github.com/leeola/errors"
 	"github.com/leeola/kala"
+	"github.com/leeola/kala/q"
 )
 
 type Config struct {
@@ -36,30 +37,32 @@ func New(c Config) (*Local, error) {
 	}, nil
 }
 
-func (k *Local) Write(c kala.Commit, m kala.Json, r io.Reader) ([]string, error) {
+func (l *Local) Write(c kala.Commit, j kala.Json, r io.Reader) ([]string, error) {
 	// For quicker prototyping, only supporting metadata atm
 	if r != nil {
 		return nil, errors.New("reader not yet implemented")
 	}
 
-	if structs.IsZero(m) && r == nil {
+	if structs.IsZero(j) && r == nil {
 		return nil, errors.New("No data given to write")
 	}
 
-	metaHash, err := kala.MarshalAndWrite(k.store, m)
+	jsonHash, err := kala.MarshalAndWrite(l.store, j)
 	if err != nil {
 		return nil, errors.Stack(err)
 	}
 
 	var multiBlobHash string
-	// TODO(leeola): Make this into a multipart splitter
-	// multiBlobHash, err := store.WriteReader(k.store, r)
+	// TODO(leeola): Make this into a multipart splitter.
+	// For now it's disabled.
+	//
+	// multiBlobHash, err := store.WriteReader(l.store, r)
 	// if err != nil {
 	// return nil, errors.Stack(err)
 	// }
 
 	version := kala.Version{
-		JsonHash:      metaHash,
+		JsonHash:      jsonHash,
 		MultiBlobHash: multiBlobHash,
 	}
 
@@ -69,7 +72,7 @@ func (k *Local) Write(c kala.Commit, m kala.Json, r io.Reader) ([]string, error)
 	// version = previousVersion
 	// }
 
-	versionHash, err := kala.MarshalAndWrite(k.store, version)
+	versionHash, err := kala.MarshalAndWrite(l.store, version)
 	if err != nil {
 		return nil, errors.Stack(err)
 	}
@@ -82,11 +85,60 @@ func (k *Local) Write(c kala.Commit, m kala.Json, r io.Reader) ([]string, error)
 	version.ChangeLog = c.ChangeLog
 
 	var hashes []string
-	if metaHash != "" {
-		hashes = append(hashes, metaHash)
+	if jsonHash != "" {
+		hashes = append(hashes, jsonHash)
+	}
+
+	// copy the fields list so that we can add to it, without
+	// modifying what is stored
+	indexFields := make(kala.Fields, len(j.Meta.IndexedFields))
+	for i, f := range j.Meta.IndexedFields {
+		indexFields[i] = f
+
+		// TODO(leeola): Check for nil field values, and attempt to find
+		// the value by unmarshalling the json manually.
+		//
+		// This should be done in this location, and not modifying the actual
+		// j.Meta.IndexedFields or we would end up storing values twice.
+		if f.Value == nil {
+			return nil, errors.New("automatic json field value assertion not yet supported")
+		}
+	}
+
+	indexFields.Append(kala.Field{
+		Field: "version.jsonHash",
+		Value: version.JsonHash,
+	})
+	indexFields.Append(kala.Field{
+		Field: "version.multiBlobHash",
+		Value: version.MultiBlobHash,
+	})
+	indexFields.Append(kala.Field{
+		Field: "version.id",
+		Value: version.Id,
+	})
+	indexFields.Append(kala.Field{
+		Field: "version.uploadedAt",
+		Value: version.UploadedAt,
+	})
+	indexFields.Append(kala.Field{
+		Field: "version.previousVersionCount",
+		Value: version.PreviousVersionCount,
+	})
+	indexFields.Append(kala.Field{
+		Field: "version.previousVersionHash",
+		Value: version.PreviousVersionHash,
+	})
+
+	if err := l.index.Index(versionHash, version.Id, indexFields); err != nil {
+		return nil, err
 	}
 
 	return append(hashes, versionHash), nil
+}
+
+func (l *Local) Search(q q.Query) ([]string, error) {
+	return l.index.Search(q)
 }
 
 // NewId is a helper to generate a new default length Id.
