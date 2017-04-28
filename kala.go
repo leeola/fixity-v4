@@ -9,7 +9,7 @@ import (
 )
 
 type Version struct {
-	JsonHash      string `json:"metaHash,omitempty"`
+	JsonHash      string `json:"jsonHash,omitempty"`
 	MultiBlobHash string `json:"multiBlobHash,omitempty"`
 
 	Id                   string     `json:"id,omitempty"`
