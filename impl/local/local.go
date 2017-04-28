@@ -50,7 +50,7 @@ func (l *Local) ReadHash(h string) (kala.Version, error) {
 	}
 
 	if v.JsonHash != "" {
-		if err := ReadAndUnmarshal(l.store, h, &v.Json); err != nil {
+		if err := ReadAndUnmarshal(l.store, v.JsonHash, &v.Json); err != nil {
 			return kala.Version{}, err
 		}
 	}
