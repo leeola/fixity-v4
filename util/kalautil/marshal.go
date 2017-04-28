@@ -17,3 +17,8 @@ func MarshalJson(v interface{}) (kala.Json, error) {
 		Json: json.RawMessage(b),
 	}, nil
 }
+
+// UnmarshalJson unmarshals the given Json struct into the given interface.
+func UnmarshalJson(j kala.Json, v interface{}) error {
+	return json.Unmarshal([]byte(j.Json), v)
+}
