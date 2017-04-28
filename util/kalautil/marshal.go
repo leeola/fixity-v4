@@ -6,8 +6,8 @@ import (
 	"github.com/leeola/kala"
 )
 
-// ToJson creates a kala.Json from the given interface.
-func ToJson(v interface{}) (kala.Json, error) {
+// MarshalJson marshals to a kala.Json from the given interface.
+func MarshalJson(v interface{}) (kala.Json, error) {
 	b, err := json.Marshal(v)
 	if err != nil {
 		return kala.Json{}, err
