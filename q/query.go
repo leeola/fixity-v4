@@ -29,7 +29,10 @@ type Query struct {
 }
 
 func New() *Query {
-	return &Query{}
+	return &Query{
+		// set a default limit
+		LimitBy: 10,
+	}
 }
 
 func (q *Query) Limit(l int) *Query {
