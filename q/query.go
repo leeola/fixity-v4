@@ -10,6 +10,11 @@ type Constraint struct {
 	Constraints []Constraint
 }
 
+type Sort struct {
+	Field      string
+	Descending bool
+}
+
 // Query is a generic method to construct a query in the index implementation.
 //
 // Eg, if mysql is the index, a Query would be constructed into a SQL string.
@@ -17,11 +22,10 @@ type Constraint struct {
 // to be used by the underlying indexer implementation. FullTextSearch for
 // example is a more niche feature, and not supported by many indexers.
 type Query struct {
-	SortBy         string
-	SortDescending bool
-	SkipBy         int
-	LimitBy        int
-	Constraint     Constraint
+	SortBy     []Sort
+	SkipBy     int
+	LimitBy    int
+	Constraint Constraint
 }
 
 func New() *Query {
@@ -39,8 +43,10 @@ func (q *Query) Skip(s int) *Query {
 }
 
 func (q *Query) Sort(field string, descending bool) *Query {
-	q.SortBy = field
-	q.SortDescending = descending
+	q.SortBy = append(q.SortBy, Sort{
+		Field:      field,
+		Descending: descending,
+	})
 	return q
 }
 
