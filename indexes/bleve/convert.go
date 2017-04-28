@@ -49,7 +49,9 @@ func ConvertConstraint(c kq.Constraint) (query.Query, error) {
 	case ops.Equal:
 		// TODO(leeola): implement bool and int casts.
 		if v, ok := c.Value.(string); ok {
-			return bleve.NewTermQuery(v), nil
+			q := bleve.NewTermQuery(v)
+			q.SetField(c.Field)
+			return q, nil
 		} else {
 			return nil, errors.Errorf(
 				"%q operator not supported for value: %s", c.Operator, c.Value)
