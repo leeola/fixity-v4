@@ -9,7 +9,7 @@ import (
 	ops "github.com/leeola/kala/q/operators"
 )
 
-func ConvertQuery(kq kq.Query) (*bleve.SearchRequest, error) {
+func ConvertQuery(kq *kq.Query) (*bleve.SearchRequest, error) {
 	var bq query.Query
 	if !structs.IsZero(kq.Constraint) {
 		constQuery, err := ConvertConstraint(kq.Constraint)

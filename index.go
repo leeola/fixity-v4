@@ -18,7 +18,7 @@ type Index interface {
 	// The hash will allow a search to query all versions
 	Index(hash, id string, fields []Field) error
 
-	Search(q.Query) ([]string, error)
+	Search(*q.Query) ([]string, error)
 }
 
 // Fields is a helper type for convenient mutation of a []Field.

@@ -16,7 +16,7 @@ type Kala interface {
 	Write(Commit, Json, io.Reader) ([]string, error)
 
 	// Search for documents matching the given query.
-	Search(q.Query) ([]string, error)
+	Search(*q.Query) ([]string, error)
 }
 
 type Commit struct {

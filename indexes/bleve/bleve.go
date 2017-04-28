@@ -63,7 +63,7 @@ func (b *Bleve) Index(h, id string, fields []kala.Field) error {
 	return b.bleve.Index(h, &row)
 }
 
-func (b *Bleve) Search(kq kq.Query) ([]string, error) {
+func (b *Bleve) Search(kq *kq.Query) ([]string, error) {
 	search, err := ConvertQuery(kq)
 	if err != nil {
 		return nil, errors.Stack(err)

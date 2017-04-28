@@ -137,7 +137,7 @@ func (l *Local) Write(c kala.Commit, j kala.Json, r io.Reader) ([]string, error)
 	return append(hashes, versionHash), nil
 }
 
-func (l *Local) Search(q q.Query) ([]string, error) {
+func (l *Local) Search(q *q.Query) ([]string, error) {
 	return l.index.Search(q)
 }
 
