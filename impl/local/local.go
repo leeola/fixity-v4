@@ -42,22 +42,22 @@ func New(c Config) (*Local, error) {
 func (l *Local) ReadHash(h string) (kala.Version, error) {
 	var v kala.Version
 	if err := ReadAndUnmarshal(l.store, h, &v); err != nil {
-		return err
+		return kala.Version{}, err
 	}
 
 	if structs.IsZero(v) {
-		return kala.ErrNotVersion
+		return kala.Version{}, kala.ErrNotVersion
 	}
 
 	if v.JsonHash != "" {
 		if err := ReadAndUnmarshal(l.store, h, &v.Json); err != nil {
-			return err
+			return kala.Version{}, err
 		}
 	}
 
 	if v.MultiBlobHash != "" {
 		// TODO(leeola): Construct a new multiblob reader for the given hash.
-		return errors.New("multiBlob reading not yet supported")
+		return kala.Version{}, errors.New("multiBlob reading not yet supported")
 	}
 
 	return v, nil
@@ -105,7 +105,7 @@ func (l *Local) Write(c kala.Commit, j kala.Json, r io.Reader) ([]string, error)
 	// version = previousVersion
 	// }
 
-	versionHash, err := kala.MarshalAndWrite(l.store, version)
+	versionHash, err := MarshalAndWrite(l.store, version)
 	if err != nil {
 		return nil, errors.Stack(err)
 	}
@@ -209,8 +209,8 @@ func MarshalAndWrite(s kala.Store, v interface{}) (string, error) {
 	if s == nil {
 		return "", errors.New("Store is nil")
 	}
-	if r == nil {
-		return "", errors.New("Reader is nil")
+	if v == nil {
+		return "", errors.New("Interface is nil")
 	}
 
 	b, err := json.Marshal(v)
@@ -226,7 +226,7 @@ func MarshalAndWrite(s kala.Store, v interface{}) (string, error) {
 	return h, nil
 }
 
-func ReadAll(s Store, h string) ([]byte, error) {
+func ReadAll(s kala.Store, h string) ([]byte, error) {
 	rc, err := s.Read(h)
 	if err != nil {
 		return nil, errors.Stack(err)
@@ -236,12 +236,12 @@ func ReadAll(s Store, h string) ([]byte, error) {
 	return ioutil.ReadAll(rc)
 }
 
-func ReadAndUnmarshal(s Store, h string, v interface{}) error {
+func ReadAndUnmarshal(s kala.Store, h string, v interface{}) error {
 	_, err := ReadAndUnmarshalWithBytes(s, h, v)
 	return err
 }
 
-func ReadAndUnmarshalWithBytes(s Store, h string, v interface{}) ([]byte, error) {
+func ReadAndUnmarshalWithBytes(s kala.Store, h string, v interface{}) ([]byte, error) {
 	b, err := ReadAll(s, h)
 	if err != nil {
 		return nil, errors.Stack(err)
