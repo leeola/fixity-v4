@@ -3,7 +3,9 @@ package local
 import (
 	"crypto/rand"
 	"encoding/hex"
+	"encoding/json"
 	"io"
+	"io/ioutil"
 
 	"github.com/fatih/structs"
 	"github.com/leeola/errors"
@@ -37,6 +39,37 @@ func New(c Config) (*Local, error) {
 	}, nil
 }
 
+func (l *Local) ReadHash(h string) (kala.Version, error) {
+	var v kala.Version
+	if err := ReadAndUnmarshal(l.store, h, &v); err != nil {
+		return err
+	}
+
+	if structs.IsZero(v) {
+		return kala.ErrNotVersion
+	}
+
+	if v.JsonHash != "" {
+		if err := ReadAndUnmarshal(l.store, h, &v.Json); err != nil {
+			return err
+		}
+	}
+
+	if v.MultiBlobHash != "" {
+		// TODO(leeola): Construct a new multiblob reader for the given hash.
+		return errors.New("multiBlob reading not yet supported")
+	}
+
+	return v, nil
+}
+
+func (l *Local) ReadId(id string) (kala.Version, error) {
+	// TODO(leeola): search the unique/id index for the given id,
+	// but first i need to decide how the indexes are going to exactly
+	// store the unique id versions.
+	return kala.Version{}, errors.New("not implemented")
+}
+
 func (l *Local) Write(c kala.Commit, j kala.Json, r io.Reader) ([]string, error) {
 	// For quicker prototyping, only supporting metadata atm
 	if r != nil {
@@ -47,7 +80,7 @@ func (l *Local) Write(c kala.Commit, j kala.Json, r io.Reader) ([]string, error)
 		return nil, errors.New("No data given to write")
 	}
 
-	jsonHash, err := kala.MarshalAndWrite(l.store, j)
+	jsonHash, err := MarshalAndWrite(l.store, j)
 	if err != nil {
 		return nil, errors.Stack(err)
 	}
@@ -151,4 +184,72 @@ func NewId() (string, error) {
 		return "", err
 	}
 	return hex.EncodeToString(b), nil
+}
+
+// WriteReader writes the given reader's content to the store.
+func WriteReader(s kala.Store, r io.Reader) (string, error) {
+	if s == nil {
+		return "", errors.New("Store is nil")
+	}
+	if r == nil {
+		return "", errors.New("Reader is nil")
+	}
+
+	b, err := ioutil.ReadAll(r)
+	if err != nil {
+		return "", errors.Wrap(err, "failed to readall")
+	}
+
+	h, err := s.Write(b)
+	return h, errors.Wrap(err, "store failed to write")
+}
+
+// MarshalAndWrite marshals the given interface to json and writes that to the store.
+func MarshalAndWrite(s kala.Store, v interface{}) (string, error) {
+	if s == nil {
+		return "", errors.New("Store is nil")
+	}
+	if r == nil {
+		return "", errors.New("Reader is nil")
+	}
+
+	b, err := json.Marshal(v)
+	if err != nil {
+		return "", errors.Stack(err)
+	}
+
+	h, err := s.Write(b)
+	if err != nil {
+		return "", errors.Stack(err)
+	}
+
+	return h, nil
+}
+
+func ReadAll(s Store, h string) ([]byte, error) {
+	rc, err := s.Read(h)
+	if err != nil {
+		return nil, errors.Stack(err)
+	}
+	defer rc.Close()
+
+	return ioutil.ReadAll(rc)
+}
+
+func ReadAndUnmarshal(s Store, h string, v interface{}) error {
+	_, err := ReadAndUnmarshalWithBytes(s, h, v)
+	return err
+}
+
+func ReadAndUnmarshalWithBytes(s Store, h string, v interface{}) ([]byte, error) {
+	b, err := ReadAll(s, h)
+	if err != nil {
+		return nil, errors.Stack(err)
+	}
+
+	if err := json.Unmarshal(b, v); err != nil {
+		return nil, errors.Stack(err)
+	}
+
+	return b, nil
 }

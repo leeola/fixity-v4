@@ -10,4 +10,8 @@ var (
 	// ErrHashNotMatchContent is to be returned by Store implementors if a given hash
 	// does not match the expected content write.
 	ErrHashNotMatchContent = errors.New("hash does not match content")
+
+	// ErrNotVersion is returned when a hash's contents are being unmarshalled into
+	// a Version, but the contents do not match a Version.
+	ErrNotVersion = errors.New("hash is not a valid Version struct")
 )

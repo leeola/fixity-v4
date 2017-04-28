@@ -1,10 +1,6 @@
 package kala
 
-import (
-	"encoding/json"
-	"io"
-	"time"
-)
+import "io"
 
 type Store interface {
 	// Check if the given hash exists in the Store
@@ -30,33 +26,4 @@ type Store interface {
 	// or removed records are included in the listing. Therefor Listing should be done
 	// before before a store is being actively served.
 	List() (<-chan string, error)
-}
-
-type Version struct {
-	JsonHash      string `json:"metaHash,omitempty"`
-	MultiBlobHash string `json:"multiBlobHash,omitempty"`
-
-	Id                   string     `json:"id,omitempty"`
-	UploadedAt           *time.Time `json:"uploadedAt,omitempty"`
-	PreviousVersionCount int        `json:"previousVersionCount,omitempty"`
-	PreviousVersionHash  string     `json:"previousVersion,omitempty"`
-
-	ChangeLog string `json:"changeLog,omitempty"`
-}
-
-type Json struct {
-	Meta JsonMeta        `json:"jsonMeta,omitempty"`
-	Json json.RawMessage `json:"json"`
-}
-
-type JsonMeta struct {
-	IndexedFields Fields
-}
-
-type MultiBlob struct {
-	BlobHashes []string `json:"blobHashes"`
-}
-
-type Blob struct {
-	Blob []byte `json:"blob"`
 }
