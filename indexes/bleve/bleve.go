@@ -13,7 +13,8 @@ import (
 type Config struct {
 	// Path is the *directory* containing the bleve index.
 	Path string `toml:"path"`
-	Log  log15.Logger
+
+	Log log15.Logger
 }
 
 type Bleve struct {
@@ -57,6 +58,7 @@ func (b *Bleve) Index(h, id string, fields []kala.Field) error {
 	row := map[string]interface{}{}
 	for _, f := range fields {
 		// TODO(leeola): implement options
+
 		row[f.Field] = f.Value
 	}
 

@@ -1,8 +1,6 @@
 package local
 
 import (
-	"crypto/rand"
-	"encoding/hex"
 	"encoding/json"
 	"io"
 	"io/ioutil"
@@ -10,6 +8,7 @@ import (
 	"github.com/fatih/structs"
 	"github.com/leeola/errors"
 	"github.com/leeola/kala"
+	"github.com/leeola/kala/fieldunmarshallers/mapfieldunmarshaller"
 	"github.com/leeola/kala/q"
 )
 
@@ -37,6 +36,62 @@ func New(c Config) (*Local, error) {
 		index:  c.Index,
 		store:  c.Store,
 	}, nil
+}
+
+// makeFields created index Fields for the Version as well as unknown values.
+func (l *Local) makeFields(version kala.Version, json kala.Json) (kala.Fields, error) {
+	// NOTE(leeola): The fieldUnmarshaller lazily unmarshals, so if all fields
+	// are specified then no unmarshalling is needed.
+	//
+	// TODO(leeola): Make this configurable for Go usage, so that
+	// a user of kala via Go can supply the field unmarshaller and use
+	// and data format they want.
+	fu := mapfieldunmarshaller.New([]byte(json.Json))
+
+	// copy the fields list so that we can add to it, without
+	// modifying what is stored
+	indexFields := make(kala.Fields, len(json.Meta.IndexedFields))
+	for i, f := range json.Meta.IndexedFields {
+		// NOTE(leeola): It's important that we don't modify the
+		// json.Meta.IndexedFields slice or we would end up storing values twice when
+		// the caller didn't want that.
+		if f.Value == nil {
+			v, err := fu.Unmarshal(f.Field)
+			if err != nil {
+				return nil, err
+			}
+			f.Value = v
+		}
+
+		indexFields[i] = f
+	}
+
+	indexFields.Append(kala.Field{
+		Field: "version.jsonHash",
+		Value: version.JsonHash,
+	})
+	indexFields.Append(kala.Field{
+		Field: "version.multiBlobHash",
+		Value: version.MultiBlobHash,
+	})
+	indexFields.Append(kala.Field{
+		Field: "version.id",
+		Value: version.Id,
+	})
+	indexFields.Append(kala.Field{
+		Field: "version.uploadedAt",
+		Value: version.UploadedAt,
+	})
+	indexFields.Append(kala.Field{
+		Field: "version.previousVersionCount",
+		Value: version.PreviousVersionCount,
+	})
+	indexFields.Append(kala.Field{
+		Field: "version.previousVersionHash",
+		Value: version.PreviousVersionHash,
+	})
+
+	return indexFields, nil
 }
 
 func (l *Local) ReadHash(h string) (kala.Version, error) {
@@ -122,46 +177,10 @@ func (l *Local) Write(c kala.Commit, j kala.Json, r io.Reader) ([]string, error)
 		hashes = append(hashes, jsonHash)
 	}
 
-	// copy the fields list so that we can add to it, without
-	// modifying what is stored
-	indexFields := make(kala.Fields, len(j.Meta.IndexedFields))
-	for i, f := range j.Meta.IndexedFields {
-		indexFields[i] = f
-
-		// TODO(leeola): Check for nil field values, and attempt to find
-		// the value by unmarshalling the json manually.
-		//
-		// This should be done in this location, and not modifying the actual
-		// j.Meta.IndexedFields or we would end up storing values twice.
-		if f.Value == nil {
-			return nil, errors.New("automatic json field value assertion not yet supported")
-		}
+	indexFields, err := l.makeFields(version, j)
+	if err != nil {
+		return nil, err
 	}
-
-	indexFields.Append(kala.Field{
-		Field: "version.jsonHash",
-		Value: version.JsonHash,
-	})
-	indexFields.Append(kala.Field{
-		Field: "version.multiBlobHash",
-		Value: version.MultiBlobHash,
-	})
-	indexFields.Append(kala.Field{
-		Field: "version.id",
-		Value: version.Id,
-	})
-	indexFields.Append(kala.Field{
-		Field: "version.uploadedAt",
-		Value: version.UploadedAt,
-	})
-	indexFields.Append(kala.Field{
-		Field: "version.previousVersionCount",
-		Value: version.PreviousVersionCount,
-	})
-	indexFields.Append(kala.Field{
-		Field: "version.previousVersionHash",
-		Value: version.PreviousVersionHash,
-	})
 
 	if err := l.index.Index(versionHash, version.Id, indexFields); err != nil {
 		return nil, err
@@ -172,18 +191,6 @@ func (l *Local) Write(c kala.Commit, j kala.Json, r io.Reader) ([]string, error)
 
 func (l *Local) Search(q *q.Query) ([]string, error) {
 	return l.index.Search(q)
-}
-
-// NewId is a helper to generate a new default length Id.
-//
-// Note that the Id is encoded as hex to easily interact with it, rather
-// than plain bytes.
-func NewId() (string, error) {
-	b := make([]byte, 32)
-	if _, err := io.ReadFull(rand.Reader, b); err != nil {
-		return "", err
-	}
-	return hex.EncodeToString(b), nil
 }
 
 // WriteReader writes the given reader's content to the store.

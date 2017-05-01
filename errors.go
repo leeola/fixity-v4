@@ -14,4 +14,7 @@ var (
 	// ErrNotVersion is returned when a hash's contents are being unmarshalled into
 	// a Version, but the contents do not match a Version.
 	ErrNotVersion = errors.New("hash is not a valid Version struct")
+
+	// ErrFieldNotFound is returned when a FieldUnmarshaller cannot unmarshal the field.
+	ErrFieldNotFound = errors.New("field ummarshaller cannot find field")
 )

@@ -18,6 +18,15 @@ func MarshalJson(v interface{}) (kala.Json, error) {
 	}, nil
 }
 
+// MustMarshalJson panics if the Marshal fails.
+func MustMarshalJson(v interface{}) kala.Json {
+	j, err := MarshalJson(v)
+	if err != nil {
+		panic(err.Error())
+	}
+	return j
+}
+
 // UnmarshalJson unmarshals the given Json struct into the given interface.
 func UnmarshalJson(j kala.Json, v interface{}) error {
 	return json.Unmarshal([]byte(j.Json), v)

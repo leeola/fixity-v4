@@ -3,7 +3,7 @@ package testutil
 import (
 	"io"
 
-	"github.com/leeola/kala/impl/local"
+	"github.com/leeola/kala"
 )
 
 // NoopStore implements a kala.Store as noops.
@@ -19,7 +19,7 @@ func (*NoopStore) Read(string) (io.ReadCloser, error) {
 }
 
 func (*NoopStore) Write([]byte) (string, error) {
-	fakeHash, err := local.NewId()
+	fakeHash, err := kala.NewId()
 	if err != nil {
 		return "", err
 	}
