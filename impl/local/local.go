@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 
 	"github.com/fatih/structs"
+	"github.com/inconshreveable/log15"
 	"github.com/leeola/errors"
 	"github.com/leeola/kala"
 	"github.com/leeola/kala/fieldunmarshallers/mapfieldunmarshaller"
@@ -15,12 +16,14 @@ import (
 type Config struct {
 	Index kala.Index
 	Store kala.Store
+	Log   log15.Logger
 }
 
 type Local struct {
 	config Config
 	index  kala.Index
 	store  kala.Store
+	log    log15.Logger
 }
 
 func New(c Config) (*Local, error) {
@@ -31,10 +34,15 @@ func New(c Config) (*Local, error) {
 		return nil, errors.New("missing reqired config: Store")
 	}
 
+	if c.Log == nil {
+		c.Log = log15.New()
+	}
+
 	return &Local{
 		config: c,
 		index:  c.Index,
 		store:  c.Store,
+		log:    c.Log,
 	}, nil
 }
 
@@ -149,9 +157,18 @@ func (l *Local) Write(c kala.Commit, j kala.Json, r io.Reader) ([]string, error)
 	// return nil, errors.Stack(err)
 	// }
 
+	if c.Id != "" || c.PreviousVersionHash != "" {
+		l.log.Warn("object mutation is not yet implemented",
+			"id", c.Id, "previousVersionHash", c.PreviousVersionHash)
+	}
+
 	version := kala.Version{
-		JsonHash:      jsonHash,
-		MultiBlobHash: multiBlobHash,
+		Id:                  c.Id,
+		UploadedAt:          c.UploadedAt,
+		PreviousVersionHash: c.PreviousVersionHash,
+		ChangeLog:           c.ChangeLog,
+		JsonHash:            jsonHash,
+		MultiBlobHash:       multiBlobHash,
 	}
 
 	// TODO(leeola): load the old version if previous version hash is specified
