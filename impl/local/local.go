@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"io"
 	"io/ioutil"
+	"time"
 
 	"github.com/fatih/structs"
 	"github.com/inconshreveable/log15"
@@ -160,6 +161,11 @@ func (l *Local) Write(c kala.Commit, j kala.Json, r io.Reader) ([]string, error)
 	if c.Id != "" || c.PreviousVersionHash != "" {
 		l.log.Warn("object mutation is not yet implemented",
 			"id", c.Id, "previousVersionHash", c.PreviousVersionHash)
+	}
+
+	if c.UploadedAt == nil {
+		now := time.Now()
+		c.UploadedAt = &now
 	}
 
 	version := kala.Version{
