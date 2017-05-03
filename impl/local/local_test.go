@@ -19,14 +19,16 @@ func TestMakeFields(t *testing.T) {
 					Foo string `json:"foo"`
 				}{Foo: "foo value"}
 				fields, err := k.makeFields(
-					kala.Version{},
-					kala.Json{
-						Json: kalautil.MustMarshalJson(&foo).Json,
-						Meta: kala.JsonMeta{
+					kala.Version{
+						JsonMeta: &kala.JsonMeta{
 							IndexedFields: kala.Fields{{
 								Field: "foo",
 							}},
-						}},
+						},
+					},
+					kala.Json{
+						Json: kalautil.MustMarshalJson(&foo).Json,
+					},
 				)
 				So(err, ShouldBeNil)
 
