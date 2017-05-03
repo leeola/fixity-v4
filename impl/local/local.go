@@ -59,20 +59,23 @@ func (l *Local) makeFields(version kala.Version, json kala.Json) (kala.Fields, e
 
 	// copy the fields list so that we can add to it, without
 	// modifying what is stored
-	indexFields := make(kala.Fields, len(json.Meta.IndexedFields))
-	for i, f := range json.Meta.IndexedFields {
-		// NOTE(leeola): It's important that we don't modify the
-		// json.Meta.IndexedFields slice or we would end up storing values twice when
-		// the caller didn't want that.
-		if f.Value == nil {
-			v, err := fu.Unmarshal(f.Field)
-			if err != nil {
-				return nil, err
+	var indexFields kala.Fields
+	if version.JsonMeta != nil {
+		indexFields = make(kala.Fields, len(version.JsonMeta.IndexedFields))
+		for i, f := range version.JsonMeta.IndexedFields {
+			// NOTE(leeola): It's important that we don't modify the
+			// version.JsonMeta.IndexedFields slice or we would end up storing values
+			// twice when the caller didn't want that.
+			if f.Value == nil {
+				v, err := fu.Unmarshal(f.Field)
+				if err != nil {
+					return nil, err
+				}
+				f.Value = v
 			}
-			f.Value = v
-		}
 
-		indexFields[i] = f
+			indexFields[i] = f
+		}
 	}
 
 	indexFields.Append(kala.Field{
@@ -173,6 +176,7 @@ func (l *Local) Write(c kala.Commit, j kala.Json, r io.Reader) ([]string, error)
 		UploadedAt:          c.UploadedAt,
 		PreviousVersionHash: c.PreviousVersionHash,
 		ChangeLog:           c.ChangeLog,
+		JsonMeta:            c.JsonMeta,
 		JsonHash:            jsonHash,
 		MultiBlobHash:       multiBlobHash,
 	}

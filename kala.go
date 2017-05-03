@@ -22,6 +22,14 @@ type Version struct {
 	// See Json docstring for further explanation of Json.
 	JsonHash string `json:"jsonHash,omitempty"`
 
+	// JsonMeta stores information about the raw Json being stored.
+	//
+	// This is primarily used to provide insights on how to index and unmarshal
+	// the Json struct.
+	//
+	// See JsonMeta docstring for further details.
+	JsonMeta *JsonMeta `json:"jsonMeta,omitempty"`
+
 	// MultiBlobHash is the hash address of any blob data stored for this version.
 	//
 	// See MultiBlob and Blob docstrings for further explanation of the MultiBlob.
@@ -82,13 +90,10 @@ type Version struct {
 // Json is a struct which stores text data in Json form.
 //
 // This data is often indexed, and is the method by which Blob data stores
-// and indexes metadata about that blob data.
+// and indexes metadata about that blob data. It does not require or imply
+// that blob data exists with the given Json, as the Json may be the primary
+// data being stored. As is the case with a Wiki, etc.
 type Json struct {
-	// Meta stores information about the raw Json being stored.
-	//
-	// See JsonMeta docstring for further details.
-	Meta JsonMeta `json:"jsonMeta,omitempty"`
-
 	// Json is the actual json data being stored.
 	//
 	// Note that Kala provides some helpers to marshal/unmarshal the Json
@@ -139,6 +144,7 @@ type Commit struct {
 	Id                  string     `json:"id,omitempty"`
 	PreviousVersionHash string     `json:"previousVersion,omitempty"`
 	UploadedAt          *time.Time `json:"uploadedAt,omitempty"`
+	JsonMeta            *JsonMeta  `json:"jsonMeta,omitempty"`
 	ChangeLog           string     `json:"changeLog,omitempty"`
 }
 
