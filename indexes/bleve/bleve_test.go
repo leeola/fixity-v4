@@ -41,13 +41,15 @@ func TestBleve(t *testing.T) {
 		Convey("Given no other entries", func() {
 			Convey("When we create a new entry", func() {
 				createdHashes, err := k.Write(
-					kala.Commit{},
-					kala.Json{Meta: kala.JsonMeta{
-						IndexedFields: kala.Fields{{
-							Field: "field",
-							Value: "foo",
-						}},
-					}},
+					kala.Commit{
+						JsonMeta: &kala.JsonMeta{
+							IndexedFields: kala.Fields{{
+								Field: "field",
+								Value: "foo",
+							}},
+						},
+					},
+					kala.Json{Json: []byte("{}")},
 					nil,
 				)
 				So(err, ShouldBeNil)
@@ -58,6 +60,69 @@ func TestBleve(t *testing.T) {
 					So(err, ShouldBeNil)
 					So(r, ShouldHaveLength, 1)
 					So(r[0], ShouldEqual, createdVersionHash)
+				})
+			})
+		})
+	})
+
+	// Note that this test is attempting to ignore sort order. Eg, this only tests
+	// that the skipping is consistent and works, not what the order of the fields
+	// are.
+	Convey("Scenario: Result skipping", t, func() {
+		Convey("Given 5 entries", func() {
+			for i := 0; i < 5; i++ {
+				_, err := k.Write(
+					kala.Commit{
+						JsonMeta: &kala.JsonMeta{
+							IndexedFields: kala.Fields{{
+								Field: "field",
+								Value: "foo",
+							}},
+						},
+					},
+					kala.Json{Json: []byte("{}")},
+					nil,
+				)
+				So(err, ShouldBeNil)
+			}
+
+			Convey("When we query the first two repeatedly", func() {
+				query := q.New().Const(q.Eq("field", "foo")).Limit(2)
+				a, err := k.Search(query)
+				So(err, ShouldBeNil)
+				b, err := k.Search(query)
+				So(err, ShouldBeNil)
+				Convey("Then it should return with the same results both times", func() {
+					So(a, ShouldHaveLength, 2)
+					So(b, ShouldHaveLength, 2)
+					for i, h := range a {
+						So(h, ShouldEqual, b[i])
+					}
+				})
+			})
+
+			Convey("When we query the second two repeatedly", func() {
+				firstTwoQ := q.New().Const(q.Eq("field", "foo")).Limit(2)
+				firstTwo, err := k.Search(firstTwoQ)
+				So(err, ShouldBeNil)
+				secondTwoQ := q.New().Const(q.Eq("field", "foo")).Limit(2).Skip(2)
+				a, err := k.Search(secondTwoQ)
+				So(err, ShouldBeNil)
+				b, err := k.Search(secondTwoQ)
+				So(err, ShouldBeNil)
+				Convey("Then it should return with the same results both times", func() {
+					So(a, ShouldHaveLength, 2)
+					So(b, ShouldHaveLength, 2)
+					for i, h := range a {
+						So(h, ShouldEqual, b[i])
+					}
+				})
+				Convey("Then it should not return with the first two", func() {
+					for _, fh := range firstTwo {
+						for _, ah := range a {
+							So(fh, ShouldNotEqual, ah)
+						}
+					}
 				})
 			})
 		})

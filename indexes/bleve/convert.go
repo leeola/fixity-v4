@@ -22,12 +22,9 @@ func ConvertQuery(kq *kq.Query) (*bleve.SearchRequest, error) {
 		bq = bleve.NewMatchAllQuery()
 	}
 
-	if kq.SkipBy != 0 {
-		return nil, errors.New("SkipBy not implemented for bleve index")
-	}
-
 	search := bleve.NewSearchRequest(bq)
 	search.Size = kq.LimitBy
+	search.From = kq.SkipBy
 
 	if len(kq.SortBy) > 0 {
 		sortBy := make([]string, len(kq.SortBy))
