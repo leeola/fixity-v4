@@ -54,6 +54,16 @@ func ConvertConstraint(c kq.Constraint) (query.Query, error) {
 				"%q operator not supported for value: %s", c.Operator, c.Value)
 		}
 
+	case ops.FullTextSearch:
+		if v, ok := c.Value.(string); ok {
+			q := bleve.NewMatchPhraseQuery(v)
+			q.SetField(c.Field)
+			return q, nil
+		} else {
+			return nil, errors.Errorf(
+				"%q operator not supported for value: %s", c.Operator, c.Value)
+		}
+
 	case ops.And, ops.Or, ops.Not:
 		qs := make([]query.Query, len(c.Constraints))
 		for i, subc := range c.Constraints {

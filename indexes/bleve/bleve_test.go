@@ -34,10 +34,10 @@ func newKala(rootDir string) kala.Kala {
 
 func TestBleve(t *testing.T) {
 	tmp := testutil.MustTempDir("kala-bleve")
-	k := newKala(tmp)
-	defer os.RemoveAll(tmp)
 
 	Convey("Scenario: Basic querying", t, func() {
+		k := newKala(tmp)
+		defer os.RemoveAll(tmp)
 		Convey("Given no other entries", func() {
 			Convey("When we create a new entry", func() {
 				createdHashes, err := k.Write(
@@ -65,10 +65,57 @@ func TestBleve(t *testing.T) {
 		})
 	})
 
+	Convey("Scenario: Multi field querying", t, func() {
+		k := newKala(tmp)
+		defer os.RemoveAll(tmp)
+		Convey("Given multiple entries", func() {
+			createdHashes, err := k.Write(
+				kala.Commit{
+					JsonMeta: &kala.JsonMeta{
+						IndexedFields: kala.Fields{
+							{
+								Field: "fielda",
+								Value: "foo",
+							},
+							{
+								Field: "fieldb",
+								Value: "bar",
+							},
+						},
+					},
+				},
+				kala.Json{Json: []byte("{}")},
+				nil,
+			)
+			So(err, ShouldBeNil)
+			So(createdHashes, ShouldHaveLength, 2)
+			createdVersionHash := createdHashes[1]
+
+			Convey("When we query fielda with the correct value", func() {
+				r, err := k.Search(q.New().Const(q.Eq("fielda", "foo")))
+				So(err, ShouldBeNil)
+				Convey("Then it should show up in search results", func() {
+					So(r, ShouldHaveLength, 1)
+					So(r[0], ShouldEqual, createdVersionHash)
+				})
+			})
+			Convey("When we query fieldb with the correct value", func() {
+				r, err := k.Search(q.New().Const(q.Eq("fieldb", "bar")))
+				So(err, ShouldBeNil)
+				Convey("Then it should show up in search results", func() {
+					So(r, ShouldHaveLength, 1)
+					So(r[0], ShouldEqual, createdVersionHash)
+				})
+			})
+		})
+	})
+
 	// Note that this test is attempting to ignore sort order. Eg, this only tests
 	// that the skipping is consistent and works, not what the order of the fields
 	// are.
 	Convey("Scenario: Result skipping", t, func() {
+		k := newKala(tmp)
+		defer os.RemoveAll(tmp)
 		Convey("Given 5 entries", func() {
 			for i := 0; i < 5; i++ {
 				_, err := k.Write(
