@@ -4,6 +4,7 @@ package operators
 const (
 	And                = "And"
 	Equal              = "Equal"
+	FullTextSearch     = "FullTextSearch"
 	GreaterThan        = "GreaterThan"
 	GreaterThanOrEqual = "GreaterThanOrEqual"
 	LessThan           = "LessThan"

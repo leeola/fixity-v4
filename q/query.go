@@ -83,6 +83,14 @@ func Eq(field string, value interface{}) Constraint {
 	}
 }
 
+func Fts(field string, value interface{}) Constraint {
+	return Constraint{
+		Operator: operators.FullTextSearch,
+		Field:    field,
+		Value:    value,
+	}
+}
+
 func Gt(field string, value interface{}) Constraint {
 	return Constraint{
 		Operator: operators.GreaterThan,
