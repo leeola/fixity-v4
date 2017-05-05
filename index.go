@@ -8,8 +8,6 @@ type Field struct {
 	Options FieldOptions `json:"options,omitempty"`
 }
 
-type FieldOptions map[string]interface{}
-
 // Index implements indexing and searching functionality for a kala store.
 type Index interface {
 	// Index the given hash and id to the given fields.
