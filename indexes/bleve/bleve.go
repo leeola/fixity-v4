@@ -17,6 +17,12 @@ type Config struct {
 	Log log15.Logger
 }
 
+// Bleve implements the kala Index interface for Bleve Search.
+//
+// Supported Options:
+//    FullTextSearch:
+//      This option is default, so it's _technically_ ignored but it still works
+//      for full text searches and should be defined in metadata regardless.
 type Bleve struct {
 	config Config
 	log    log15.Logger
