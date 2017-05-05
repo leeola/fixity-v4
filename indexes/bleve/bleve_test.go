@@ -38,28 +38,42 @@ func TestBleve(t *testing.T) {
 	Convey("Scenario: Basic querying", t, func() {
 		k := newKala(tmp)
 		defer os.RemoveAll(tmp)
-		Convey("Given no other entries", func() {
-			Convey("When we create a new entry", func() {
-				createdHashes, err := k.Write(
-					kala.Commit{
-						JsonMeta: &kala.JsonMeta{
-							IndexedFields: kala.Fields{{
-								Field: "field",
-								Value: "foo",
-							}},
-						},
+		Convey("Given a single entry", func() {
+			createdHashes, err := k.Write(
+				kala.Commit{
+					JsonMeta: &kala.JsonMeta{
+						IndexedFields: kala.Fields{{
+							Field: "field",
+							Value: "foo bar baz",
+						}},
 					},
-					kala.Json{Json: []byte("{}")},
-					nil,
-				)
+				},
+				kala.Json{Json: []byte("{}")},
+				nil,
+			)
+			So(err, ShouldBeNil)
+			So(createdHashes, ShouldHaveLength, 2)
+			createdVersionHash := createdHashes[1]
+			Convey("When the correct value is queried", func() {
+				r, err := k.Search(q.New().Const(q.Eq("field", "foo bar baz")))
 				So(err, ShouldBeNil)
-				So(createdHashes, ShouldHaveLength, 2)
-				createdVersionHash := createdHashes[1]
 				Convey("Then it should show up in search results", func() {
-					r, err := k.Search(q.New().Const(q.Eq("field", "foo")))
-					So(err, ShouldBeNil)
 					So(r, ShouldHaveLength, 1)
 					So(r[0], ShouldEqual, createdVersionHash)
+				})
+			})
+			Convey("When the incorrect value is queried", func() {
+				r, err := k.Search(q.New().Const(q.Eq("field", "incorrect")))
+				So(err, ShouldBeNil)
+				Convey("Then it should not show up in search results", func() {
+					So(r, ShouldHaveLength, 0)
+				})
+			})
+			Convey("When the a substring of the full value is queried", func() {
+				r, err := k.Search(q.New().Const(q.Eq("field", "bar")))
+				So(err, ShouldBeNil)
+				Convey("Then it should not show up in search results", func() {
+					So(r, ShouldHaveLength, 0)
 				})
 			})
 		})
@@ -99,12 +113,60 @@ func TestBleve(t *testing.T) {
 					So(r[0], ShouldEqual, createdVersionHash)
 				})
 			})
+			Convey("When we query fielda with the incorrect value", func() {
+				r, err := k.Search(q.New().Const(q.Eq("fielda", "bar")))
+				So(err, ShouldBeNil)
+				Convey("Then it should not show up in search results", func() {
+					So(r, ShouldHaveLength, 0)
+				})
+			})
 			Convey("When we query fieldb with the correct value", func() {
 				r, err := k.Search(q.New().Const(q.Eq("fieldb", "bar")))
 				So(err, ShouldBeNil)
 				Convey("Then it should show up in search results", func() {
 					So(r, ShouldHaveLength, 1)
 					So(r[0], ShouldEqual, createdVersionHash)
+				})
+			})
+		})
+	})
+
+	Convey("Scenario: querying fulltextsearch", t, func() {
+		k := newKala(tmp)
+		defer os.RemoveAll(tmp)
+		Convey("Given multiple entries", func() {
+			createdHashes, err := k.Write(
+				kala.Commit{
+					JsonMeta: &kala.JsonMeta{
+						// fts is default with bleve.
+						IndexedFields: kala.Fields{
+							{
+								Field: "field",
+								Value: "this is a fts field, with foo in it",
+							},
+						},
+					},
+				},
+				kala.Json{Json: []byte("{}")},
+				nil,
+			)
+			So(err, ShouldBeNil)
+			So(createdHashes, ShouldHaveLength, 2)
+			createdVersionHash := createdHashes[1]
+
+			Convey("When we query fielda with the correct value", func() {
+				r, err := k.Search(q.New().Const(q.Eq("field", "foo")))
+				So(err, ShouldBeNil)
+				Convey("Then it should show up in search results", func() {
+					So(r, ShouldHaveLength, 1)
+					So(r[0], ShouldEqual, createdVersionHash)
+				})
+			})
+			Convey("When we query with an incorrect value", func() {
+				r, err := k.Search(q.New().Const(q.Eq("field", "bar")))
+				So(err, ShouldBeNil)
+				Convey("Then it should not show up in search results", func() {
+					So(r, ShouldHaveLength, 0)
 				})
 			})
 		})
