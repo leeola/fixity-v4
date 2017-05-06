@@ -1,20 +1,20 @@
-package kala
+package fixity
 
 import (
 	"encoding/json"
 	"io"
 	"time"
 
-	"github.com/leeola/kala/q"
+	"github.com/leeola/fixity/q"
 )
 
 // Version of json and blob data tracked through history and time.
 //
-// This is the root method for tracking mutation in Kala. Each write to Kala
+// This is the root method for tracking mutation in Fixity. Each write to Fixity
 // writes the json and blob data and records their addresses here in this
 // struct along with some additional metadata.
 //
-// Note that many of these fields are optional, and it is up to the Kala
+// Note that many of these fields are optional, and it is up to the Fixity
 // implementation to enforce reasonable requirements.
 type Version struct {
 	// JsonHash is the hash address of any json data stored for this version.
@@ -37,7 +37,7 @@ type Version struct {
 
 	// Id is a unique string which allows Versions to be linked.
 	//
-	// Since Kala is immutable, Versions allow a single piece of data to be
+	// Since Fixity is immutable, Versions allow a single piece of data to be
 	// mutated over time and history. Each version represents a single state
 	// of mutation for the given Json and Blob hash. The Id, allows each
 	// version of, say, a single File or Wiki page to have the same identifier
@@ -63,7 +63,7 @@ type Version struct {
 	//
 	// This not only provides a historical record of each mutation, but it can
 	// help identify version forks. A fork in this case, is when multiple
-	// writers write based off of the same PreviousVersionHash. Since Kala
+	// writers write based off of the same PreviousVersionHash. Since Fixity
 	// stores data by content address, forks and "conflicts" are not
 	// problematic, but can cause confusion to the actual writer of the data.
 	PreviousVersionHash string `json:"previousVersion,omitempty"`
@@ -96,7 +96,7 @@ type Version struct {
 type Json struct {
 	// Json is the actual json data being stored.
 	//
-	// Note that Kala provides some helpers to marshal/unmarshal the Json
+	// Note that Fixity provides some helpers to marshal/unmarshal the Json
 	// struct into an interface as well as automatic index field inspecting,
 	// which assumes valid Json, but if those are not used this Json []byte
 	// slice can be anything.
@@ -110,7 +110,7 @@ type Json struct {
 // As well as mappings for json fields, etc.
 //
 // Without Metadata about the Json data, Json data would become a black box
-// with no information to help Kala rebuild indexes and etc.
+// with no information to help Fixity rebuild indexes and etc.
 type JsonMeta struct {
 	// IndexFields are the fields of the Json data to be indexed.
 	//
@@ -148,11 +148,11 @@ type Commit struct {
 	ChangeLog           string     `json:"changeLog,omitempty"`
 }
 
-// Kala implements writing, indexing and reading with a Kala store.
+// Fixity implements writing, indexing and reading with a Fixity store.
 //
 // This interface will be implemented for multiple stores, such as a local on
 // disk store and a remote over network store.
-type Kala interface {
+type Fixity interface {
 	// ReadHash unmarshals the given hash contents into a Version.
 	//
 	// Included in the Version is the Json and MultiBlob, if any exist. If no
@@ -172,6 +172,6 @@ type Kala interface {
 	// Search for documents matching the given query.
 	Search(*q.Query) ([]string, error)
 
-	// Write the given  Commit, Meta and Reader to the Kala store.
+	// Write the given  Commit, Meta and Reader to the Fixity store.
 	Write(Commit, Json, io.Reader) ([]string, error)
 }

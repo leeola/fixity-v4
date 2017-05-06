@@ -1,6 +1,6 @@
-package kala
+package fixity
 
-import "github.com/leeola/kala/q"
+import "github.com/leeola/fixity/q"
 
 type Field struct {
 	Field   string       `json:"field"`
@@ -8,7 +8,7 @@ type Field struct {
 	Options FieldOptions `json:"options,omitempty"`
 }
 
-// Index implements indexing and searching functionality for a kala store.
+// Index implements indexing and searching functionality for a fixity store.
 type Index interface {
 	// Index the given hash and id to the given fields.
 	//
@@ -30,11 +30,11 @@ func (fs *Fields) Append(f Field) {
 
 // FieldUnmarshaller is responsible for unmarshalling fields from a []byte slice.
 //
-// This is used to implement Kala's ability to unmarshal the data and return
+// This is used to implement Fixity's ability to unmarshal the data and return
 // the requested field, thereby indexing the Field.Value even if it was not
 // specified.
 //
-// Kala will likely call the field unmarshaller many times, so the
+// Fixity will likely call the field unmarshaller many times, so the
 // unmarshalled value should be cached between method calls, and lazily unmarshalled
 // since it may not be used at all.
 type FieldUnmarshaller interface {

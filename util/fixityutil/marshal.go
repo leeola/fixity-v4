@@ -1,25 +1,25 @@
-package kalautil
+package fixityutil
 
 import (
 	"encoding/json"
 
-	"github.com/leeola/kala"
+	"github.com/leeola/fixity"
 )
 
-// MarshalJson marshals to a kala.Json from the given interface.
-func MarshalJson(v interface{}) (kala.Json, error) {
+// MarshalJson marshals to a fixity.Json from the given interface.
+func MarshalJson(v interface{}) (fixity.Json, error) {
 	b, err := json.Marshal(v)
 	if err != nil {
-		return kala.Json{}, err
+		return fixity.Json{}, err
 	}
 
-	return kala.Json{
+	return fixity.Json{
 		Json: json.RawMessage(b),
 	}, nil
 }
 
 // MustMarshalJson panics if the Marshal fails.
-func MustMarshalJson(v interface{}) kala.Json {
+func MustMarshalJson(v interface{}) fixity.Json {
 	j, err := MarshalJson(v)
 	if err != nil {
 		panic(err.Error())
@@ -28,6 +28,6 @@ func MustMarshalJson(v interface{}) kala.Json {
 }
 
 // UnmarshalJson unmarshals the given Json struct into the given interface.
-func UnmarshalJson(j kala.Json, v interface{}) error {
+func UnmarshalJson(j fixity.Json, v interface{}) error {
 	return json.Unmarshal([]byte(j.Json), v)
 }

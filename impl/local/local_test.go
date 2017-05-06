@@ -4,8 +4,8 @@ import (
 	"testing"
 
 	"github.com/fatih/structs"
-	"github.com/leeola/kala"
-	"github.com/leeola/kala/util/kalautil"
+	"github.com/leeola/fixity"
+	"github.com/leeola/fixity/util/fixityutil"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -19,20 +19,20 @@ func TestMakeFields(t *testing.T) {
 					Foo string `json:"foo"`
 				}{Foo: "foo value"}
 				fields, err := k.makeFields(
-					kala.Version{
-						JsonMeta: &kala.JsonMeta{
-							IndexedFields: kala.Fields{{
+					fixity.Version{
+						JsonMeta: &fixity.JsonMeta{
+							IndexedFields: fixity.Fields{{
 								Field: "foo",
 							}},
 						},
 					},
-					kala.Json{
-						Json: kalautil.MustMarshalJson(&foo).Json,
+					fixity.Json{
+						Json: fixityutil.MustMarshalJson(&foo).Json,
 					},
 				)
 				So(err, ShouldBeNil)
 
-				var fooField kala.Field
+				var fooField fixity.Field
 				for _, f := range fields {
 					if f.Field == "foo" {
 						fooField = f

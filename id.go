@@ -1,4 +1,4 @@
-package kala
+package fixity
 
 import (
 	"crypto/rand"

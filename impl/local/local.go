@@ -9,21 +9,21 @@ import (
 	"github.com/fatih/structs"
 	"github.com/inconshreveable/log15"
 	"github.com/leeola/errors"
-	"github.com/leeola/kala"
-	"github.com/leeola/kala/fieldunmarshallers/mapfieldunmarshaller"
-	"github.com/leeola/kala/q"
+	"github.com/leeola/fixity"
+	"github.com/leeola/fixity/fieldunmarshallers/mapfieldunmarshaller"
+	"github.com/leeola/fixity/q"
 )
 
 type Config struct {
-	Index kala.Index
-	Store kala.Store
+	Index fixity.Index
+	Store fixity.Store
 	Log   log15.Logger
 }
 
 type Local struct {
 	config Config
-	index  kala.Index
-	store  kala.Store
+	index  fixity.Index
+	store  fixity.Store
 	log    log15.Logger
 }
 
@@ -48,20 +48,20 @@ func New(c Config) (*Local, error) {
 }
 
 // makeFields created index Fields for the Version as well as unknown values.
-func (l *Local) makeFields(version kala.Version, json kala.Json) (kala.Fields, error) {
+func (l *Local) makeFields(version fixity.Version, json fixity.Json) (fixity.Fields, error) {
 	// NOTE(leeola): The fieldUnmarshaller lazily unmarshals, so if all fields
 	// are specified then no unmarshalling is needed.
 	//
 	// TODO(leeola): Make this configurable for Go usage, so that
-	// a user of kala via Go can supply the field unmarshaller and use
+	// a user of fixity via Go can supply the field unmarshaller and use
 	// and data format they want.
 	fu := mapfieldunmarshaller.New([]byte(json.Json))
 
 	// copy the fields list so that we can add to it, without
 	// modifying what is stored
-	var indexFields kala.Fields
+	var indexFields fixity.Fields
 	if version.JsonMeta != nil {
-		indexFields = make(kala.Fields, len(version.JsonMeta.IndexedFields))
+		indexFields = make(fixity.Fields, len(version.JsonMeta.IndexedFields))
 		for i, f := range version.JsonMeta.IndexedFields {
 			// NOTE(leeola): It's important that we don't modify the
 			// version.JsonMeta.IndexedFields slice or we would end up storing values
@@ -78,27 +78,27 @@ func (l *Local) makeFields(version kala.Version, json kala.Json) (kala.Fields, e
 		}
 	}
 
-	indexFields.Append(kala.Field{
+	indexFields.Append(fixity.Field{
 		Field: "version.jsonHash",
 		Value: version.JsonHash,
 	})
-	indexFields.Append(kala.Field{
+	indexFields.Append(fixity.Field{
 		Field: "version.multiBlobHash",
 		Value: version.MultiBlobHash,
 	})
-	indexFields.Append(kala.Field{
+	indexFields.Append(fixity.Field{
 		Field: "version.id",
 		Value: version.Id,
 	})
-	indexFields.Append(kala.Field{
+	indexFields.Append(fixity.Field{
 		Field: "version.uploadedAt",
 		Value: version.UploadedAt,
 	})
-	indexFields.Append(kala.Field{
+	indexFields.Append(fixity.Field{
 		Field: "version.previousVersionCount",
 		Value: version.PreviousVersionCount,
 	})
-	indexFields.Append(kala.Field{
+	indexFields.Append(fixity.Field{
 		Field: "version.previousVersionHash",
 		Value: version.PreviousVersionHash,
 	})
@@ -106,38 +106,38 @@ func (l *Local) makeFields(version kala.Version, json kala.Json) (kala.Fields, e
 	return indexFields, nil
 }
 
-func (l *Local) ReadHash(h string) (kala.Version, error) {
-	var v kala.Version
+func (l *Local) ReadHash(h string) (fixity.Version, error) {
+	var v fixity.Version
 	if err := ReadAndUnmarshal(l.store, h, &v); err != nil {
-		return kala.Version{}, err
+		return fixity.Version{}, err
 	}
 
 	if structs.IsZero(v) {
-		return kala.Version{}, kala.ErrNotVersion
+		return fixity.Version{}, fixity.ErrNotVersion
 	}
 
 	if v.JsonHash != "" {
 		if err := ReadAndUnmarshal(l.store, v.JsonHash, &v.Json); err != nil {
-			return kala.Version{}, err
+			return fixity.Version{}, err
 		}
 	}
 
 	if v.MultiBlobHash != "" {
 		// TODO(leeola): Construct a new multiblob reader for the given hash.
-		return kala.Version{}, errors.New("multiBlob reading not yet supported")
+		return fixity.Version{}, errors.New("multiBlob reading not yet supported")
 	}
 
 	return v, nil
 }
 
-func (l *Local) ReadId(id string) (kala.Version, error) {
+func (l *Local) ReadId(id string) (fixity.Version, error) {
 	// TODO(leeola): search the unique/id index for the given id,
 	// but first i need to decide how the indexes are going to exactly
 	// store the unique id versions.
-	return kala.Version{}, errors.New("not implemented")
+	return fixity.Version{}, errors.New("not implemented")
 }
 
-func (l *Local) Write(c kala.Commit, j kala.Json, r io.Reader) ([]string, error) {
+func (l *Local) Write(c fixity.Commit, j fixity.Json, r io.Reader) ([]string, error) {
 	// For quicker prototyping, only supporting metadata atm
 	if r != nil {
 		return nil, errors.New("reader not yet implemented")
@@ -171,7 +171,7 @@ func (l *Local) Write(c kala.Commit, j kala.Json, r io.Reader) ([]string, error)
 		c.UploadedAt = &now
 	}
 
-	version := kala.Version{
+	version := fixity.Version{
 		Id:                  c.Id,
 		UploadedAt:          c.UploadedAt,
 		PreviousVersionHash: c.PreviousVersionHash,
@@ -221,7 +221,7 @@ func (l *Local) Search(q *q.Query) ([]string, error) {
 }
 
 // WriteReader writes the given reader's content to the store.
-func WriteReader(s kala.Store, r io.Reader) (string, error) {
+func WriteReader(s fixity.Store, r io.Reader) (string, error) {
 	if s == nil {
 		return "", errors.New("Store is nil")
 	}
@@ -239,7 +239,7 @@ func WriteReader(s kala.Store, r io.Reader) (string, error) {
 }
 
 // MarshalAndWrite marshals the given interface to json and writes that to the store.
-func MarshalAndWrite(s kala.Store, v interface{}) (string, error) {
+func MarshalAndWrite(s fixity.Store, v interface{}) (string, error) {
 	if s == nil {
 		return "", errors.New("Store is nil")
 	}
@@ -260,7 +260,7 @@ func MarshalAndWrite(s kala.Store, v interface{}) (string, error) {
 	return h, nil
 }
 
-func ReadAll(s kala.Store, h string) ([]byte, error) {
+func ReadAll(s fixity.Store, h string) ([]byte, error) {
 	rc, err := s.Read(h)
 	if err != nil {
 		return nil, errors.Stack(err)
@@ -270,12 +270,12 @@ func ReadAll(s kala.Store, h string) ([]byte, error) {
 	return ioutil.ReadAll(rc)
 }
 
-func ReadAndUnmarshal(s kala.Store, h string, v interface{}) error {
+func ReadAndUnmarshal(s fixity.Store, h string, v interface{}) error {
 	_, err := ReadAndUnmarshalWithBytes(s, h, v)
 	return err
 }
 
-func ReadAndUnmarshalWithBytes(s kala.Store, h string, v interface{}) ([]byte, error) {
+func ReadAndUnmarshalWithBytes(s fixity.Store, h string, v interface{}) ([]byte, error) {
 	b, err := ReadAll(s, h)
 	if err != nil {
 		return nil, errors.Stack(err)

@@ -8,7 +8,7 @@ import (
 	"camlistore.org/pkg/rollsum"
 
 	"github.com/leeola/errors"
-	"github.com/leeola/kala/store"
+	"github.com/leeola/fixity/store"
 )
 
 const (

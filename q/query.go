@@ -1,6 +1,6 @@
 package q
 
-import "github.com/leeola/kala/q/operators"
+import "github.com/leeola/fixity/q/operators"
 
 type Constraint struct {
 	// Operator

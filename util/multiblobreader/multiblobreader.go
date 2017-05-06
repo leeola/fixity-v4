@@ -7,7 +7,7 @@ import (
 	"io/ioutil"
 
 	"github.com/leeola/errors"
-	"github.com/leeola/kala/store"
+	"github.com/leeola/fixity/store"
 )
 
 type readerData struct {

@@ -6,8 +6,8 @@ import (
 	"github.com/blevesearch/bleve"
 	"github.com/inconshreveable/log15"
 	"github.com/leeola/errors"
-	"github.com/leeola/kala"
-	kq "github.com/leeola/kala/q"
+	"github.com/leeola/fixity"
+	kq "github.com/leeola/fixity/q"
 )
 
 type Config struct {
@@ -17,7 +17,7 @@ type Config struct {
 	Log log15.Logger
 }
 
-// Bleve implements the kala Index interface for Bleve Search.
+// Bleve implements the fixity Index interface for Bleve Search.
 //
 // Supported Options:
 //    FullTextSearch:
@@ -58,7 +58,7 @@ func New(c Config) (*Bleve, error) {
 	}, nil
 }
 
-func (b *Bleve) Index(h, id string, fields []kala.Field) error {
+func (b *Bleve) Index(h, id string, fields []fixity.Field) error {
 	b.log.Warn("id indexing not yet implemented", "id", id)
 
 	row := map[string]interface{}{}

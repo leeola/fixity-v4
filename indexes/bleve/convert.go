@@ -5,8 +5,8 @@ import (
 	"github.com/blevesearch/bleve/search/query"
 	"github.com/fatih/structs"
 	"github.com/leeola/errors"
-	kq "github.com/leeola/kala/q"
-	ops "github.com/leeola/kala/q/operators"
+	kq "github.com/leeola/fixity/q"
+	ops "github.com/leeola/fixity/q/operators"
 )
 
 func ConvertQuery(kq *kq.Query) (*bleve.SearchRequest, error) {

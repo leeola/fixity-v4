@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 
 	"github.com/asdine/storm"
-	"github.com/leeola/kala"
-	"github.com/leeola/kala/q"
+	"github.com/leeola/fixity"
+	"github.com/leeola/fixity/q"
 )
 
 // IndexFilename is the filename used as the boltdb index.
@@ -45,7 +45,7 @@ func New(c Config) (*Storm, error) {
 	}, nil
 }
 
-func (s *Storm) Index(fields []kala.Field) error {
+func (s *Storm) Index(fields []fixity.Field) error {
 	row := map[string]interface{}{}
 	for _, f := range fields {
 		// TODO(leeola): implement options

@@ -9,7 +9,7 @@ import (
 
 	"github.com/inconshreveable/log15"
 	"github.com/leeola/errors"
-	"github.com/leeola/kala"
+	"github.com/leeola/fixity"
 	blake2b "github.com/minio/blake2b-simd"
 )
 
@@ -21,7 +21,7 @@ type Config struct {
 	Log  log15.Logger
 }
 
-// Disk implements a Kala Store for an simple Filesystem.
+// Disk implements a Fixity Store for an simple Filesystem.
 type Disk struct {
 	path string
 	log  log15.Logger
@@ -64,7 +64,7 @@ func (s *Disk) Read(h string) (io.ReadCloser, error) {
 	var rc io.ReadCloser
 	rc, err := os.Open(p)
 	if os.IsNotExist(err) {
-		return nil, kala.ErrHashNotFound
+		return nil, fixity.ErrHashNotFound
 	}
 
 	return rc, err
@@ -86,7 +86,7 @@ func (s *Disk) Write(b []byte) (string, error) {
 func (s *Disk) WriteHash(h string, b []byte) error {
 	expectedH := s.Hash(b)
 	if h != expectedH {
-		return kala.ErrHashNotMatchContent
+		return fixity.ErrHashNotMatchContent
 	}
 	return s.writeHash(h, b)
 }

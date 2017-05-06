@@ -3,7 +3,7 @@ package mapfieldunmarshaller
 import (
 	"encoding/json"
 
-	"github.com/leeola/kala"
+	"github.com/leeola/fixity"
 )
 
 // TODO(leeola): Make the unmarshaller configurable so it's not just Json.
@@ -29,7 +29,7 @@ func (m *MapFieldUnmarshaller) Unmarshal(field string) (interface{}, error) {
 
 	v, ok := m.M[field]
 	if !ok {
-		return nil, kala.ErrFieldNotFound
+		return nil, fixity.ErrFieldNotFound
 	}
 
 	return v, nil

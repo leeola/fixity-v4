@@ -1,4 +1,4 @@
-package kala
+package fixity
 
 const (
 	FOKeyFullTextSearch = "FullTextSearch"

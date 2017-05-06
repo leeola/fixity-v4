@@ -5,8 +5,8 @@ import (
 	sq "github.com/asdine/storm/q"
 	"github.com/fatih/structs"
 	"github.com/leeola/errors"
-	kq "github.com/leeola/kala/q"
-	ops "github.com/leeola/kala/q/operators"
+	kq "github.com/leeola/fixity/q"
+	ops "github.com/leeola/fixity/q/operators"
 )
 
 func ConvertQuery(db storm.DB, kq kq.Query) (storm.Query, error) {
@@ -21,7 +21,7 @@ func ConvertQuery(db storm.DB, kq kq.Query) (storm.Query, error) {
 	}
 
 	// TODO(leeola): Storm may not accept an empty set of constraints, so we may need to
-	// reject kala queries without constraints.
+	// reject fixity queries without constraints.
 	stormQuery := db.Select(ms...)
 
 	if kq.SortBy != "" {

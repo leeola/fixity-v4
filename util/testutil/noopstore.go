@@ -3,10 +3,10 @@ package testutil
 import (
 	"io"
 
-	"github.com/leeola/kala"
+	"github.com/leeola/fixity"
 )
 
-// NoopStore implements a kala.Store as noops.
+// NoopStore implements a fixity.Store as noops.
 type NoopStore struct {
 }
 
@@ -19,7 +19,7 @@ func (*NoopStore) Read(string) (io.ReadCloser, error) {
 }
 
 func (*NoopStore) Write([]byte) (string, error) {
-	fakeHash, err := kala.NewId()
+	fakeHash, err := fixity.NewId()
 	if err != nil {
 		return "", err
 	}

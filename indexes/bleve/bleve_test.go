@@ -4,14 +4,14 @@ import (
 	"os"
 	"testing"
 
-	"github.com/leeola/kala"
-	"github.com/leeola/kala/impl/local"
-	"github.com/leeola/kala/q"
-	"github.com/leeola/kala/util/testutil"
+	"github.com/leeola/fixity"
+	"github.com/leeola/fixity/impl/local"
+	"github.com/leeola/fixity/q"
+	"github.com/leeola/fixity/util/testutil"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
-func newKala(rootDir string) kala.Kala {
+func newFixity(rootDir string) fixity.Fixity {
 	iConf := Config{
 		Path: rootDir,
 	}
@@ -33,22 +33,22 @@ func newKala(rootDir string) kala.Kala {
 }
 
 func TestBleve(t *testing.T) {
-	tmp := testutil.MustTempDir("kala-bleve")
+	tmp := testutil.MustTempDir("fixity-bleve")
 
 	Convey("Scenario: Basic querying", t, func() {
-		k := newKala(tmp)
+		k := newFixity(tmp)
 		defer os.RemoveAll(tmp)
 		Convey("Given a single entry", func() {
 			createdHashes, err := k.Write(
-				kala.Commit{
-					JsonMeta: &kala.JsonMeta{
-						IndexedFields: kala.Fields{{
+				fixity.Commit{
+					JsonMeta: &fixity.JsonMeta{
+						IndexedFields: fixity.Fields{{
 							Field: "field",
 							Value: "foo bar baz",
 						}},
 					},
 				},
-				kala.Json{Json: []byte("{}")},
+				fixity.Json{Json: []byte("{}")},
 				nil,
 			)
 			So(err, ShouldBeNil)
@@ -80,13 +80,13 @@ func TestBleve(t *testing.T) {
 	})
 
 	Convey("Scenario: Multi field querying", t, func() {
-		k := newKala(tmp)
+		k := newFixity(tmp)
 		defer os.RemoveAll(tmp)
 		Convey("Given multiple entries", func() {
 			createdHashes, err := k.Write(
-				kala.Commit{
-					JsonMeta: &kala.JsonMeta{
-						IndexedFields: kala.Fields{
+				fixity.Commit{
+					JsonMeta: &fixity.JsonMeta{
+						IndexedFields: fixity.Fields{
 							{
 								Field: "fielda",
 								Value: "foo",
@@ -98,7 +98,7 @@ func TestBleve(t *testing.T) {
 						},
 					},
 				},
-				kala.Json{Json: []byte("{}")},
+				fixity.Json{Json: []byte("{}")},
 				nil,
 			)
 			So(err, ShouldBeNil)
@@ -132,14 +132,14 @@ func TestBleve(t *testing.T) {
 	})
 
 	Convey("Scenario: querying fulltextsearch", t, func() {
-		k := newKala(tmp)
+		k := newFixity(tmp)
 		defer os.RemoveAll(tmp)
 		Convey("Given multiple entries", func() {
 			createdHashes, err := k.Write(
-				kala.Commit{
-					JsonMeta: &kala.JsonMeta{
+				fixity.Commit{
+					JsonMeta: &fixity.JsonMeta{
 						// fts is default with bleve.
-						IndexedFields: kala.Fields{
+						IndexedFields: fixity.Fields{
 							{
 								Field: "field",
 								Value: "this is a fts field, with foo in it",
@@ -147,7 +147,7 @@ func TestBleve(t *testing.T) {
 						},
 					},
 				},
-				kala.Json{Json: []byte("{}")},
+				fixity.Json{Json: []byte("{}")},
 				nil,
 			)
 			So(err, ShouldBeNil)
@@ -176,20 +176,20 @@ func TestBleve(t *testing.T) {
 	// that the skipping is consistent and works, not what the order of the fields
 	// are.
 	Convey("Scenario: Result skipping", t, func() {
-		k := newKala(tmp)
+		k := newFixity(tmp)
 		defer os.RemoveAll(tmp)
 		Convey("Given 5 entries", func() {
 			for i := 0; i < 5; i++ {
 				_, err := k.Write(
-					kala.Commit{
-						JsonMeta: &kala.JsonMeta{
-							IndexedFields: kala.Fields{{
+					fixity.Commit{
+						JsonMeta: &fixity.JsonMeta{
+							IndexedFields: fixity.Fields{{
 								Field: "field",
 								Value: "foo",
 							}},
 						},
 					},
-					kala.Json{Json: []byte("{}")},
+					fixity.Json{Json: []byte("{}")},
 					nil,
 				)
 				So(err, ShouldBeNil)
