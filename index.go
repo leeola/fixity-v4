@@ -18,6 +18,11 @@ type Index interface {
 	Index(hash, id string, fields []Field) error
 
 	Search(*q.Query) ([]string, error)
+
+	// TODO(leeola): Enable a close method to shutdown any
+	//
+	// // Close shuts down any connections that may need to be closed.
+	// Close() error
 }
 
 // Fields is a helper type for convenient mutation of a []Field.

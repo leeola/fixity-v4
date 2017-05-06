@@ -174,4 +174,9 @@ type Fixity interface {
 
 	// Write the given  Commit, Meta and Reader to the Fixity store.
 	Write(Commit, Json, io.Reader) ([]string, error)
+
+	// TODO(leeola): Enable a close method to shutdown any
+	//
+	// // Close shuts down any connections that may need to be closed.
+	// Close() error
 }

@@ -26,4 +26,9 @@ type Store interface {
 	// or removed records are included in the listing. Therefor Listing should be done
 	// before before a store is being actively served.
 	List() (<-chan string, error)
+
+	// TODO(leeola): Enable a close method to shutdown any
+	//
+	// // Close shuts down any connections that may need to be closed.
+	// Close() error
 }
