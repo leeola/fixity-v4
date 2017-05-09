@@ -94,3 +94,37 @@ func TestSearch(t *testing.T) {
 		})
 	})
 }
+
+func TestFullTextSearch(t *testing.T) {
+	Convey("Scenario: FullTextSearch", t, func() {
+		s, tmp := newSnail()
+		defer os.RemoveAll(tmp)
+		defer s.Close()
+
+		Convey("Given an empty index", func() {
+			Convey("When queried", func() {
+				keys, err := s.Search(q.New().Const(q.Eq("foo", "bar")))
+				So(err, ShouldBeNil)
+				Convey("Then it should not match anything", func() {
+					So(keys, ShouldHaveLength, 0)
+				})
+			})
+		})
+
+		Convey("Given one document", func() {
+			err := s.Index("hash", "id", fixity.Fields{{
+				Field: "field1", Value: "foo bar baz",
+				Options: (fixity.FieldOptions{}).FullTextSearch(),
+			}})
+			So(err, ShouldBeNil)
+			Convey("When queried with a matching value", func() {
+				keys, err := s.Search(q.New().Const(q.Fts("field1", "bar")))
+				So(err, ShouldBeNil)
+				Convey("Then it should respond with the expected data", func() {
+					So(keys, ShouldHaveLength, 1)
+					So(keys[0], ShouldEqual, "hash")
+				})
+			})
+		})
+	})
+}

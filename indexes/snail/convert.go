@@ -9,7 +9,12 @@ import (
 func (s *Snail) convertConstraint(c q.Constraint) (Matcher, error) {
 	switch c.Operator {
 	case ops.Equal:
-		return eqMatcher, nil
+		return MatcherFunc(eqMatcher), nil
+
+	case ops.FullTextSearch:
+		// TODO(leeola): check if it's a ID search or a Ver search, and return
+		// the correct fts for that.
+		return ftsMatcher(s.bleveVer, c)
 
 	case ops.And:
 		ms, err := s.convertConstraints(c.Constraints)

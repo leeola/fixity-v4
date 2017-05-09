@@ -6,11 +6,13 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/blevesearch/bleve"
 	"github.com/boltdb/bolt"
 	"github.com/inconshreveable/log15"
 	"github.com/leeola/errors"
 	"github.com/leeola/fixity"
 	"github.com/leeola/fixity/q"
+	"github.com/leeola/fixity/util"
 )
 
 type DocFields map[string]interface{}
@@ -36,9 +38,11 @@ type Config struct {
 // and then upon querying, it filters the resulting keys with each constraint.
 // Duplicate keys will be replaced when present.
 type Snail struct {
-	config Config
-	log    log15.Logger
-	db     *bolt.DB
+	config   Config
+	log      log15.Logger
+	db       *bolt.DB
+	bleveId  bleve.Index
+	bleveVer bleve.Index
 }
 
 func New(c Config) (*Snail, error) {
@@ -50,7 +54,14 @@ func New(c Config) (*Snail, error) {
 		c.Log = log15.New()
 	}
 
-	if err := os.MkdirAll(c.Path, 0755); err != nil {
+	bleveIdDir := filepath.Join(c.Path, "bleve", "id")
+	bleveVerDir := filepath.Join(c.Path, "bleve", "ver")
+	// Making the bleve path, because that's one dir deeper than the default,
+	// so this'll make everything we need.
+	if err := os.MkdirAll(bleveIdDir, 0755); err != nil {
+		return nil, err
+	}
+	if err := os.MkdirAll(bleveVerDir, 0755); err != nil {
 		return nil, err
 	}
 
@@ -60,23 +71,86 @@ func New(c Config) (*Snail, error) {
 		return nil, err
 	}
 
+	bleveId, err := bleve.Open(bleveIdDir)
+	if err == bleve.ErrorIndexMetaMissing {
+		mapping := bleve.NewIndexMapping()
+		bleveId, err = bleve.New(bleveIdDir, mapping)
+	}
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to open or create bleve id index")
+	}
+	bleveVer, err := bleve.Open(bleveVerDir)
+	if err == bleve.ErrorIndexMetaMissing {
+		mapping := bleve.NewIndexMapping()
+		bleveVer, err = bleve.New(bleveVerDir, mapping)
+	}
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to open or create bleve id index")
+	}
+
 	return &Snail{
-		config: c,
-		db:     db,
-		log:    c.Log,
+		config:   c,
+		db:       db,
+		bleveId:  bleveId,
+		bleveVer: bleveVer,
+		log:      c.Log,
 	}, nil
+}
+
+// IndexFts goes through the fields and indexes any with the FTS option.
+//
+// It ignores all non-fts fields.
+func (s *Snail) IndexFts(h, id string, fields []fixity.Field) error {
+	docFields := map[string]interface{}{}
+	for _, f := range fields {
+		opts := f.Options
+		if opts == nil {
+			continue
+		}
+		v, ok := opts[fixity.FOKeyFullTextSearch]
+		if !ok {
+			continue
+		}
+
+		useFts, ok := v.(bool)
+		if !ok {
+			return errors.Errorf("incorrectly option value type: %s", fixity.FOKeyFullTextSearch)
+		}
+
+		if useFts {
+			docFields[f.Field] = f.Value
+		}
+	}
+
+	if err := s.bleveVer.Index(h, &docFields); err != nil {
+		return err
+	}
+
+	if id != "" {
+		if err := s.bleveId.Index(h, &docFields); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // Index the given key by the given document fields.
 func (s *Snail) Index(h, id string, fields []fixity.Field) error {
+	if err := s.IndexFts(h, id, fields); err != nil {
+		return err
+	}
+
 	docFields := map[string]interface{}{}
 	for _, f := range fields {
 		// this is where we'll implement/fork Bleve FTS support.
 		// options not supported yet
 		if f.Options != nil {
 			for optKey, optValue := range f.Options {
-				s.log.Warn("snail index option not implemented",
-					"option", optKey, "value", optValue)
+				if optKey != fixity.FOKeyFullTextSearch {
+					s.log.Warn("snail index option not supported",
+						"option", optKey, "value", optValue)
+				}
 			}
 		}
 		docFields[f.Field] = f.Value
@@ -157,13 +231,17 @@ func (s *Snail) Search(q *q.Query) ([]string, error) {
 				return err
 			}
 
+			docKey := string(k)
+			// nil is okay
+			docVal, _ := docFields[q.Constraint.Field]
+
 			// if the doc matches, add it to our doc list to be skipped, limited and
 			// sorted.
-			if matcher(q.Constraint, docFields) {
+			if matcher.Match(docKey, q.Constraint.Value, docVal) {
 				total += 1
 
 				doc := Doc{
-					Key: string(k),
+					Key: docKey,
 				}
 
 				// only store the if we need to sort. This helps reduce memory footprint if
@@ -211,5 +289,9 @@ func (s *Snail) Search(q *q.Query) ([]string, error) {
 }
 
 func (s *Snail) Close() error {
-	return s.db.Close()
+	return util.MultiError(
+		s.db.Close(),
+		s.bleveId.Close(),
+		s.bleveVer.Close(),
+	)
 }
