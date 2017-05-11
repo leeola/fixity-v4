@@ -1,4 +1,4 @@
-package configumarshaller
+package configunmarshaller
 
 import (
 	"io"
@@ -10,7 +10,15 @@ import (
 	"github.com/leeola/errors"
 )
 
-type ConfigUnmarshaller func(v interface{}) error
+type ConfigUnmarshaller interface {
+	Unmarshal(interface{}) error
+}
+
+type ConfigUnmarshallerFunc func(interface{}) error
+
+func (f ConfigUnmarshallerFunc) Unmarshal(v interface{}) error {
+	return f(v)
+}
 
 // New returns an unmarshaller for the given configPaths.
 //
@@ -22,7 +30,7 @@ type ConfigUnmarshaller func(v interface{}) error
 func New(configPaths []string) ConfigUnmarshaller {
 	var configData string
 
-	return func(v interface{}) error {
+	return ConfigUnmarshallerFunc(func(v interface{}) error {
 		if configData == "" {
 			b, err := ConfigPathsToBytes(configPaths)
 			if err != nil {
@@ -36,7 +44,7 @@ func New(configPaths []string) ConfigUnmarshaller {
 		}
 
 		return nil
-	}
+	})
 }
 
 func UnmarshalConfigs(configPaths []string, v interface{}) error {

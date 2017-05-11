@@ -4,7 +4,7 @@ import (
 	"errors"
 
 	"github.com/leeola/fixity"
-	cu "github.com/leeola/fixity/util/configumarshaller"
+	cu "github.com/leeola/fixity/util/configunmarshaller"
 )
 
 var (
@@ -18,9 +18,9 @@ var (
 func init() {
 	// init the loaders so they're not nil. Nil loader slice represents a freed
 	// slice of loaders.
-	fixityLoaders := []FixityLoader{}
-	indexLoaders := []IndexLoader{}
-	storeLoaders := []StoreLoader{}
+	fixityLoaders = []FixityLoader{}
+	indexLoaders = []IndexLoader{}
+	storeLoaders = []StoreLoader{}
 }
 
 type FixityLoader func(cu.ConfigUnmarshaller) (fixity.Fixity, error)
@@ -28,7 +28,7 @@ type IndexLoader func(cu.ConfigUnmarshaller) (fixity.Index, error)
 type StoreLoader func(cu.ConfigUnmarshaller) (fixity.Store, error)
 
 func RegisterFixity(l FixityLoader) error {
-	if loadedFixity != nil {
+	if fixityLoaders == nil {
 		return errors.New("fixity already loaded")
 	}
 
@@ -37,7 +37,7 @@ func RegisterFixity(l FixityLoader) error {
 }
 
 func RegisterIndex(l IndexLoader) error {
-	if loadedFixity != nil {
+	if fixityLoaders == nil {
 		return errors.New("fixity already loaded")
 	}
 
@@ -46,7 +46,7 @@ func RegisterIndex(l IndexLoader) error {
 }
 
 func RegisterStore(l StoreLoader) error {
-	if loadedFixity != nil {
+	if fixityLoaders == nil {
 		return errors.New("fixity already loaded")
 	}
 
