@@ -88,6 +88,10 @@ func LoadFixity(cu cu.ConfigUnmarshaller) (fixity.Fixity, error) {
 		return nil, errors.New("configuration defines multiple fixities")
 	}
 
+	// purge the slice to free memory. Only one autoload is allowed with
+	// this usage.
+	fixityLoaders = nil
+
 	return fixities[0], nil
 }
 
@@ -125,6 +129,10 @@ func LoadIndex(cu cu.ConfigUnmarshaller) (fixity.Index, error) {
 		return nil, errors.New("configuration defines multiple indexes")
 	}
 
+	// purge the slice to free memory. Only one autoload is allowed with
+	// this usage.
+	indexLoaders = nil
+
 	return indexes[0], nil
 }
 
@@ -161,6 +169,10 @@ func LoadStore(cu cu.ConfigUnmarshaller) (fixity.Store, error) {
 	if len(stores) > 1 {
 		return nil, errors.New("configuration defines multiple stores")
 	}
+
+	// purge the slice to free memory. Only one autoload is allowed with
+	// this usage.
+	storeLoaders = nil
 
 	return stores[0], nil
 }
