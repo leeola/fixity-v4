@@ -48,6 +48,21 @@ func New(c Config) (*Local, error) {
 	}, nil
 }
 
+func (l *Local) Blob(h string) ([]byte, error) {
+	rc, err := l.store.Read(h)
+	if err != nil {
+		return nil, err
+	}
+	defer rc.Close()
+
+	b, err := ioutil.ReadAll(rc)
+	if err != nil {
+		return nil, err
+	}
+
+	return b, nil
+}
+
 // makeFields created index Fields for the Version as well as unknown values.
 func (l *Local) makeFields(version fixity.Version, json fixity.Json) (fixity.Fields, error) {
 	// NOTE(leeola): The fieldUnmarshaller lazily unmarshals, so if all fields

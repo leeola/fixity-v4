@@ -153,6 +153,11 @@ type Commit struct {
 // This interface will be implemented for multiple stores, such as a local on
 // disk store and a remote over network store.
 type Fixity interface {
+	// Blob returns a raw blob of the given hash.
+	//
+	// Mainly useful for inspecting the underlying data structure.
+	Blob(hash string) ([]byte, error)
+
 	// ReadHash unmarshals the given hash contents into a Version.
 	//
 	// Included in the Version is the Json and MultiBlob, if any exist. If no
