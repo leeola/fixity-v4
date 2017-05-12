@@ -19,8 +19,8 @@ func Loader(cu cu.ConfigUnmarshaller) (fixity.Fixity, error) {
 	// specifies a local Fixity implementation.
 	var c struct {
 		Config struct {
-			RootPath string `json:"rootPath"`
-		} `json:"localFixity"`
+			RootPath string `toml:"rootPath"`
+		} `toml:"localFixity"`
 	}
 
 	if err := cu.Unmarshal(&c); err != nil {
