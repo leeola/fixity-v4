@@ -1,0 +1,20 @@
+[localFixity]
+# An optional directory to base all relative paths in this config off of.
+rootPath = "_stores/local"
+
+# Create any missing paths for the various stores/databases that
+# may need to.
+CreatDirectories = true
+
+[snailIndex]
+# Where to write the index. If relative, this is a subdirectory of
+# the rootPath
+Path = "index"
+
+[diskStore]
+# Where to write the index. If relative, this is a subdirectory of
+# the rootPath
+Path = "store"
+
+
+# kak: filetype=ini
