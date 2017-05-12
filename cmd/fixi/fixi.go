@@ -14,7 +14,7 @@ func main() {
 	app.Usage = "interact with your fixi datastore"
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
-			Name:   "config, f",
+			Name:   "config, c",
 			Value:  "~/.config/fixi/fixi.toml",
 			Usage:  "load config from `PATH`",
 			EnvVar: "FIXI_CONFIG",
