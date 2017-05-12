@@ -40,6 +40,14 @@ func TestCliJson(t *testing.T) {
 				[]string{"{", "foo=bar", "baz=[", "1", "str", "]", "}"},
 				`{"baz":[1,"str"],"foo":"bar"}`,
 			},
+			{
+				[]string{"{", "foo=bar", "baz=[", "1", "str"},
+				`{"baz":[1,"str"],"foo":"bar"}`,
+			},
+			{
+				[]string{"[", "foo=bar", "1", "bat=baz", "boo=[", "1", "str"},
+				`[{"foo":"bar"},1,{"bat":"baz","boo":[1,"str"]}]`,
+			},
 		}
 
 		for _, test := range tests {
