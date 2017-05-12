@@ -8,6 +8,56 @@ import (
 	"github.com/leeola/fixity/q"
 )
 
+// Fixity implements writing, indexing and reading with a Fixity store.
+//
+// This interface will be implemented for multiple stores, such as a local on
+// disk store and a remote over network store.
+type Fixity interface {
+	// Blob returns a raw blob of the given hash.
+	//
+	// Mainly useful for inspecting the underlying data structure.
+	Blob(hash string) ([]byte, error)
+
+	// ReadHash unmarshals the given hash contents into a Version.
+	//
+	// Included in the Version is the Json and MultiBlob, if any exist. If no
+	// Json exists the Json struct will be zero value, and if no MultiBlob
+	// exists the ReadCloser will be nil.
+	//
+	// ReadHash will return ErrNotVersion if the given hash is not a valid hash.
+	ReadHash(hash string) (Version, error)
+
+	// ReadId unmarshals the given id into a Version struct.
+	//
+	// Included in the Version is the Json and MultiBlob, if any exist. If no
+	// Json exists the Json struct will be zero value, and if no MultiBlob
+	// exists the ReadCloser will be nil.
+	ReadId(id string) (Version, error)
+
+	// Search for documents matching the given query.
+	Search(*q.Query) ([]string, error)
+
+	// Write the given  Commit, Meta and Reader to the Fixity store.
+	Write(Commit, Json, io.Reader) ([]string, error)
+
+	// TODO(leeola): Enable a close method to shutdown any
+	//
+	// // Close shuts down any connections that may need to be closed.
+	// Close() error
+}
+
+// Commit is a higher level Version, allowing simple and high level writes.
+//
+// Many or all fields may be duplicated from the Version struct. See Version
+// for documentation on them.
+type Commit struct {
+	Id                  string     `json:"id,omitempty"`
+	PreviousVersionHash string     `json:"previousVersion,omitempty"`
+	UploadedAt          *time.Time `json:"uploadedAt,omitempty"`
+	JsonMeta            *JsonMeta  `json:"jsonMeta,omitempty"`
+	ChangeLog           string     `json:"changeLog,omitempty"`
+}
+
 // Version of json and blob data tracked through history and time.
 //
 // This is the root method for tracking mutation in Fixity. Each write to Fixity
@@ -134,54 +184,4 @@ type MultiBlob struct {
 // TODO(leeola): add a Size field.
 type Blob struct {
 	Blob []byte `json:"blob"`
-}
-
-// Commit is a higher level Version, allowing simple and high level writes.
-//
-// Many or all fields may be duplicated from the Version struct. See Version
-// for documentation on them.
-type Commit struct {
-	Id                  string     `json:"id,omitempty"`
-	PreviousVersionHash string     `json:"previousVersion,omitempty"`
-	UploadedAt          *time.Time `json:"uploadedAt,omitempty"`
-	JsonMeta            *JsonMeta  `json:"jsonMeta,omitempty"`
-	ChangeLog           string     `json:"changeLog,omitempty"`
-}
-
-// Fixity implements writing, indexing and reading with a Fixity store.
-//
-// This interface will be implemented for multiple stores, such as a local on
-// disk store and a remote over network store.
-type Fixity interface {
-	// Blob returns a raw blob of the given hash.
-	//
-	// Mainly useful for inspecting the underlying data structure.
-	Blob(hash string) ([]byte, error)
-
-	// ReadHash unmarshals the given hash contents into a Version.
-	//
-	// Included in the Version is the Json and MultiBlob, if any exist. If no
-	// Json exists the Json struct will be zero value, and if no MultiBlob
-	// exists the ReadCloser will be nil.
-	//
-	// ReadHash will return ErrNotVersion if the given hash is not a valid hash.
-	ReadHash(hash string) (Version, error)
-
-	// ReadId unmarshals the given id into a Version struct.
-	//
-	// Included in the Version is the Json and MultiBlob, if any exist. If no
-	// Json exists the Json struct will be zero value, and if no MultiBlob
-	// exists the ReadCloser will be nil.
-	ReadId(id string) (Version, error)
-
-	// Search for documents matching the given query.
-	Search(*q.Query) ([]string, error)
-
-	// Write the given  Commit, Meta and Reader to the Fixity store.
-	Write(Commit, Json, io.Reader) ([]string, error)
-
-	// TODO(leeola): Enable a close method to shutdown any
-	//
-	// // Close shuts down any connections that may need to be closed.
-	// Close() error
 }
