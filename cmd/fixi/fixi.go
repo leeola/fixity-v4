@@ -30,9 +30,10 @@ func main() {
 			Action:    BlobCmd,
 		},
 		{
-			Name:    "write",
-			Aliases: []string{"w"},
-			Usage:   "write a commit to fixity",
+			Name:      "write",
+			Aliases:   []string{"w"},
+			ArgsUsage: "CLIJSON",
+			Usage:     "write a commit to fixity",
 			Flags: []cli.Flag{
 				cli.StringFlag{
 					Name:  "file",
@@ -49,6 +50,14 @@ func main() {
 				cli.StringFlag{
 					Name:  "previous",
 					Usage: "the previousVersionHash of the commit",
+				},
+				cli.StringSliceFlag{
+					Name:  "index-field, d",
+					Usage: "a field or field=value to index",
+				},
+				cli.StringSliceFlag{
+					Name:  "index-fts-field, s",
+					Usage: "a field or field=value to index with full text search",
 				},
 			},
 			Action: WriteCmd,
