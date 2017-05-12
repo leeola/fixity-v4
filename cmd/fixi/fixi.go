@@ -30,6 +30,13 @@ func main() {
 			Action:    BlobCmd,
 		},
 		{
+			Name:      "search",
+			ArgsUsage: "QUERY",
+			Aliases:   []string{"s"},
+			Usage:     "search for hashes matching the query",
+			Action:    SearchCmd,
+		},
+		{
 			Name:      "write",
 			Aliases:   []string{"w"},
 			ArgsUsage: "CLIJSON",
