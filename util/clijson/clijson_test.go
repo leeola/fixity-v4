@@ -21,6 +21,10 @@ func TestCliJson(t *testing.T) {
 				`{"foo":"bar"}`,
 			},
 			{
+				[]string{"foo=bar", "1"},
+				`[{"foo":"bar"},1]`,
+			},
+			{
 				[]string{"[", "foo=bar", "]"},
 				`[{"foo":"bar"}]`,
 			},

@@ -41,7 +41,8 @@ func process(args []string) interface{} {
 			v, args = object(args)
 
 		default:
-			v, args = list(args[1:])
+			v = value(args[0])
+			args = args[1:]
 		}
 
 		values = append(values, v)
