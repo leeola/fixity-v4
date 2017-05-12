@@ -15,9 +15,10 @@ import (
 )
 
 type Config struct {
-	Index fixity.Index
-	Store fixity.Store
-	Log   log15.Logger
+	Index    fixity.Index `toml:"-"`
+	Store    fixity.Store `toml:"-"`
+	Log      log15.Logger `toml:"-"`
+	RootPath string       `toml:"rootPath"`
 }
 
 type Local struct {
