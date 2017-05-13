@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/leeola/fixity"
+	"github.com/leeola/fixity/autoload"
+	homedir "github.com/mitchellh/go-homedir"
 	"github.com/urfave/cli"
 )
 
@@ -15,7 +18,7 @@ func main() {
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
 			Name:   "config, c",
-			Value:  "~/.config/fixi/config.toml",
+			Value:  "~/.config/fixity/config.toml",
 			Usage:  "load config from `PATH`",
 			EnvVar: "FIXI_CONFIG",
 		},
@@ -75,4 +78,16 @@ func main() {
 		fmt.Println(err.Error())
 		os.Exit(1)
 	}
+}
+
+// loadFixity expands the configPath and loads fixity.
+func loadFixity(ctx *cli.Context) (fixity.Fixity, error) {
+	configPath := ctx.GlobalString("config")
+
+	configPath, err := homedir.Expand(configPath)
+	if err != nil {
+		return nil, err
+	}
+
+	return autoload.LoadFixity(configPath)
 }

@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/leeola/fixity"
-	"github.com/leeola/fixity/autoload"
 	"github.com/leeola/fixity/util/clijson"
 	"github.com/urfave/cli"
 )
@@ -28,7 +27,7 @@ func WriteCmd(ctx *cli.Context) error {
 		return errors.New("--blob not implemented yet")
 	}
 
-	fixi, err := autoload.LoadFixity(ctx.GlobalString("config"))
+	fixi, err := loadFixity(ctx)
 	if err != nil {
 		return err
 	}

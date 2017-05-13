@@ -8,7 +8,6 @@ import (
 	"text/tabwriter"
 
 	"github.com/leeola/fixity"
-	"github.com/leeola/fixity/autoload"
 	"github.com/leeola/fixity/q"
 	"github.com/urfave/cli"
 )
@@ -19,7 +18,7 @@ func SearchCmd(ctx *cli.Context) error {
 		return cli.ShowCommandHelp(ctx, "search")
 	}
 
-	fixi, err := autoload.LoadFixity(ctx.GlobalString("config"))
+	fixi, err := loadFixity(ctx)
 	if err != nil {
 		return err
 	}
@@ -54,14 +53,16 @@ type listable struct {
 
 func listableResults(fixi fixity.Fixity, hashes []string) (*listable, error) {
 	listable := newListable()
+
+	// always have a base set of values, regardless of the number of results
+	listable.AddField("id")
+
 	for _, h := range hashes {
 		row := map[string]interface{}{}
 		v, err := fixi.ReadHash(h)
 		if err != nil {
 			return nil, err
 		}
-
-		listable.AddField("id")
 
 		row["id"] = v.Id
 

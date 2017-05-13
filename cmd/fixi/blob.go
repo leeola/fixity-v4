@@ -8,7 +8,6 @@ import (
 	"os"
 
 	"github.com/fatih/color"
-	"github.com/leeola/fixity/autoload"
 	"github.com/nwidger/jsoncolor"
 	"github.com/urfave/cli"
 )
@@ -19,7 +18,7 @@ func BlobCmd(ctx *cli.Context) error {
 		return cli.ShowCommandHelp(ctx, "blob")
 	}
 
-	fixity, err := autoload.LoadFixity(ctx.GlobalString("config"))
+	fixity, err := loadFixity(ctx)
 	if err != nil {
 		return err
 	}
