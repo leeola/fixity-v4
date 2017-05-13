@@ -12,7 +12,7 @@ CreatDirectories = true
 Path = "index"
 
 [diskStore]
-# Where to write the index. If relative, this is a subdirectory of
+# Where to write the store. If relative, this is a subdirectory of
 # the rootPath
 Path = "store"
 
