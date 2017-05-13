@@ -15,7 +15,7 @@ func main() {
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
 			Name:   "config, c",
-			Value:  "~/.config/fixi/fixi.toml",
+			Value:  "~/.config/fixi/config.toml",
 			Usage:  "load config from `PATH`",
 			EnvVar: "FIXI_CONFIG",
 		},
