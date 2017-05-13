@@ -70,7 +70,7 @@ func (q *Query) Or(c ...Constraint) *Query {
 
 func And(c ...Constraint) Constraint {
 	return Constraint{
-		Operator:    operators.Equal,
+		Operator:    operators.And,
 		Constraints: c,
 	}
 }
@@ -140,7 +140,8 @@ func Not(c ...Constraint) Constraint {
 
 func Or(c ...Constraint) Constraint {
 	return Constraint{
-		Operator: operators.Or,
+		Operator:    operators.Or,
+		Constraints: c,
 	}
 }
 
