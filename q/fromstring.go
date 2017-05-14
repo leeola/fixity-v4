@@ -32,6 +32,8 @@ func FromString(s string) *Query {
 		}
 
 		switch op {
+		case "eq":
+			op = operators.Equal
 		case "fts":
 			op = operators.FullTextSearch
 		}
