@@ -107,6 +107,10 @@ func Gte(field string, value interface{}) Constraint {
 	}
 }
 
+// In checks if the given value is found within a list of values.
+//
+// Details are up to the implementor, but usually a equality check is done
+// on the values within the list.
 func In(field string, value interface{}) Constraint {
 	return Constraint{
 		Operator: operators.In,
