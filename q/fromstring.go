@@ -46,6 +46,7 @@ func FromString(s string) *Query {
 	if len(fieldless) != 0 {
 		cs = append(cs, Constraint{
 			Operator: operators.FullTextSearch,
+			Field:    "*",
 			Value:    strings.Join(fieldless, " "),
 		})
 	}
