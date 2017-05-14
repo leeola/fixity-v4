@@ -42,10 +42,10 @@ wiki pages, home inventory, etc. I wanted a database for my life, schemaless
 and easy to manage.
 
 Fixity is my attempt to implement my desired features in one low maintenance
-package. Fixity should store data in a format that you can read, and write
-a program easily to extract, should you so feel the need to. It can be used
-as a simple database, or store  See
-[Project Goals](#project-goals) also.
+package. Fixity should store data in a format that you can read with any
+text editor and write a program easily to extract, should you so feel the
+need to. It can be used as a simple schemaless database. See also:
+[Project Goals](#project-goals).
 
 
 
