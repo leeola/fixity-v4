@@ -15,7 +15,7 @@ until the API and json formats have been finalized. **Do not use currently.**
 With much inspiration from [Camlistore](https://camlistore.org),
 Fixity aims to be:
 
-- Low maintenance. Both for Fixity dev(s) and users.
+- Low maintenance, small in scope. Both for Fixity dev(s) and users.
 - Easy to migrate away from. The data format isn't binary, it's just Json.
 - Append only, versioned and easy to reason about.
 - Developer friendly. Fixity has a friendly Go and HTTP API.
