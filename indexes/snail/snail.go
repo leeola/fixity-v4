@@ -225,32 +225,26 @@ func (s *Snail) Search(q *q.Query) ([]string, error) {
 		c := bkt.Cursor()
 
 		for k, v := c.First(); k != nil; k, v = c.Next() {
-			var docFields DocFields
+			doc := Doc{
+				Key: string(k),
+			}
 
-			if err := json.Unmarshal(v, &docFields); err != nil {
+			if err := json.Unmarshal(v, &doc.Fields); err != nil {
 				return err
 			}
 
-			docKey := string(k)
-			// nil is okay
-			docVal, _ := docFields[q.Constraint.Field]
-
-			// if the doc matches, add it to our doc list to be skipped, limited and
-			// sorted.
-			if matcher.Match(docKey, q.Constraint.Value, docVal) {
+			// if the doc matches, add it to our doc list to be sorted, skipped, and
+			// limited.
+			if matcher.Match(doc, q.Constraint) {
 				total += 1
-
-				doc := Doc{
-					Key: docKey,
-				}
 
 				// only store the if we need to sort. This helps reduce memory footprint if
 				// we don't actually need to store all the documents.
 				//
 				// TODO(leeola): only store the fields we're sorting by, further reducing
 				// the memory footprint.
-				if hasSorts {
-					doc.Fields = docFields
+				if !hasSorts {
+					doc.Fields = nil
 				}
 
 				matchedDocs = append(matchedDocs, doc)

@@ -8,19 +8,19 @@ import (
 )
 
 type Matcher interface {
-	Match(key string, constraintValue, fieldValue interface{}) bool
+	Match(Doc, q.Constraint) bool
 }
 
-type MatcherFunc func(key string, a, b interface{}) bool
+type MatcherFunc func(Doc, q.Constraint) bool
 
-func (f MatcherFunc) Match(key string, a, b interface{}) bool {
-	return f(key, a, b)
+func (f MatcherFunc) Match(d Doc, c q.Constraint) bool {
+	return f(d, c)
 }
 
 func andMatcher(matchers []Matcher) Matcher {
-	return MatcherFunc(func(k string, a, b interface{}) bool {
+	return MatcherFunc(func(d Doc, c q.Constraint) bool {
 		for _, m := range matchers {
-			if !m.Match(k, a, b) {
+			if !m.Match(d, c) {
 				return false
 			}
 		}
@@ -28,8 +28,24 @@ func andMatcher(matchers []Matcher) Matcher {
 	})
 }
 
-func eqMatcher(_ string, a, b interface{}) bool {
-	return a == b
+func eqMatcher(d Doc, c q.Constraint) bool {
+	// if it's a wildcard constraint, check all fields.
+	if c.Field == "*" {
+		for _, v := range d.Fields {
+			if v == c.Value {
+				return true
+			}
+		}
+		return false
+	}
+
+	v, ok := d.Fields[c.Field]
+	// if the value doesn't exist, return false
+	if !ok {
+		return false
+	}
+
+	return v == c.Value
 }
 
 // ftsMatcher checks the bleve index the constraint and compares the match key.
@@ -52,7 +68,10 @@ func ftsMatcher(b bleve.Index, c q.Constraint) (Matcher, error) {
 	// will be slower, but it's the only choice we have, since matchers cannot be
 	// delayed.
 	bq := bleve.NewMatchPhraseQuery(queryStr)
-	bq.SetField(c.Field)
+
+	if c.Field != "*" {
+		bq.SetField(c.Field)
+	}
 
 	// TODO(leeola): How many does the search request limit by default? How can
 	// we make it return all, no matter the size?
@@ -67,11 +86,11 @@ func ftsMatcher(b bleve.Index, c q.Constraint) (Matcher, error) {
 		keys[i] = documentMatch.ID
 	}
 
-	return MatcherFunc(func(key string, _, _ interface{}) bool {
+	return MatcherFunc(func(d Doc, _ q.Constraint) bool {
 		// Check if the current document's key is in the bleve list.
 		// If it is, we have a match.
 		for _, k := range keys {
-			if key == k {
+			if d.Key == k {
 				return true
 			}
 		}

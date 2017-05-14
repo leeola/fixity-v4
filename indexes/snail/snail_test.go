@@ -127,4 +127,111 @@ func TestFullTextSearch(t *testing.T) {
 			})
 		})
 	})
+
+	Convey("Scenario: Wildcard field name", t, func() {
+		s, tmp := newSnail()
+		defer os.RemoveAll(tmp)
+		defer s.Close()
+
+		Convey("Given multiple matching documents", func() {
+			err := s.Index("hash1", "id1", fixity.Fields{{
+				Field: "field1", Value: "foo",
+				Options: (fixity.FieldOptions{}).FullTextSearch(),
+			}})
+			err = s.Index("hash2", "id2", fixity.Fields{{
+				Field: "field2", Value: "bar",
+				Options: (fixity.FieldOptions{}).FullTextSearch(),
+			}})
+			err = s.Index("hash3", "id3", fixity.Fields{{
+				Field: "field3", Value: "foo",
+				Options: (fixity.FieldOptions{}).FullTextSearch(),
+			}})
+			So(err, ShouldBeNil)
+			Convey("When queried with a matching value", func() {
+				keys, err := s.Search(q.New().Const(q.Fts("*", "foo")))
+				So(err, ShouldBeNil)
+				Convey("Then it should respond with the expected data", func() {
+					So(keys, ShouldHaveLength, 2)
+					So(keys[0], ShouldEqual, "hash1")
+					So(keys[1], ShouldEqual, "hash3")
+				})
+			})
+		})
+	})
+}
+
+func TestEqual(t *testing.T) {
+	Convey("Scenario: Equal constraint", t, func() {
+		s, tmp := newSnail()
+		defer os.RemoveAll(tmp)
+		defer s.Close()
+
+		Convey("Given one matching document", func() {
+			err := s.Index("hash1", "id1", fixity.Fields{{
+				Field: "field", Value: "foo",
+			}})
+			err = s.Index("hash2", "id2", fixity.Fields{{
+				Field: "field", Value: "bar",
+			}})
+			So(err, ShouldBeNil)
+			Convey("When queried with a matching value", func() {
+				keys, err := s.Search(q.New().Const(q.Eq("field", "foo")))
+				So(err, ShouldBeNil)
+				Convey("Then it should respond with the expected data", func() {
+					So(keys, ShouldHaveLength, 1)
+					So(keys[0], ShouldEqual, "hash1")
+				})
+			})
+		})
+
+		Convey("Given multiple matching documents", func() {
+			err := s.Index("hash1", "id1", fixity.Fields{{
+				Field: "field", Value: "foo",
+			}})
+			err = s.Index("hash2", "id2", fixity.Fields{{
+				Field: "field", Value: "bar",
+			}})
+			err = s.Index("hash3", "id3", fixity.Fields{{
+				Field: "field", Value: "foo",
+			}})
+			So(err, ShouldBeNil)
+			Convey("When queried with a matching value", func() {
+				keys, err := s.Search(q.New().Const(q.Eq("field", "foo")))
+				So(err, ShouldBeNil)
+				Convey("Then it should respond with the expected data", func() {
+					So(keys, ShouldHaveLength, 2)
+					So(keys[0], ShouldEqual, "hash1")
+					So(keys[1], ShouldEqual, "hash3")
+				})
+			})
+		})
+	})
+
+	Convey("Scenario: Wildcard field name", t, func() {
+		s, tmp := newSnail()
+		defer os.RemoveAll(tmp)
+		defer s.Close()
+
+		Convey("Given multiple matching documents", func() {
+			err := s.Index("hash1", "id1", fixity.Fields{{
+				Field: "field1", Value: "foo",
+			}})
+			err = s.Index("hash2", "id2", fixity.Fields{{
+				Field: "field2", Value: "bar",
+			}})
+			err = s.Index("hash3", "id3", fixity.Fields{{
+				Field: "field3", Value: "foo",
+			}})
+			So(err, ShouldBeNil)
+			Convey("When queried with a matching value", func() {
+				keys, err := s.Search(q.New().Const(q.Eq("*", "foo")))
+				So(err, ShouldBeNil)
+				Convey("Then it should respond with the expected data", func() {
+					So(keys, ShouldHaveLength, 2)
+					So(keys[0], ShouldEqual, "hash1")
+					So(keys[1], ShouldEqual, "hash3")
+				})
+			})
+		})
+	})
 }
