@@ -68,7 +68,15 @@ func (q *Query) Or(c ...Constraint) *Query {
 	return q
 }
 
+// And requires that all given constraints are succeed.
+//
+// Note that if a single constraint is used, no And constraint is used.
+// This is mainly to reduce needless abstractions, albeit not intuitively.
 func And(c ...Constraint) Constraint {
+	if len(c) == 1 {
+		return c[0]
+	}
+
 	return Constraint{
 		Operator:    operators.And,
 		Constraints: c,
@@ -142,7 +150,15 @@ func Not(c ...Constraint) Constraint {
 	}
 }
 
+// Or requires that any of the given constraints succeed.
+//
+// Note that if a single constraint is used, no Or constraint is used.
+// This is mainly to reduce needless abstractions, albeit not intuitively.
 func Or(c ...Constraint) Constraint {
+	if len(c) == 1 {
+		return c[0]
+	}
+
 	return Constraint{
 		Operator:    operators.Or,
 		Constraints: c,
