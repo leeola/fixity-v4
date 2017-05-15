@@ -11,6 +11,9 @@ func (s *Snail) convertConstraint(c q.Constraint) (Matcher, error) {
 	case ops.Equal:
 		return MatcherFunc(eqMatcher), nil
 
+	case ops.In:
+		return MatcherFunc(inMatcher), nil
+
 	case ops.FullTextSearch:
 		// TODO(leeola): check if it's a ID search or a Ver search, and return
 		// the correct fts for that.

@@ -28,6 +28,44 @@ func andMatcher(matchers []Matcher) Matcher {
 	})
 }
 
+func inMatcher(d Doc, c q.Constraint) bool {
+	// if it's a wildcard constraint, check all fields.
+	if c.Field == "*" {
+		for k, _ := range d.Fields {
+			c.Field = k
+			if inMatcherNoWildcard(d, c) {
+				return true
+			}
+			return false
+		}
+	}
+
+	return inMatcherNoWildcard(d, c)
+}
+
+// The lack of wildcard supports prevents infinite recursion while still
+// supporting fields with the name "*"
+func inMatcherNoWildcard(d Doc, c q.Constraint) bool {
+	i, ok := d.Fields[c.Field]
+	// if the value doesn't exist, return false
+	if !ok {
+		return false
+	}
+
+	vs, ok := i.([]interface{})
+
+	if !ok {
+		return false
+	}
+
+	for _, v := range vs {
+		if c.Value == v {
+			return true
+		}
+	}
+	return false
+}
+
 func eqMatcher(d Doc, c q.Constraint) bool {
 	// if it's a wildcard constraint, check all fields.
 	if c.Field == "*" {
