@@ -10,6 +10,8 @@ type Constraint struct {
 	Constraints []Constraint
 }
 
+type Constraints []Constraint
+
 type Sort struct {
 	Field      string
 	Descending bool
@@ -171,4 +173,24 @@ func Re(field string, value interface{}) Constraint {
 		Field:    field,
 		Value:    value,
 	}
+}
+
+// Add the given constraint to this slice.
+func (cs *Constraints) Add(c Constraint) {
+	*cs = append(*cs, c)
+}
+
+// Eq creates and adds an Eq constraint to this constraint slice.
+func (cs *Constraints) Eq(field string, value interface{}) {
+	cs.Add(Eq(field, value))
+}
+
+// Fts creates and adds an Fts constraint to this constraint slice.
+func (cs *Constraints) Fts(field string, value interface{}) {
+	cs.Add(Fts(field, value))
+}
+
+// In creates and adds an In constraint to this constraint slice.
+func (cs *Constraints) In(field string, value interface{}) {
+	cs.Add(In(field, value))
 }
