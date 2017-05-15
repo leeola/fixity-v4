@@ -8,19 +8,19 @@ import (
 )
 
 type Matcher interface {
-	Match(Doc, q.Constraint) bool
+	Match(Doc) bool
 }
 
-type MatcherFunc func(Doc, q.Constraint) bool
+type MatcherFunc func(Doc) bool
 
-func (f MatcherFunc) Match(d Doc, c q.Constraint) bool {
-	return f(d, c)
+func (f MatcherFunc) Match(d Doc) bool {
+	return f(d)
 }
 
-func andMatcher(matchers []Matcher) Matcher {
-	return MatcherFunc(func(d Doc, c q.Constraint) bool {
+func andMatcher(matchers []Matcher, c q.Constraint) Matcher {
+	return MatcherFunc(func(d Doc) bool {
 		for _, m := range matchers {
-			if !m.Match(d, c) {
+			if !m.Match(d) {
 				return false
 			}
 		}
@@ -28,24 +28,29 @@ func andMatcher(matchers []Matcher) Matcher {
 	})
 }
 
-func inMatcher(d Doc, c q.Constraint) bool {
-	// if it's a wildcard constraint, check all fields.
-	if c.Field == "*" {
-		for k, _ := range d.Fields {
-			c.Field = k
-			if inMatcherNoWildcard(d, c) {
-				return true
+func inMatcher(c q.Constraint) Matcher {
+	return MatcherFunc(func(d Doc) bool {
+		// if it's a wildcard constraint, check all fields.
+		if c.Field == "*" {
+			for k, _ := range d.Fields {
+				c := c
+				c.Field = k
+				if in(d, c) {
+					return true
+				}
+				return false
 			}
-			return false
 		}
-	}
 
-	return inMatcherNoWildcard(d, c)
+		return in(d, c)
+	})
 }
 
+// in checks of the doc matches the constraint, ignoring wildcard functionality.
+//
 // The lack of wildcard supports prevents infinite recursion while still
 // supporting fields with the name "*"
-func inMatcherNoWildcard(d Doc, c q.Constraint) bool {
+func in(d Doc, c q.Constraint) bool {
 	i, ok := d.Fields[c.Field]
 	// if the value doesn't exist, return false
 	if !ok {
@@ -66,24 +71,26 @@ func inMatcherNoWildcard(d Doc, c q.Constraint) bool {
 	return false
 }
 
-func eqMatcher(d Doc, c q.Constraint) bool {
-	// if it's a wildcard constraint, check all fields.
-	if c.Field == "*" {
-		for _, v := range d.Fields {
-			if v == c.Value {
-				return true
+func eqMatcher(c q.Constraint) Matcher {
+	return MatcherFunc(func(d Doc) bool {
+		// if it's a wildcard constraint, check all fields.
+		if c.Field == "*" {
+			for _, v := range d.Fields {
+				if v == c.Value {
+					return true
+				}
 			}
+			return false
 		}
-		return false
-	}
 
-	v, ok := d.Fields[c.Field]
-	// if the value doesn't exist, return false
-	if !ok {
-		return false
-	}
+		v, ok := d.Fields[c.Field]
+		// if the value doesn't exist, return false
+		if !ok {
+			return false
+		}
 
-	return v == c.Value
+		return v == c.Value
+	})
 }
 
 // ftsMatcher checks the bleve index the constraint and compares the match key.
@@ -124,7 +131,7 @@ func ftsMatcher(b bleve.Index, c q.Constraint) (Matcher, error) {
 		keys[i] = documentMatch.ID
 	}
 
-	return MatcherFunc(func(d Doc, _ q.Constraint) bool {
+	return MatcherFunc(func(d Doc) bool {
 		// Check if the current document's key is in the bleve list.
 		// If it is, we have a match.
 		for _, k := range keys {

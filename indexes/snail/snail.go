@@ -235,7 +235,7 @@ func (s *Snail) Search(q *q.Query) ([]string, error) {
 
 			// if the doc matches, add it to our doc list to be sorted, skipped, and
 			// limited.
-			if matcher.Match(doc, q.Constraint) {
+			if matcher.Match(doc) {
 				total += 1
 
 				// only store the if we need to sort. This helps reduce memory footprint if

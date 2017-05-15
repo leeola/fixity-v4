@@ -9,10 +9,10 @@ import (
 func (s *Snail) convertConstraint(c q.Constraint) (Matcher, error) {
 	switch c.Operator {
 	case ops.Equal:
-		return MatcherFunc(eqMatcher), nil
+		return eqMatcher(c), nil
 
 	case ops.In:
-		return MatcherFunc(inMatcher), nil
+		return inMatcher(c), nil
 
 	case ops.FullTextSearch:
 		// TODO(leeola): check if it's a ID search or a Ver search, and return
@@ -25,7 +25,7 @@ func (s *Snail) convertConstraint(c q.Constraint) (Matcher, error) {
 			return nil, err
 		}
 
-		return andMatcher(ms), nil
+		return andMatcher(ms, c), nil
 
 	default:
 		return nil, errors.Errorf("unsupported operator: %s", c.Operator)

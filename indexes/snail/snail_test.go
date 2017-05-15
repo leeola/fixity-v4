@@ -95,6 +95,34 @@ func TestSearch(t *testing.T) {
 	})
 }
 
+func TestAnd(t *testing.T) {
+	Convey("Scenario: And constraint", t, func() {
+		s, tmp := newSnail()
+		defer os.RemoveAll(tmp)
+		defer s.Close()
+
+		Convey("Given one matching document", func() {
+			err := s.Index("hash1", "id1", fixity.Fields{
+				{Field: "field1", Value: "foo"},
+				{Field: "field2", Value: "bar"},
+			})
+			err = s.Index("hash2", "id2", fixity.Fields{
+				{Field: "field1", Value: "baz"},
+				{Field: "field2", Value: "bat"},
+			})
+			So(err, ShouldBeNil)
+			Convey("When queried with a matching value", func() {
+				keys, err := s.Search(q.New().And(q.Eq("field1", "foo"), q.Eq("field2", "bar")))
+				So(err, ShouldBeNil)
+				Convey("Then it should respond with the expected data", func() {
+					So(keys, ShouldHaveLength, 1)
+					So(keys[0], ShouldEqual, "hash1")
+				})
+			})
+		})
+	})
+}
+
 func TestFullTextSearch(t *testing.T) {
 	Convey("Scenario: FullTextSearch", t, func() {
 		s, tmp := newSnail()
