@@ -37,8 +37,20 @@ type Fixity interface {
 	// Search for documents matching the given query.
 	Search(*q.Query) ([]string, error)
 
-	// Write the given  Commit, Meta and Reader to the Fixity store.
-	Write(Commit, Json, io.Reader) ([]string, error)
+	// Write the given Commit, Reader, and JsonWithMeta to the Fixity store.
+	//
+	// A single Write can support an arbitrary number of JsonWithMeta fields.
+	// Each Json value within the JsonWithMeta is stored as it's own content
+	// address.
+	//
+	// This allows the caller to optimize how the data is stored. Ensuring that
+	// frequently changing data is not stored with infrequently changing data,
+	// effectively manually deduplicating the json.
+	//
+	// This method of deduplication, vs rolling checksums as seen in Blobs,
+	// is chosen because the caller of Write is able to effectively choose
+	// the rolling splits by seperating Json out into separate objects.
+	Write(Commit, io.Reader, MultiJson) ([]string, error)
 
 	// TODO(leeola): Enable a close method to shutdown any
 	//
@@ -54,7 +66,6 @@ type Commit struct {
 	Id                  string     `json:"id,omitempty"`
 	PreviousVersionHash string     `json:"previousVersion,omitempty"`
 	UploadedAt          *time.Time `json:"uploadedAt,omitempty"`
-	JsonMeta            *JsonMeta  `json:"jsonMeta,omitempty"`
 	ChangeLog           string     `json:"changeLog,omitempty"`
 }
 
@@ -67,18 +78,11 @@ type Commit struct {
 // Note that many of these fields are optional, and it is up to the Fixity
 // implementation to enforce reasonable requirements.
 type Version struct {
-	// JsonHash is the hash address of any json data stored for this version.
+	// MultiJson is a map of JsonWithMeta values.
 	//
-	// See Json docstring for further explanation of Json.
-	JsonHash string `json:"jsonHash,omitempty"`
-
-	// JsonMeta stores information about the raw Json being stored.
-	//
-	// This is primarily used to provide insights on how to index and unmarshal
-	// the Json struct.
-	//
-	// See JsonMeta docstring for further details.
-	JsonMeta *JsonMeta `json:"jsonMeta,omitempty"`
+	// Each stored JsonHash is paired with an optional JsonMeta field describing
+	// indexing metadata for the stored Json.
+	MultiJson MultiJson `json:"multiJson,omitempty"`
 
 	// MultiBlobHash is the hash address of any blob data stored for this version.
 	//
@@ -128,13 +132,38 @@ type Version struct {
 	// ChangeLog is a simple human friendly message about this Version.
 	ChangeLog string `json:"changeLog,omitempty"`
 
-	// Json is the unmarshalled contents of the JsonHash.
-	Json Json `json:"-"`
-
-	// MultiBlob is the unmarshalled contents of the MultiBlobHash.
+	// MultiBlob is the read contents of the MultiBlobHash.
+	//
+	// This is loaded for convenience during Fixity.Read methods. It is not
+	// stored within the marshalled value of JsonWithMeta.
 	//
 	// This must be closed if not nil!
 	MultiBlob io.ReadCloser `json:"-"`
+}
+
+// MultiJson is a map of JsonWithMetas, keyed for unordered unmarshalling.
+type MultiJson map[string]JsonWithMeta
+
+// JsonWithMeta stores the hash and meta of a Json struct.
+type JsonWithMeta struct {
+	// JsonHash is the hash address of any json data stored for this version.
+	//
+	// See Json docstring for further explanation of Json.
+	JsonHash string `json:"jsonHash,omitempty"`
+
+	// JsonMeta stores information about the raw Json being stored.
+	//
+	// This is primarily used to provide insights on how to index and unmarshal
+	// the Json struct.
+	//
+	// See JsonMeta docstring for further details.
+	JsonMeta *JsonMeta `json:"jsonMeta,omitempty"`
+
+	// Json is the read contents of the JsonHash.
+	//
+	// This is loaded for convenience during Fixity.Read methods. It is not
+	// stored within the marshalled value of JsonWithMeta.
+	Json Json `json:"-"`
 }
 
 // Json is a struct which stores text data in Json form.
@@ -148,8 +177,8 @@ type Json struct {
 	//
 	// Note that Fixity provides some helpers to marshal/unmarshal the Json
 	// struct into an interface as well as automatic index field inspecting,
-	// which assumes valid Json, but if those are not used this Json []byte
-	// slice can be anything.
+	// which assumes valid Json, but if those are not used this Json then the
+	// []byte slice can be anything.
 	Json json.RawMessage `json:"json"`
 }
 
