@@ -37,20 +37,12 @@ type Fixity interface {
 	// Search for documents matching the given query.
 	Search(*q.Query) ([]string, error)
 
-	// Write the given Commit, Reader, and JsonWithMeta to the Fixity store.
+	// Write the given Commit, MultiJson, and Reader to the Fixity store.
 	//
-	// A single Write can support an arbitrary number of JsonWithMeta fields.
-	// Each Json value within the JsonWithMeta is stored as it's own content
-	// address.
-	//
-	// This allows the caller to optimize how the data is stored. Ensuring that
-	// frequently changing data is not stored with infrequently changing data,
-	// effectively manually deduplicating the json.
-	//
-	// This method of deduplication, vs rolling checksums as seen in Blobs,
-	// is chosen because the caller of Write is able to effectively choose
-	// the rolling splits by seperating Json out into separate objects.
-	Write(Commit, io.Reader, MultiJson) ([]string, error)
+	// A single write can support an arbitrary number of Json documents
+	// via the MultiJson map. The reasoning behind this is documented in
+	// the MultiJson docstring.
+	Write(Commit, MultiJson, io.Reader) ([]string, error)
 
 	// TODO(leeola): Enable a close method to shutdown any
 	//
@@ -78,13 +70,20 @@ type Commit struct {
 // Note that many of these fields are optional, and it is up to the Fixity
 // implementation to enforce reasonable requirements.
 type Version struct {
-	// MultiJson is a map of JsonWithMeta values.
+	// MultiJsonHash is a map of JsonHashWithMeta values.
 	//
 	// Each stored JsonHash is paired with an optional JsonMeta field describing
 	// indexing metadata for the stored Json.
-	MultiJson MultiJson `json:"multiJson,omitempty"`
+	//
+	// See MultiJsonHash docstring for further explanation.
+	MultiJsonHash MultiJsonHash `json:"multiJsonHash,omitempty"`
 
 	// MultiBlobHash is the hash address of any blob data stored for this version.
+	//
+	// This is stored by address (hash) rather than embedded as MultiJsonHash is,
+	// because MultiBlob is significantly bigger, and can grow basically without
+	// limit. The MultiJson and MultiJsonHash structs are expected to store far
+	// less data.
 	//
 	// See MultiBlob and Blob docstrings for further explanation of the MultiBlob.
 	MultiBlobHash string `json:"multiBlobHash,omitempty"`
@@ -139,17 +138,54 @@ type Version struct {
 	//
 	// This must be closed if not nil!
 	MultiBlob io.ReadCloser `json:"-"`
+
+	// MultiJson is the read contents of the MultiJsonHash hashes.
+	//
+	// This is loaded for convenience during Fixity.Read methods. It is not
+	// stored within the marshalled value of JsonWithMeta.
+	MultiJson MultiJson `json:"-"`
 }
 
-// MultiJson is a map of JsonWithMetas, keyed for unordered unmarshalling.
+// MultiJson is a JsonWithMetas map, keyed for unordered unmarshalling.
+//
+// MultiJson differs from MultiJsonHash in that MultiJson is supplied by
+// users, and contains the JsonBytes. MultiJsonHash is stored within
+// the Fixity.Store, and does *not* contain the JsonBytes. The Bytes are
+// stored separately, as to separate the Meta from the actual Content.
+//
+// MultiJson and MultiJsonHash allow a writer to store multiple json structs
+// together, within a single Commit.
+//
+// A single Commit Write can support an arbitrary number of Json documents via
+// the MultiJson map. Each Json value within the JsonWithMeta is stored as
+// it's own content address.
+//
+// This allows the caller to optimize how the data is stored. Ensuring that
+// frequently changing data is not stored with infrequently changing data,
+// effectively manually deduplicating the json.
+//
+// This method of deduplication, vs rolling checksums as seen in Blobs,
+// is chosen because the caller of Write is able to effectively choose
+// the rolling splits by seperating Json out into separate objects.
+// Furthermore, for rolling checksums to be effective with smaller documents
+// the rolling algorithm would need to chunk at very small intervals,
+// introducing a lot of extra documents in the store with little gain.
+//
+// Finally, and most importantly, storing Json as chunked bytes would cause
+// the json to effectively be encoded. No longer is the content "just json",
+// but rather you need to join bytes together to construct your actual data,
+// as is the case with binary blobs. Blobs don't have a choice on this, as
+// Binary isn't Json, but Json does. Keeping the storage model easy to reason
+// about and easy to migrate away from, analyze with external tools, etc,
+// is a core philosophy of Fixity.
 type MultiJson map[string]JsonWithMeta
 
-// JsonWithMeta stores the hash and meta of a Json struct.
+// MultiJsonHash is a JsonHashWithMetas map, keyed for unordered unmarshalling.
+type MultiJsonHash map[string]JsonHashWithMeta
+
+// JsonWithMeta stores the bytes and meta of a Json struct.
 type JsonWithMeta struct {
-	// JsonHash is the hash address of any json data stored for this version.
-	//
-	// See Json docstring for further explanation of Json.
-	JsonHash string `json:"jsonHash,omitempty"`
+	Json
 
 	// JsonMeta stores information about the raw Json being stored.
 	//
@@ -158,12 +194,21 @@ type JsonWithMeta struct {
 	//
 	// See JsonMeta docstring for further details.
 	JsonMeta *JsonMeta `json:"jsonMeta,omitempty"`
+}
 
-	// Json is the read contents of the JsonHash.
+// JsonWithMeta stores the hash and meta of a Json struct.
+type JsonHashWithMeta struct {
+	JsonWithMeta
+
+	// JsonHash is the hash address of any json data stored for this version.
 	//
-	// This is loaded for convenience during Fixity.Read methods. It is not
-	// stored within the marshalled value of JsonWithMeta.
-	Json Json `json:"-"`
+	// See Json docstring for further explanation of Json.
+	JsonHash string `json:"jsonHash,omitempty"`
+
+	// Json hides the Json field from the embedded JsonWithMeta field.
+	//
+	// This serves to prevent it from being written in the store.
+	Json struct{} `json:"-"`
 }
 
 // Json is a struct which stores text data in Json form.
@@ -173,13 +218,8 @@ type JsonWithMeta struct {
 // that blob data exists with the given Json, as the Json may be the primary
 // data being stored. As is the case with a Wiki, etc.
 type Json struct {
-	// Json is the actual json data being stored.
-	//
-	// Note that Fixity provides some helpers to marshal/unmarshal the Json
-	// struct into an interface as well as automatic index field inspecting,
-	// which assumes valid Json, but if those are not used this Json then the
-	// []byte slice can be anything.
-	Json json.RawMessage `json:"json"`
+	// JsonBytes is the actual json data being stored.
+	JsonBytes json.RawMessage `json:"json"`
 }
 
 // JsonMeta stores information about the raw Json being stored.
@@ -212,5 +252,5 @@ type MultiBlob struct {
 //
 // TODO(leeola): add a Size field.
 type Blob struct {
-	Blob []byte `json:"blob"`
+	BlobBytes []byte `json:"blob"`
 }
