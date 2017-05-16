@@ -51,43 +51,14 @@ type Fixity interface {
 }
 
 // Commit is a higher level Version, allowing simple and high level writes.
+// Commit is metadata about the Json/Bytes being written.
+// Commit contains ordering and mutation info for the data being written.
 //
-// Many or all fields may be duplicated from the Version struct. See Version
-// for documentation on them.
+// Eg, the Id to group writes together, the PreviousVersionHash to load
+// mutations and/or order, and the CreatedAt  to represent timed order.
+//
+// Most fields are optional, depending on the Fixity and Index implementations.
 type Commit struct {
-	Id                  string     `json:"id,omitempty"`
-	PreviousVersionHash string     `json:"previousVersion,omitempty"`
-	UploadedAt          *time.Time `json:"uploadedAt,omitempty"`
-	ChangeLog           string     `json:"changeLog,omitempty"`
-}
-
-// Version of json and blob data tracked through history and time.
-//
-// This is the root method for tracking mutation in Fixity. Each write to Fixity
-// writes the json and blob data and records their addresses here in this
-// struct along with some additional metadata.
-//
-// Note that many of these fields are optional, and it is up to the Fixity
-// implementation to enforce reasonable requirements.
-type Version struct {
-	// MultiJsonHash is a map of JsonHashWithMeta values.
-	//
-	// Each stored JsonHash is paired with an optional JsonMeta field describing
-	// indexing metadata for the stored Json.
-	//
-	// See MultiJsonHash docstring for further explanation.
-	MultiJsonHash MultiJsonHash `json:"multiJsonHash,omitempty"`
-
-	// MultiBlobHash is the hash address of any blob data stored for this version.
-	//
-	// This is stored by address (hash) rather than embedded as MultiJsonHash is,
-	// because MultiBlob is significantly bigger, and can grow basically without
-	// limit. The MultiJson and MultiJsonHash structs are expected to store far
-	// less data.
-	//
-	// See MultiBlob and Blob docstrings for further explanation of the MultiBlob.
-	MultiBlobHash string `json:"multiBlobHash,omitempty"`
-
 	// Id is a unique string which allows Versions to be linked.
 	//
 	// Since Fixity is immutable, Versions allow a single piece of data to be
@@ -121,29 +92,8 @@ type Version struct {
 	// problematic, but can cause confusion to the actual writer of the data.
 	PreviousVersionHash string `json:"previousVersion,omitempty"`
 
-	// PreviousVersionCount stores a count of all previous versions.
-	//
-	// This serves to provide a more human friendly method of knowing how many
-	// modifications there were, without having to run through the entire
-	// PreviousVersion chain.
-	PreviousVersionCount int `json:"previousVersionCount,omitempty"`
-
 	// ChangeLog is a simple human friendly message about this Version.
 	ChangeLog string `json:"changeLog,omitempty"`
-
-	// MultiBlob is the read contents of the MultiBlobHash.
-	//
-	// This is loaded for convenience during Fixity.Read methods. It is not
-	// stored within the marshalled value of JsonWithMeta.
-	//
-	// This must be closed if not nil!
-	MultiBlob io.ReadCloser `json:"-"`
-
-	// MultiJson is the read contents of the MultiJsonHash hashes.
-	//
-	// This is loaded for convenience during Fixity.Read methods. It is not
-	// stored within the marshalled value of JsonWithMeta.
-	MultiJson MultiJson `json:"-"`
 }
 
 // MultiJson is a JsonWithMetas map, keyed for unordered unmarshalling.
@@ -180,9 +130,6 @@ type Version struct {
 // is a core philosophy of Fixity.
 type MultiJson map[string]JsonWithMeta
 
-// MultiJsonHash is a JsonHashWithMetas map, keyed for unordered unmarshalling.
-type MultiJsonHash map[string]JsonHashWithMeta
-
 // JsonWithMeta stores the bytes and meta of a Json struct.
 type JsonWithMeta struct {
 	Json
@@ -194,21 +141,6 @@ type JsonWithMeta struct {
 	//
 	// See JsonMeta docstring for further details.
 	JsonMeta *JsonMeta `json:"jsonMeta,omitempty"`
-}
-
-// JsonWithMeta stores the hash and meta of a Json struct.
-type JsonHashWithMeta struct {
-	JsonWithMeta
-
-	// JsonHash is the hash address of any json data stored for this version.
-	//
-	// See Json docstring for further explanation of Json.
-	JsonHash string `json:"jsonHash,omitempty"`
-
-	// Json hides the Json field from the embedded JsonWithMeta field.
-	//
-	// This serves to prevent it from being written in the store.
-	Json struct{} `json:"-"`
 }
 
 // Json is a struct which stores text data in Json form.
@@ -236,21 +168,4 @@ type JsonMeta struct {
 	// These can include the value if the indexer cannot assert the real
 	// value to be indexed from the Json.Json []byte slice.
 	IndexedFields Fields `json:"indexedFields"`
-}
-
-// MultiBlob stores the Blob addresses of a piece of data.
-//
-// The data, say an Image, is split up into multiple Blobs as to allow
-// for the content to be dedupicated.
-//
-// TODO(leeola): add a TotalSize field.
-type MultiBlob struct {
-	BlobHashes []string `json:"blobHashes"`
-}
-
-// Blob is a chunk of MultiBlob data, serving to deduplicate large content.
-//
-// TODO(leeola): add a Size field.
-type Blob struct {
-	BlobBytes []byte `json:"blob"`
 }
