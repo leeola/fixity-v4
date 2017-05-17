@@ -65,51 +65,53 @@ func (l *Local) Blob(h string) ([]byte, error) {
 
 // makeFields created index Fields for the Version as well as unknown values.
 func (l *Local) makeFields(version fixity.Version, multiJson fixity.MultiJson) (fixity.Fields, error) {
-	// NOTE(leeola): The fieldUnmarshaller lazily unmarshals, so if all fields
-	// are specified then no unmarshalling is needed.
-	var fu *mapfieldunmarshaller.MapFieldUnmarshaller
-
-	// TODO(leeola): this whole section is super hacky, ignoring support for
-	// multiJson, not refactoring the usage until it compiles.
 	var (
-		jsonMeta *fixity.JsonMeta
-		jsonHash string
+		jsonHashes  []string
+		indexFields fixity.Fields
 	)
-	for k, jsonWithMeta := range multiJson {
-		fu = mapfieldunmarshaller.New([]byte(jsonWithMeta.JsonBytes))
-		jsonMeta = jsonWithMeta.JsonMeta
-		jsonHash = version.MultiJsonHash[k].JsonHash
+	for _, jsonHashWithMeta := range version.MultiJsonHash {
+		// the embedded JsonWithMeta value prior to writing *does* contain the
+		// Json bytes. After writing, it does not. In other words, we can get the
+		// JsonWithMeta from the JsonHashWithMeta prior to writing, and only
+		// prior to writing.
+		jsonWithMeta := jsonHashWithMeta.JsonWithMeta
 
-		// TODO(leeola): make a new mapfieldunmarshaller that is constructed from
-		// multiple other field unmarshallers. For now we're just using the first
-		// json.. which is a temporary hack to get the refactoring back to "working".
-		break
-	}
+		// Note that we could make this more efficient by using
+		// make([]string, len(jsonHashWithMeta)), but then we have to keep a tally
+		// of the index that this map range is on. I'm just choosing not to,
+		// currently.
+		jsonHashes = append(jsonHashes, jsonHashWithMeta.JsonHash)
 
-	// copy the fields list so that we can add to it, without
-	// modifying what is stored
-	var indexFields fixity.Fields
-	if jsonMeta != nil {
-		indexFields = make(fixity.Fields, len(jsonMeta.IndexedFields))
-		for i, f := range jsonMeta.IndexedFields {
-			// NOTE(leeola): It's important that we don't modify the
-			// version.JsonMeta.IndexedFields slice or we would end up storing values
-			// twice when the caller didn't want that.
-			if f.Value == nil {
-				v, err := fu.Unmarshal(f.Field)
-				if err != nil {
-					return nil, err
+		if jsonWithMeta.JsonMeta != nil {
+			// NOTE(leeola): The fieldUnmarshaller lazily unmarshals, so if all fields
+			// are specified then no unmarshalling is needed.
+			//
+			// This is only not nil if a value is missing from an index field.
+			// It also caches the unmarshalling process.
+			var u *mapfieldunmarshaller.MapFieldUnmarshaller
+
+			for _, f := range jsonWithMeta.JsonMeta.IndexedFields {
+				if f.Value == nil {
+					// only instantiate the field unmarshaller as needed.
+					if u == nil {
+						u = mapfieldunmarshaller.New([]byte(jsonWithMeta.JsonBytes))
+					}
+
+					v, err := u.Unmarshal(f.Field)
+					if err != nil {
+						return nil, err
+					}
+					f.Value = v
 				}
-				f.Value = v
-			}
 
-			indexFields[i] = f
+				indexFields = append(indexFields, f)
+			}
 		}
 	}
 
 	indexFields.Append(fixity.Field{
-		Field: "version.jsonHash",
-		Value: jsonHash,
+		Field: "version.jsonHashes",
+		Value: jsonHashes,
 	})
 	indexFields.Append(fixity.Field{
 		Field: "version.multiBlobHash",
