@@ -64,21 +64,34 @@ func (l *Local) Blob(h string) ([]byte, error) {
 }
 
 // makeFields created index Fields for the Version as well as unknown values.
-func (l *Local) makeFields(version fixity.Version, json fixity.Json) (fixity.Fields, error) {
+func (l *Local) makeFields(version fixity.Version, multiJson fixity.MultiJson) (fixity.Fields, error) {
 	// NOTE(leeola): The fieldUnmarshaller lazily unmarshals, so if all fields
 	// are specified then no unmarshalling is needed.
-	//
-	// TODO(leeola): Make this configurable for Go usage, so that
-	// a user of fixity via Go can supply the field unmarshaller and use
-	// and data format they want.
-	fu := mapfieldunmarshaller.New([]byte(json.Json))
+	var fu *mapfieldunmarshaller.MapFieldUnmarshaller
+
+	// TODO(leeola): this whole section is super hacky, ignoring support for
+	// multiJson, not refactoring the usage until it compiles.
+	var (
+		jsonMeta *fixity.JsonMeta
+		jsonHash string
+	)
+	for k, jsonWithMeta := range multiJson {
+		fu = mapfieldunmarshaller.New([]byte(jsonWithMeta.JsonBytes))
+		jsonMeta = jsonWithMeta.JsonMeta
+		jsonHash = version.MultiJsonHash[k].JsonHash
+
+		// TODO(leeola): make a new mapfieldunmarshaller that is constructed from
+		// multiple other field unmarshallers. For now we're just using the first
+		// json.. which is a temporary hack to get the refactoring back to "working".
+		break
+	}
 
 	// copy the fields list so that we can add to it, without
 	// modifying what is stored
 	var indexFields fixity.Fields
-	if version.JsonMeta != nil {
-		indexFields = make(fixity.Fields, len(version.JsonMeta.IndexedFields))
-		for i, f := range version.JsonMeta.IndexedFields {
+	if jsonMeta != nil {
+		indexFields = make(fixity.Fields, len(jsonMeta.IndexedFields))
+		for i, f := range jsonMeta.IndexedFields {
 			// NOTE(leeola): It's important that we don't modify the
 			// version.JsonMeta.IndexedFields slice or we would end up storing values
 			// twice when the caller didn't want that.
@@ -96,7 +109,7 @@ func (l *Local) makeFields(version fixity.Version, json fixity.Json) (fixity.Fie
 
 	indexFields.Append(fixity.Field{
 		Field: "version.jsonHash",
-		Value: version.JsonHash,
+		Value: jsonHash,
 	})
 	indexFields.Append(fixity.Field{
 		Field: "version.multiBlobHash",
@@ -132,8 +145,8 @@ func (l *Local) ReadHash(h string) (fixity.Version, error) {
 		return fixity.Version{}, fixity.ErrNotVersion
 	}
 
-	if v.JsonHash != "" {
-		if err := ReadAndUnmarshal(l.store, v.JsonHash, &v.Json); err != nil {
+	for _, jhwm := range v.JsonHashWithMeta {
+		if err := ReadAndUnmarshal(l.store, jhwm.JsonHash, &v.Json); err != nil {
 			return fixity.Version{}, err
 		}
 	}
@@ -153,7 +166,7 @@ func (l *Local) ReadId(id string) (fixity.Version, error) {
 	return fixity.Version{}, errors.New("not implemented")
 }
 
-func (l *Local) Write(c fixity.Commit, j fixity.Json, r io.Reader) ([]string, error) {
+func (l *Local) Write(c fixity.Commit, multiJson fixity.MultiJson, r io.Reader) ([]string, error) {
 	// For quicker prototyping, only supporting metadata atm
 	if r != nil {
 		return nil, errors.New("reader not yet implemented")
@@ -163,9 +176,23 @@ func (l *Local) Write(c fixity.Commit, j fixity.Json, r io.Reader) ([]string, er
 		return nil, errors.New("No data given to write")
 	}
 
-	jsonHash, err := MarshalAndWrite(l.store, j)
-	if err != nil {
-		return nil, errors.Stack(err)
+	// the hashes we're going to return for the user.
+	var hashes []string
+
+	// marshal the given multijson to construct a multijsonhash.
+	multiJsonHash := fixity.MultiJsonHash{}
+	for k, jwm := range multiJson {
+		jsonHash, err := MarshalAndWrite(l.store, jwm.Json)
+		if err != nil {
+			return nil, errors.Stack(err)
+		}
+
+		hashes = append(hashes, jsonHash)
+
+		multiJsonHash[k] = fixity.JsonHashWithMeta{
+			JsonWithMeta: jwm,
+			JsonHash:     jsonHash,
+		}
 	}
 
 	var multiBlobHash string
@@ -182,6 +209,9 @@ func (l *Local) Write(c fixity.Commit, j fixity.Json, r io.Reader) ([]string, er
 			"id", c.Id, "previousVersionHash", c.PreviousVersionHash)
 	}
 
+	// TODO(leeola): construct a standard to allow writers leave the time
+	// blank. Useful for making ID chains based off of history, and ignoring
+	// time completely.
 	if c.UploadedAt == nil {
 		now := time.Now()
 		c.UploadedAt = &now
@@ -192,8 +222,7 @@ func (l *Local) Write(c fixity.Commit, j fixity.Json, r io.Reader) ([]string, er
 		UploadedAt:          c.UploadedAt,
 		PreviousVersionHash: c.PreviousVersionHash,
 		ChangeLog:           c.ChangeLog,
-		JsonMeta:            c.JsonMeta,
-		JsonHash:            jsonHash,
+		MultiJsonHash:       multiJsonHash,
 		MultiBlobHash:       multiBlobHash,
 	}
 
@@ -215,12 +244,7 @@ func (l *Local) Write(c fixity.Commit, j fixity.Json, r io.Reader) ([]string, er
 	// even if we're repalcing it with nothing.
 	version.ChangeLog = c.ChangeLog
 
-	var hashes []string
-	if jsonHash != "" {
-		hashes = append(hashes, jsonHash)
-	}
-
-	indexFields, err := l.makeFields(version, j)
+	indexFields, err := l.makeFields(version, multiJson)
 	if err != nil {
 		return nil, err
 	}

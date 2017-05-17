@@ -91,7 +91,7 @@ type MultiJsonHash map[string]JsonHashWithMeta
 type JsonHashWithMeta struct {
 	JsonWithMeta
 
-	// JsonHash is the hash address of any json data stored for this version.
+	// JsonHash is the hash address of of the json data.
 	//
 	// See Json docstring for further explanation of Json.
 	JsonHash string `json:"jsonHash,omitempty"`

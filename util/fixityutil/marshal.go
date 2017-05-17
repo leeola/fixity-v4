@@ -14,7 +14,7 @@ func MarshalJson(v interface{}) (fixity.Json, error) {
 	}
 
 	return fixity.Json{
-		Json: json.RawMessage(b),
+		JsonBytes: json.RawMessage(b),
 	}, nil
 }
 
@@ -29,5 +29,5 @@ func MustMarshalJson(v interface{}) fixity.Json {
 
 // UnmarshalJson unmarshals the given Json struct into the given interface.
 func UnmarshalJson(j fixity.Json, v interface{}) error {
-	return json.Unmarshal([]byte(j.Json), v)
+	return json.Unmarshal([]byte(j.JsonBytes), v)
 }
