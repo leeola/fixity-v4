@@ -50,8 +50,6 @@ type Fixity interface {
 	// Close() error
 }
 
-// Commit is a higher level Version, allowing simple and high level writes.
-// Commit is metadata about the Json/Bytes being written.
 // Commit contains ordering and mutation info for the data being written.
 //
 // Eg, the Id to group writes together, the PreviousVersionHash to load
