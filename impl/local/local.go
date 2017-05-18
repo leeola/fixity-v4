@@ -147,10 +147,14 @@ func (l *Local) ReadHash(h string) (fixity.Version, error) {
 		return fixity.Version{}, fixity.ErrNotVersion
 	}
 
-	for _, jhwm := range v.JsonHashWithMeta {
-		if err := ReadAndUnmarshal(l.store, jhwm.JsonHash, &v.Json); err != nil {
+	v.MultiJson = fixity.MultiJson{}
+	for k, jhwm := range v.MultiJsonHash {
+		var j fixity.Json
+		if err := ReadAndUnmarshal(l.store, jhwm.JsonHash, &j); err != nil {
 			return fixity.Version{}, err
 		}
+
+		v.MultiJson[k] = fixity.JsonWithMeta{Json: j}
 	}
 
 	if v.MultiBlobHash != "" {
@@ -174,7 +178,7 @@ func (l *Local) Write(c fixity.Commit, multiJson fixity.MultiJson, r io.Reader) 
 		return nil, errors.New("reader not yet implemented")
 	}
 
-	if structs.IsZero(j) && r == nil {
+	if len(multiJson) == 0 && r == nil {
 		return nil, errors.New("No data given to write")
 	}
 
@@ -220,12 +224,9 @@ func (l *Local) Write(c fixity.Commit, multiJson fixity.MultiJson, r io.Reader) 
 	}
 
 	version := fixity.Version{
-		Id:                  c.Id,
-		UploadedAt:          c.UploadedAt,
-		PreviousVersionHash: c.PreviousVersionHash,
-		ChangeLog:           c.ChangeLog,
-		MultiJsonHash:       multiJsonHash,
-		MultiBlobHash:       multiBlobHash,
+		Commit:        c,
+		MultiJsonHash: multiJsonHash,
+		MultiBlobHash: multiBlobHash,
 	}
 
 	// TODO(leeola): load the old version if previous version hash is specified
