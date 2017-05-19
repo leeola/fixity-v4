@@ -31,3 +31,26 @@ func MustMarshalJson(v interface{}) fixity.Json {
 func UnmarshalJson(j fixity.Json, v interface{}) error {
 	return json.Unmarshal([]byte(j.JsonBytes), v)
 }
+
+// MarshalJsonWithMeta marshals to a fixity.JsonWithMeta from the given interface.
+func MarshalJsonWithMeta(v interface{}) (fixity.JsonWithMeta, error) {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return fixity.JsonWithMeta{}, err
+	}
+
+	return fixity.JsonWithMeta{
+		Json: fixity.Json{
+			JsonBytes: json.RawMessage(b),
+		},
+	}, nil
+}
+
+// MustMarshalJsonWithMeta panics if the Marshal fails.
+func MustMarshalJsonWithMeta(v interface{}) fixity.JsonWithMeta {
+	j, err := MarshalJsonWithMeta(v)
+	if err != nil {
+		panic(err.Error())
+	}
+	return j
+}

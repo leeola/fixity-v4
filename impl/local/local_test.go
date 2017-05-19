@@ -20,14 +20,16 @@ func TestMakeFields(t *testing.T) {
 				}{Foo: "foo value"}
 				fields, err := k.makeFields(
 					fixity.Version{
-						JsonMeta: &fixity.JsonMeta{
-							IndexedFields: fixity.Fields{{
-								Field: "foo",
-							}},
+						MultiJsonHash: fixity.MultiJsonHash{
+							"json type": fixityutil.JsonHashWithMetaFields(
+								fixity.Fields{{
+									Field: "foo",
+								}},
+							),
 						},
 					},
-					fixity.Json{
-						Json: fixityutil.MustMarshalJson(&foo).Json,
+					fixity.MultiJson{
+						"json type": fixityutil.MustMarshalJsonWithMeta(&foo),
 					},
 				)
 				So(err, ShouldBeNil)

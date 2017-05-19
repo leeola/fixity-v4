@@ -69,7 +69,7 @@ func (l *Local) makeFields(version fixity.Version, multiJson fixity.MultiJson) (
 		jsonHashes  []string
 		indexFields fixity.Fields
 	)
-	for _, jsonHashWithMeta := range version.MultiJsonHash {
+	for multiJsonKey, jsonHashWithMeta := range version.MultiJsonHash {
 		// the embedded JsonWithMeta value prior to writing *does* contain the
 		// Json bytes. After writing, it does not. In other words, we can get the
 		// JsonWithMeta from the JsonHashWithMeta prior to writing, and only
@@ -94,7 +94,12 @@ func (l *Local) makeFields(version fixity.Version, multiJson fixity.MultiJson) (
 				if f.Value == nil {
 					// only instantiate the field unmarshaller as needed.
 					if u == nil {
-						u = mapfieldunmarshaller.New([]byte(jsonWithMeta.JsonBytes))
+						// This lookup can be avoided by using the implicitly embedded
+						// value of the version. However, at time of writing this,
+						// the implicitness of that is unexpected, so it's not being
+						// used.
+						j := multiJson[multiJsonKey].Json
+						u = mapfieldunmarshaller.New([]byte(j.JsonBytes))
 					}
 
 					v, err := u.Unmarshal(f.Field)
