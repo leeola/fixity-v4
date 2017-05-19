@@ -149,7 +149,7 @@ type JsonWithMeta struct {
 // data being stored. As is the case with a Wiki, etc.
 type Json struct {
 	// JsonBytes is the actual json data being stored.
-	JsonBytes json.RawMessage `json:"json"`
+	JsonBytes json.RawMessage `json:"jsonBytes"`
 }
 
 // JsonMeta stores information about the raw Json being stored.

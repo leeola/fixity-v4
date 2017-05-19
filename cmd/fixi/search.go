@@ -66,14 +66,17 @@ func listableResults(fixi fixity.Fixity, hashes []string) (*listable, error) {
 
 		row["id"] = v.Id
 
-		var j map[string]interface{}
-		if err := json.Unmarshal(v.Json.Json, &j); err != nil {
-			return nil, err
-		}
+		for _, jsonWithMeta := range v.MultiJson {
+			var j map[string]interface{}
+			if err := json.Unmarshal(jsonWithMeta.JsonBytes, &j); err != nil {
+				return nil, err
+			}
 
-		for k, v := range j {
-			listable.AddField(k)
-			row[k] = v
+			// TODO(leeola)" figure out expected behavior for duplicate fields?
+			for k, v := range j {
+				listable.AddField(k)
+				row[k] = v
+			}
 		}
 
 		listable.AddRow(row)

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"strconv"
@@ -42,19 +41,9 @@ func WriteCmd(ctx *cli.Context) error {
 		return err
 	}
 
-	var meta *fixity.JsonMeta
-	if len(fields) > 0 {
-		meta = &fixity.JsonMeta{
-			IndexedFields: fields,
-		}
-	}
-
-	c := fixity.Commit{
-		JsonMeta: meta,
-	}
-	j := fixity.Json{
-		Json: json.RawMessage(b),
-	}
+	var c fixity.Commit
+	j := fixity.MultiJson{}
+	j.AddJsonWithFields(ctx.String("json-key"), b, fields)
 
 	hashes, err := fixi.Write(c, j, nil)
 	if err != nil {
@@ -67,8 +56,8 @@ func WriteCmd(ctx *cli.Context) error {
 }
 
 func jsonToFields(ctx *cli.Context, b []byte) (fixity.Fields, error) {
-	indexFields := ctx.StringSlice("index-field")
-	ftsFields := ctx.StringSlice("index-fts-field")
+	indexFields := ctx.StringSlice("index")
+	ftsFields := ctx.StringSlice("fts")
 	hasIndexFields := len(indexFields) > 0
 	hasFtsFields := len(ftsFields) > 0
 

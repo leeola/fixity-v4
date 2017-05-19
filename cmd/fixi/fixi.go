@@ -14,7 +14,7 @@ func main() {
 	app := cli.NewApp()
 	app.Name = "fixi"
 	app.HelpName = "fixi" // this was being set to "blob", how?
-	app.Usage = "interact with your fixi datastore"
+	app.Usage = "a low level cli to interact with a fixity store"
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
 			Name:   "config, c",
@@ -62,12 +62,17 @@ func main() {
 					Usage: "the previousVersionHash of the commit",
 				},
 				cli.StringSliceFlag{
-					Name:  "index-field, d",
+					Name:  "index",
 					Usage: "a field or field=value to index",
 				},
 				cli.StringSliceFlag{
-					Name:  "index-fts-field, s",
+					Name:  "fts",
 					Usage: "a field or field=value to index with full text search",
+				},
+				cli.StringFlag{
+					Name:  "json-key",
+					Usage: "the multijson key to associate the given json with",
+					Value: "fixi-cli",
 				},
 			},
 			Action: WriteCmd,
