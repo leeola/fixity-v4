@@ -52,6 +52,7 @@ func WriteCmd(ctx *cli.Context) error {
 
 	if ctx.Bool("print") {
 		for _, h := range hashes {
+			fmt.Println(h)
 			if err := printHash(fixi, h); err != nil {
 				return err
 			}
