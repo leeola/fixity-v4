@@ -27,6 +27,14 @@ type Fixity interface {
 	// ReadHash will return ErrNotVersion if the given hash is not a valid hash.
 	ReadHash(hash string) (Version, error)
 
+	// TODO(leeola): implement once Nodes are being worked on.
+	//
+	// // ReadHashes reads each hash in order until one returns content.
+	// //
+	// // This method exists primarily to allow Fixity nodes to request a hash,
+	// // and any mapped hashes (encrypted hashes/etc) from subsequent nodes.
+	// ReadHashes(hashes []string) (Version, error)
+
 	// ReadId unmarshals the given id into a Version struct.
 	//
 	// Included in the Version is the Json and MultiBlob, if any exist. If no
@@ -43,6 +51,29 @@ type Fixity interface {
 	// via the MultiJson map. The reasoning behind this is documented in
 	// the MultiJson docstring.
 	Write(Commit, MultiJson, io.Reader) ([]string, error)
+
+	// TODO(leeola): Writeblob is disabled until the mapping API/Schema is figured
+	// out. Specifically, it's clear how we can store maps of one hash to another,
+	// but how the requesting of the original hash from the node network is still
+	// up for debate.
+	//
+	// Eg, if a hash is requested from a node and not found, the
+	// Eg, a network of nodes could contain both the hash and the alternate-hash
+	// (encrypted, alternate storage like ipfs, etc), how do we request it from
+	// the network. Making multiple requests, eg for the hash and then alternate,
+	// to each node is bad.
+	//
+	// Currently i'm thinking requests will propagate via cascading ReadHashes.
+	// See ReadHashes docstring for more thoughts on this.
+	//
+	// // WriteBlob writes the given bytes to the store, returning the hash address.
+	// //
+	// // This is a lower level function allowing two Fixity nodes to write content
+	// // to eachother.
+	// //
+	// // It is expected that the resulting hash **may not match** the hash
+	// // the writer expected. If this happens, a map should be created.
+	// WriteBlob([]byte) (string, error)
 
 	// TODO(leeola): Enable a close method to shutdown any
 	//
