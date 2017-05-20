@@ -8,6 +8,7 @@ import (
 	"os"
 
 	"github.com/fatih/color"
+	"github.com/leeola/fixity"
 	"github.com/nwidger/jsoncolor"
 	"github.com/urfave/cli"
 )
@@ -23,7 +24,11 @@ func BlobCmd(ctx *cli.Context) error {
 		return err
 	}
 
-	b, err := fixity.Blob(h)
+	return printHash(fixity, h)
+}
+
+func printHash(fixi fixity.Fixity, h string) error {
+	b, err := fixi.Blob(h)
 	if err != nil {
 		return err
 	}

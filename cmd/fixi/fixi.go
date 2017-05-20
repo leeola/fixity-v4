@@ -74,6 +74,10 @@ func main() {
 					Usage: "the multijson key to associate the given json with",
 					Value: "fixi-cli",
 				},
+				cli.BoolFlag{
+					Name:  "print",
+					Usage: "print the created hashes",
+				},
 			},
 			Action: WriteCmd,
 		},
