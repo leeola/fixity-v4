@@ -43,7 +43,7 @@ func WriteCmd(ctx *cli.Context) error {
 
 	var c fixity.Commit
 	j := fixity.MultiJson{}
-	j.AddJsonWithFields(ctx.String("json-key"), b, fields)
+	j.JsonBytesWithFields(ctx.String("json-key"), b, fields)
 
 	hashes, err := fixi.Write(c, j, nil)
 	if err != nil {
