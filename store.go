@@ -96,10 +96,12 @@ type JsonHashWithMeta struct {
 	// See Json docstring for further explanation of Json.
 	JsonHash string `json:"jsonHash,omitempty"`
 
-	// Json hides the Json field from the embedded JsonWithMeta field.
+	// JsonBytes hides the JsonBytes field from the embedded JsonWithMeta field.
 	//
-	// This serves to prevent it from being written in the store.
-	Json struct{} `json:"-"`
+	// This serves to prevent it from being written in the store. Note that
+	// it is a pointer because a struct{} alone would still cause an empty
+	// object to be written.
+	JsonBytes *struct{} `json:"jsonBytes,omitempty"`
 }
 
 // MultiBlob stores the Blob addresses of a piece of data.
