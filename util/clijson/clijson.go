@@ -104,7 +104,15 @@ func object(args []string) (map[string]interface{}, []string) {
 			v interface{}
 		)
 
-		if args[0] == "}" {
+		switch args[0] {
+		case "}":
+			return values, args[1:]
+
+			// a single , within an object allows the object to be split.
+			// This allows the following string vs json to be compiled:
+			// Input:  foo=bar , baz=bat
+			// Output: [{"foo":"bar"},{"baz":"bat"}]
+		case ",":
 			return values, args[1:]
 		}
 
