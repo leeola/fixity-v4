@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"log"
 	"os"
 
 	"github.com/fatih/color"
@@ -49,7 +48,7 @@ func printHash(fixi fixity.Fixity, h string) error {
 
 	prettyJson := bytes.Buffer{}
 	if err := f.Format(&prettyJson, b); err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	_, err = io.Copy(os.Stdout, &prettyJson)
