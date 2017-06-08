@@ -50,9 +50,9 @@ type Deletion struct {
 type Deletions []Deletion
 
 type Content struct {
-	PreviousBlobMetaHash string `json:"previousBlobMetaHash"`
-	BlobHash             string `json:"blobHash"`
-	IndexedFields        Fields `json:"indexedFields"`
+	PreviousContentHash string `json:"previousContentHash"`
+	BlobHash            string `json:"blobHash"`
+	IndexedFields       Fields `json:"indexedFields"`
 }
 
 type Blob struct {
