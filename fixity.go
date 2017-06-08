@@ -38,8 +38,9 @@ type Block struct {
 
 	//Deletion  *Deletion  `json:"deletion,omitempty"`
 	//Deletions  *Deletion  `json:"deletion,omitempty"`
+	//Append  *Append  `json:"append,omitempty"`
 
-	ContentHash string `json:"cotentHash"`
+	ContentHash string `json:"cotentHash,omitempty"`
 }
 
 type Deletion struct {
