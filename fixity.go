@@ -19,9 +19,9 @@ type Fixity interface {
 	//
 	// Each Content, Blob and Chunk will be deleted if no other block in the
 	// blockchain depends on it. This is a slow process.
-	Delete(h string) error
+	Delete(hash string) error
 
-	Update(h string, r io.Reader, f ...[]Field) ([]string, error)
+	Update(hash string, r io.Reader, f ...[]Field) ([]string, error)
 
 	// // Search for documents matching the given query.
 	// Search(*q.Query) ([]string, error)
