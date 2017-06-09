@@ -34,7 +34,7 @@ type Fixity interface {
 
 type Block struct {
 	Block             int    `json:"block"`
-	PreviousBlockHash string `json:"previousBlockHash`
+	PreviousBlockHash string `json:"previousBlockHash"`
 
 	//Deletion  *Deletion  `json:"deletion,omitempty"`
 	//Deletions  *Deletion  `json:"deletion,omitempty"`
