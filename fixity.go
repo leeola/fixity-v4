@@ -13,7 +13,7 @@ type Fixity interface {
 	Blob(hash string) ([]byte, error)
 
 	// Create a block for the given reader and index fields.
-	Create(r io.Reader, f ...[]Field) ([]string, error)
+	Create(id string, r io.Reader, f ...Field) ([]string, error)
 
 	// Delete marks the given BlobMeta hash to be garbage collected in time.
 	//
@@ -21,7 +21,7 @@ type Fixity interface {
 	// blockchain depends on it. This is a slow process.
 	Delete(hash string) error
 
-	Update(hash string, r io.Reader, f ...[]Field) ([]string, error)
+	Update(hash string, r io.Reader, f ...Field) ([]string, error)
 
 	// // Search for documents matching the given query.
 	// Search(*q.Query) ([]string, error)
@@ -45,15 +45,16 @@ type Block struct {
 
 type Deletion struct {
 	BlockHash   string `json:"blockHash"`
-	ContentHash string `json:"contentHash"`
+	ContentHash string `json:"contentHash,omitempty"`
 }
 
 type Deletions []Deletion
 
 type Content struct {
-	PreviousContentHash string `json:"previousContentHash"`
+	Id                  string `json:"id,omitempty"`
+	PreviousContentHash string `json:"previousContentHash,omitempty"`
 	BlobHash            string `json:"blobHash"`
-	IndexedFields       Fields `json:"indexedFields"`
+	IndexedFields       Fields `json:"indexedFields,omitempty"`
 }
 
 type Blob struct {
