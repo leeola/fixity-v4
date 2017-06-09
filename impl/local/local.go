@@ -183,6 +183,11 @@ func (l *Local) Write(id string, r io.Reader, f ...fixi.Field) ([]string, error)
 	}
 	hashes = append(hashes, bHash)
 
+	// set the head block so we can iterate next time
+	if err := l.setHead(bHash); err != nil {
+		return nil, err
+	}
+
 	return hashes, nil
 }
 
