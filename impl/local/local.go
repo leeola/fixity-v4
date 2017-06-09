@@ -14,6 +14,7 @@ import (
 	"github.com/leeola/fixity"
 	fixi "github.com/leeola/fixity"
 	"github.com/leeola/fixity/q"
+	"github.com/leeola/fixity/rollers/camli"
 )
 
 var (
@@ -132,12 +133,35 @@ func (l *Local) Write(id string, r io.Reader, f ...fixi.Field) ([]string, error)
 
 	var hashes []string
 
-	// TODO(leeola): roll reader
-	rHash, err := WriteReader(l.store, r)
+	// this warning is a bit silly, seeing as we already warn below.. but this
+	// part is really important, as it's possible to duplicate data if incorrect
+	// roll sizes are used.
+	if id != "" {
+		l.log.Warn("previous roll size is not being loaded")
+	}
+	rollSize := camli.DefaultMinRollSize
+	roller, err := camli.New(r, rollSize)
 	if err != nil {
 		return nil, err
 	}
-	hashes = append(hashes, rHash)
+
+	cHashes, totalSize, err := WriteRoller(l.store, roller)
+	if err != nil {
+		return nil, err
+	}
+	hashes = append(hashes, cHashes...)
+
+	blob := fixi.Blob{
+		ChunkHashes: cHashes,
+		Size:        totalSize,
+		RollSize:    rollSize,
+	}
+
+	blobHash, err := MarshalAndWrite(l.store, blob)
+	if err != nil {
+		return nil, err
+	}
+	hashes = append(hashes, blobHash)
 
 	previousBlockHash, err := l.getHead()
 	if err != nil {
@@ -150,7 +174,7 @@ func (l *Local) Write(id string, r io.Reader, f ...fixi.Field) ([]string, error)
 
 	content := fixi.Content{
 		Id:            id,
-		BlobHash:      rHash,
+		BlobHash:      blobHash,
 		IndexedFields: f,
 	}
 
@@ -257,4 +281,28 @@ func ReadAndUnmarshalWithBytes(s fixity.Store, h string, v interface{}) ([]byte,
 	}
 
 	return b, nil
+}
+
+func WriteRoller(s fixi.Store, r fixi.Roller) ([]string, int64, error) {
+	var totalSize int64
+	var hashes []string
+	for {
+		c, err := r.Roll()
+		if err != nil && err != io.EOF {
+			return nil, 0, err
+		}
+
+		totalSize += c.Size
+
+		if err == io.EOF {
+			break
+		}
+
+		h, err := MarshalAndWrite(s, c)
+		if err != nil {
+			return nil, 0, err
+		}
+		hashes = append(hashes, h)
+	}
+	return hashes, totalSize, nil
 }

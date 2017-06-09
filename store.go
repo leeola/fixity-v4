@@ -32,3 +32,8 @@ type Store interface {
 	// // Close shuts down any connections that may need to be closed.
 	// Close() error
 }
+
+// Roller implements chunking over bytes.
+type Roller interface {
+	Roll() (Chunk, error)
+}

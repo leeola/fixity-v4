@@ -59,9 +59,11 @@ type Content struct {
 
 type Blob struct {
 	ChunkHashes []string `json:"chunkHashes"`
+	Size        int64    `json:"size"`
 	RollSize    int      `json:"rollSize"`
 }
 
 type Chunk struct {
 	ChunkBytes []byte `json:"chunkBytes"`
+	Size       int64  `json:"size"`
 }
