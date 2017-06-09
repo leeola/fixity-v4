@@ -121,7 +121,11 @@ func (l *Local) setHead(h string) error {
 	})
 }
 
-func (l *Local) Create(id string, r io.Reader, f ...fixi.Field) ([]string, error) {
+func (l *Local) Remove(id string) error {
+	return errors.New("not implemented")
+}
+
+func (l *Local) Write(id string, r io.Reader, f ...fixi.Field) ([]string, error) {
 	if r == nil {
 		return nil, errors.New("no data given to write")
 	}
@@ -180,14 +184,6 @@ func (l *Local) Create(id string, r io.Reader, f ...fixi.Field) ([]string, error
 	hashes = append(hashes, bHash)
 
 	return hashes, nil
-}
-
-func (l *Local) Delete(h string) error {
-	return errors.New("not implemented")
-}
-
-func (l *Local) Update(h string, r io.Reader, f ...fixi.Field) ([]string, error) {
-	return nil, errors.New("not implemented")
 }
 
 // WriteReader writes the given reader's content to the store.

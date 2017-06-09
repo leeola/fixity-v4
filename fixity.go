@@ -12,16 +12,16 @@ type Fixity interface {
 	// Mainly useful for inspecting the underlying data structure.
 	Blob(hash string) ([]byte, error)
 
-	// Create a block for the given reader and index fields.
-	Create(id string, r io.Reader, f ...Field) ([]string, error)
-
-	// Delete marks the given BlobMeta hash to be garbage collected in time.
+	// Remove marks the given block's content to be garbage collected eventually.
 	//
 	// Each Content, Blob and Chunk will be deleted if no other block in the
 	// blockchain depends on it. This is a slow process.
-	Delete(hash string) error
+	//
+	// If the block is not a content block, an error will be returned.
+	Remove(id string) error
 
-	Update(hash string, r io.Reader, f ...Field) ([]string, error)
+	// Write a block for the given reader and index fields.
+	Write(id string, r io.Reader, f ...Field) ([]string, error)
 
 	// // Search for documents matching the given query.
 	// Search(*q.Query) ([]string, error)

@@ -41,10 +41,9 @@ func Loader(cu cu.ConfigUnmarshaller) (fixity.Fixity, error) {
 		return nil, err
 	}
 
-	config := local.Config{
-		Index: i,
-		Store: s,
-	}
+	config := c.Config
+	config.Index = i
+	config.Store = s
 
 	return local.New(config)
 }

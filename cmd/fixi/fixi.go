@@ -33,54 +33,41 @@ func main() {
 			Action:    BlobCmd,
 		},
 		// {
-		// Name:      "search",
-		// ArgsUsage: "QUERY",
-		// Aliases:   []string{"s"},
-		// Usage:     "search for hashes matching the query",
-		// Action:    SearchCmd,
+		// 		Name:      "search",
+		// 		ArgsUsage: "QUERY",
+		// 		Aliases:   []string{"s"},
+		// 		Usage:     "search for hashes matching the query",
+		// 		Action:    SearchCmd,
 		// },
-		// {
-		// Name:      "write",
-		// Aliases:   []string{"w"},
-		// ArgsUsage: "CLIJSON",
-		// Usage:     "write a commit to fixity",
-		// Flags: []cli.Flag{
-		// cli.StringFlag{
-		// Name:  "file",
-		// Usage: "upload a blob from `PATH`",
-		// },
-		// cli.StringFlag{
-		// Name:  "blob",
-		// Usage: "upload a blob from `DATA`",
-		// },
-		// cli.StringFlag{
-		// Name:  "id",
-		// Usage: "the id of the commit",
-		// },
-		// cli.StringFlag{
-		// Name:  "previous",
-		// Usage: "the previousVersionHash of the commit",
-		// },
-		// cli.StringSliceFlag{
-		// Name:  "index",
-		// Usage: "a field or field=value to index",
-		// },
-		// cli.StringSliceFlag{
-		// Name:  "fts",
-		// Usage: "a field or field=value to index with full text search",
-		// },
-		// cli.StringFlag{
-		// Name:  "json-key",
-		// Usage: "the multijson key to associate the given json with",
-		// Value: "fixi-cli",
-		// },
-		// cli.BoolFlag{
-		// Name:  "print",
-		// Usage: "print the created hashes",
-		// },
-		// },
-		// Action: WriteCmd,
-		// },
+		{
+			Name:      "write",
+			Aliases:   []string{"w"},
+			ArgsUsage: "CLIJSON",
+			Usage:     "write a commit to fixity",
+			Flags: []cli.Flag{
+				cli.StringFlag{
+					Name:  "file",
+					Usage: "upload a file from `PATH`",
+				},
+				cli.StringFlag{
+					Name:  "id",
+					Usage: "the id of the commit",
+				},
+				cli.StringSliceFlag{
+					Name:  "index",
+					Usage: "a field or field=value to index",
+				},
+				cli.StringSliceFlag{
+					Name:  "fts",
+					Usage: "a field or field=value to index with full text search",
+				},
+				cli.BoolFlag{
+					Name:  "print",
+					Usage: "print the created hashes",
+				},
+			},
+			Action: WriteCmd,
+		},
 	}
 
 	if err := app.Run(os.Args); err != nil {
