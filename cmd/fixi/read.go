@@ -49,6 +49,6 @@ func ReadCmd(ctx *cli.Context) error {
 		out = f
 	}
 
-	_, err = io.Copy(out, content)
+	_, err = io.Copy(out, &content)
 	return err
 }

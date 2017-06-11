@@ -13,6 +13,7 @@ import (
 	"github.com/inconshreveable/log15"
 	"github.com/leeola/errors"
 	"github.com/leeola/fixity"
+	"github.com/leeola/fixity/blobreader"
 	"github.com/leeola/fixity/q"
 	"github.com/leeola/fixity/rollers/camli"
 )
@@ -163,7 +164,7 @@ func (l *Local) ReadHash(h string) (fixity.Content, error) {
 		return fixity.Content{}, fixity.ErrNotContent
 	}
 
-	// TODO(leeola): Construct a new reader for the given hash.
+	c.ReadCloser = blobreader.New(l.store, c.BlobHash)
 
 	return c, nil
 }
