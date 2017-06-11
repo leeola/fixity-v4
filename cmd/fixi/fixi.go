@@ -28,9 +28,28 @@ func main() {
 		{
 			Name:      "blob",
 			ArgsUsage: "HASH",
-			Aliases:   []string{"b"},
 			Usage:     "inspect a raw blob from HASH",
 			Action:    BlobCmd,
+		},
+		{
+			Name:  "blocks",
+			Usage: "inspect the fixity blockchain",
+			Flags: []cli.Flag{
+				cli.BoolFlag{
+					Name:  "long-hashes",
+					Usage: "display full block hashes",
+				},
+				cli.IntFlag{
+					Name:  "limit",
+					Value: 25,
+					Usage: "limit the total blocks displayed by `LIMIT`",
+				},
+				cli.StringFlag{
+					Name:  "type",
+					Usage: "only display blocks of `TYPE`",
+				},
+			},
+			Action: BlocksCmd,
 		},
 		{
 			Name:      "read",

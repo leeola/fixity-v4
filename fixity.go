@@ -1,6 +1,12 @@
 package fixity
 
-import "io"
+import (
+	"encoding/json"
+	"io"
+	"io/ioutil"
+
+	"github.com/leeola/errors"
+)
 
 // Fixity implements writing, indexing and reading with a Fixity store.
 //
@@ -12,9 +18,9 @@ type Fixity interface {
 	// Mainly useful for inspecting the underlying data structure.
 	Blob(hash string) ([]byte, error)
 
-	// Block(hash string) (Block, error)
+	Head() (Block, error)
 
-	ReadId(id string) (Content, error)
+	Read(id string) (Content, error)
 
 	ReadHash(hash string) (Content, error)
 
@@ -47,6 +53,12 @@ type Block struct {
 	//Append  *Append  `json:"append,omitempty"`
 
 	ContentHash string `json:"cotentHash,omitempty"`
+
+	// BlockHash is the hash of the Block itself, provided by Fixity.
+	BlockHash string `json:"-"`
+
+	// Store allows block methods to load previous blocks and content.
+	Store Store `json:"-"`
 }
 
 type Deletion struct {
@@ -74,4 +86,35 @@ type Blob struct {
 type Chunk struct {
 	ChunkBytes []byte `json:"chunkBytes"`
 	Size       int64  `json:"size"`
+}
+
+func (b Block) PreviousBlock() (Block, error) {
+	if b.Store == nil {
+		return Block{}, errors.New("Store not set")
+	}
+
+	if b.PreviousBlockHash == "" {
+		return Block{}, nil
+	}
+
+	rc, err := b.Store.Read(b.PreviousBlockHash)
+	if err != nil {
+		return Block{}, err
+	}
+	defer rc.Close()
+
+	bB, err := ioutil.ReadAll(rc)
+	if err != nil {
+		return Block{}, err
+	}
+
+	var previousBlock Block
+	if err := json.Unmarshal(bB, &previousBlock); err != nil {
+		return Block{}, err
+	}
+
+	previousBlock.BlockHash = b.PreviousBlockHash
+	previousBlock.Store = b.Store
+
+	return previousBlock, nil
 }

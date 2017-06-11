@@ -90,11 +90,23 @@ func (l *Local) Blob(h string) ([]byte, error) {
 	return b, nil
 }
 
+func (l *Local) Head() (fixity.Block, error) {
+	h, b, err := l.getHead()
+	if err != nil {
+		return fixity.Block{}, nil
+	}
+
+	b.BlockHash = h
+	b.Store = l.store
+	return b, err
+
+}
+
 func (l *Local) Search(q *q.Query) ([]string, error) {
 	return l.index.Search(q)
 }
 
-func (l *Local) getHead() (string, error) {
+func (l *Local) getHead() (string, fixity.Block, error) {
 	var h string
 	err := l.db.View(func(tx *bolt.Tx) error {
 		bkt := tx.Bucket(blockMetaBucketKey)
@@ -110,7 +122,16 @@ func (l *Local) getHead() (string, error) {
 
 		return nil
 	})
-	return h, err
+	if err != nil {
+		return "", fixity.Block{}, err
+	}
+
+	var b fixity.Block
+	if err := ReadAndUnmarshal(l.store, h, &b); err != nil {
+		return "", fixity.Block{}, err
+	}
+
+	return h, b, nil
 }
 
 func (l *Local) getIdHash(id string) (string, error) {
@@ -169,7 +190,7 @@ func (l *Local) ReadHash(h string) (fixity.Content, error) {
 	return c, nil
 }
 
-func (l *Local) ReadId(id string) (fixity.Content, error) {
+func (l *Local) Read(id string) (fixity.Content, error) {
 	h, err := l.getIdHash(id)
 	if err != nil {
 		return fixity.Content{}, err
@@ -219,7 +240,7 @@ func (l *Local) Write(id string, r io.Reader, f ...fixity.Field) ([]string, erro
 	}
 	hashes = append(hashes, blobHash)
 
-	previousBlockHash, err := l.getHead()
+	previousBlockHash, previousBlock, err := l.getHead()
 	if err != nil {
 		return nil, err
 	}
@@ -240,19 +261,9 @@ func (l *Local) Write(id string, r io.Reader, f ...fixity.Field) ([]string, erro
 	}
 	hashes = append(hashes, cHash)
 
-	var lastBlock int
-	// Get the previous block hash and count
-	if previousBlockHash != "" {
-		var prevBlock fixity.Block
-		if err := ReadAndUnmarshal(l.store, previousBlockHash, &prevBlock); err != nil {
-			return nil, err
-		}
-		lastBlock = prevBlock.Block
-	}
-
 	block := fixity.Block{
 		// zero value is okay for both of these.
-		Block:             lastBlock + 1,
+		Block:             previousBlock.Block + 1,
 		PreviousBlockHash: previousBlockHash,
 		ContentHash:       cHash,
 	}

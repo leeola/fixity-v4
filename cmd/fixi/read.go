@@ -29,7 +29,7 @@ func ReadCmd(ctx *cli.Context) error {
 
 	var content fixity.Content
 	if !ctx.Bool("hash") {
-		content, err = fixi.ReadId(idOrHash)
+		content, err = fixi.Read(idOrHash)
 	} else {
 		content, err = fixi.ReadHash(idOrHash)
 	}
