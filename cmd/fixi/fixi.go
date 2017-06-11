@@ -32,6 +32,23 @@ func main() {
 			Usage:     "inspect a raw blob from HASH",
 			Action:    BlobCmd,
 		},
+		{
+			Name:      "read",
+			ArgsUsage: "ID PATH",
+			Aliases:   []string{"r"},
+			Usage:     "read the given ID or hash content to the given PATH",
+			Flags: []cli.Flag{
+				cli.BoolFlag{
+					Name:  "hash",
+					Usage: "use a hash as the first arg instead of hash",
+				},
+				cli.BoolFlag{
+					Name:  "stdout",
+					Usage: "print the bytes to stdout; this can be verbose!",
+				},
+			},
+			Action: ReadCmd,
+		},
 		// {
 		// 		Name:      "search",
 		// 		ArgsUsage: "QUERY",

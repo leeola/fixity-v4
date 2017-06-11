@@ -12,6 +12,12 @@ type Fixity interface {
 	// Mainly useful for inspecting the underlying data structure.
 	Blob(hash string) ([]byte, error)
 
+	// Block(hash string) (Block, error)
+
+	ReadId(id string) (Content, error)
+
+	ReadHash(hash string) (Content, error)
+
 	// Remove marks the given block's content to be garbage collected eventually.
 	//
 	// Each Content, Blob and Chunk will be deleted if no other block in the
@@ -51,6 +57,8 @@ type Deletion struct {
 type Deletions []Deletion
 
 type Content struct {
+	io.ReadCloser `json:"-"`
+
 	Id                  string `json:"id,omitempty"`
 	PreviousContentHash string `json:"previousContentHash,omitempty"`
 	BlobHash            string `json:"blobHash"`

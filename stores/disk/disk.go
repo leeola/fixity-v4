@@ -86,7 +86,7 @@ func (s *Disk) Write(b []byte) (string, error) {
 func (s *Disk) WriteHash(h string, b []byte) error {
 	expectedH := s.Hash(b)
 	if h != expectedH {
-		return fixity.ErrHashNotMatchContent
+		return fixity.ErrHashNotMatchBytes
 	}
 	return s.writeHash(h, b)
 }

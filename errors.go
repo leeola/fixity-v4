@@ -7,13 +7,12 @@ var (
 	// content for the given hash.
 	ErrHashNotFound = errors.New("hash not found")
 
-	// ErrHashNotMatchContent is to be returned by Store implementors if a given hash
+	// ErrHashNotMatchBytes is to be returned by Store implementors if a given hash
 	// does not match the expected content write.
-	ErrHashNotMatchContent = errors.New("hash does not match content")
+	ErrHashNotMatchBytes = errors.New("hash does not match bytes")
 
-	// ErrNotVersion is returned when a hash's contents are being unmarshalled into
-	// a Version, but the contents do not match a Version.
-	ErrNotVersion = errors.New("hash is not a valid Version struct")
+	// ErrNotContent is returned if the json of a hash is not a Content.
+	ErrNotContent = errors.New("hash is not a valid Content struct")
 
 	// ErrFieldNotFound is returned when a FieldUnmarshaller cannot unmarshal the field.
 	ErrFieldNotFound = errors.New("field ummarshaller cannot find field")

@@ -9,16 +9,17 @@ import (
 	"time"
 
 	"github.com/boltdb/bolt"
+	"github.com/fatih/structs"
 	"github.com/inconshreveable/log15"
 	"github.com/leeola/errors"
 	"github.com/leeola/fixity"
-	fixi "github.com/leeola/fixity"
 	"github.com/leeola/fixity/q"
 	"github.com/leeola/fixity/rollers/camli"
 )
 
 var (
 	blockMetaBucketKey = []byte("blockMeta")
+	idsBucketKey       = []byte("ids")
 	lastBlockKey       = []byte("lastBlock")
 )
 
@@ -111,6 +112,25 @@ func (l *Local) getHead() (string, error) {
 	return h, err
 }
 
+func (l *Local) getIdHash(id string) (string, error) {
+	var h string
+	err := l.db.View(func(tx *bolt.Tx) error {
+		bkt := tx.Bucket(idsBucketKey)
+		// if bucket does not exist, this will be nil
+		if bkt == nil {
+			return nil
+		}
+
+		hB := bkt.Get([]byte(id))
+		if hB != nil {
+			h = string(hB)
+		}
+
+		return nil
+	})
+	return h, err
+}
+
 func (l *Local) setHead(h string) error {
 	return l.db.Update(func(tx *bolt.Tx) error {
 		bkt, err := tx.CreateBucketIfNotExists(blockMetaBucketKey)
@@ -122,11 +142,46 @@ func (l *Local) setHead(h string) error {
 	})
 }
 
+func (l *Local) setIdHash(id, h string) error {
+	return l.db.Update(func(tx *bolt.Tx) error {
+		bkt, err := tx.CreateBucketIfNotExists(idsBucketKey)
+		if err != nil {
+			return err
+		}
+
+		return bkt.Put([]byte(id), []byte(h))
+	})
+}
+
+func (l *Local) ReadHash(h string) (fixity.Content, error) {
+	var c fixity.Content
+	if err := ReadAndUnmarshal(l.store, h, &c); err != nil {
+		return fixity.Content{}, err
+	}
+
+	if structs.IsZero(c) {
+		return fixity.Content{}, fixity.ErrNotContent
+	}
+
+	// TODO(leeola): Construct a new reader for the given hash.
+
+	return c, nil
+}
+
+func (l *Local) ReadId(id string) (fixity.Content, error) {
+	h, err := l.getIdHash(id)
+	if err != nil {
+		return fixity.Content{}, err
+	}
+
+	return l.ReadHash(h)
+}
+
 func (l *Local) Remove(id string) error {
 	return errors.New("not implemented")
 }
 
-func (l *Local) Write(id string, r io.Reader, f ...fixi.Field) ([]string, error) {
+func (l *Local) Write(id string, r io.Reader, f ...fixity.Field) ([]string, error) {
 	if r == nil {
 		return nil, errors.New("no data given to write")
 	}
@@ -151,7 +206,7 @@ func (l *Local) Write(id string, r io.Reader, f ...fixi.Field) ([]string, error)
 	}
 	hashes = append(hashes, cHashes...)
 
-	blob := fixi.Blob{
+	blob := fixity.Blob{
 		ChunkHashes: cHashes,
 		Size:        totalSize,
 		RollSize:    rollSize,
@@ -172,7 +227,7 @@ func (l *Local) Write(id string, r io.Reader, f ...fixi.Field) ([]string, error)
 		l.log.Warn("loading previous content hash not implemented")
 	}
 
-	content := fixi.Content{
+	content := fixity.Content{
 		Id:            id,
 		BlobHash:      blobHash,
 		IndexedFields: f,
@@ -187,14 +242,14 @@ func (l *Local) Write(id string, r io.Reader, f ...fixi.Field) ([]string, error)
 	var lastBlock int
 	// Get the previous block hash and count
 	if previousBlockHash != "" {
-		var prevBlock fixi.Block
+		var prevBlock fixity.Block
 		if err := ReadAndUnmarshal(l.store, previousBlockHash, &prevBlock); err != nil {
 			return nil, err
 		}
 		lastBlock = prevBlock.Block
 	}
 
-	block := fixi.Block{
+	block := fixity.Block{
 		// zero value is okay for both of these.
 		Block:             lastBlock + 1,
 		PreviousBlockHash: previousBlockHash,
@@ -210,6 +265,13 @@ func (l *Local) Write(id string, r io.Reader, f ...fixi.Field) ([]string, error)
 	// set the head block so we can iterate next time
 	if err := l.setHead(bHash); err != nil {
 		return nil, err
+	}
+
+	// if the id was supplied, update the new id
+	if id != "" {
+		if err := l.setIdHash(id, cHash); err != nil {
+			return nil, err
+		}
 	}
 
 	return hashes, nil
@@ -283,7 +345,7 @@ func ReadAndUnmarshalWithBytes(s fixity.Store, h string, v interface{}) ([]byte,
 	return b, nil
 }
 
-func WriteRoller(s fixi.Store, r fixi.Roller) ([]string, int64, error) {
+func WriteRoller(s fixity.Store, r fixity.Roller) ([]string, int64, error) {
 	var totalSize int64
 	var hashes []string
 	for {
