@@ -60,7 +60,7 @@ func main() {
 			Name:      "write",
 			Aliases:   []string{"w"},
 			ArgsUsage: "CLIJSON",
-			Usage:     "write a commit to fixity",
+			Usage:     "write a content to fixity",
 			Flags: []cli.Flag{
 				cli.StringFlag{
 					Name:  "file",
@@ -68,7 +68,7 @@ func main() {
 				},
 				cli.StringFlag{
 					Name:  "id",
-					Usage: "the id of the commit",
+					Usage: "the id of the content",
 				},
 				cli.StringSliceFlag{
 					Name:  "index",
