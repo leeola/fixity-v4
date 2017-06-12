@@ -2,7 +2,6 @@ package snail
 
 import (
 	"encoding/json"
-	"fmt"
 	"os"
 	"path/filepath"
 	"time"
@@ -138,8 +137,6 @@ func (s *Snail) IndexFts(h, id string, fields []fixity.Field) error {
 
 // Index the given key by the given document fields.
 func (s *Snail) Index(h, id string, fields []fixity.Field) error {
-	fmt.Println("snail index was called for", h, id)
-
 	if err := s.IndexFts(h, id, fields); err != nil {
 		return err
 	}
