@@ -2,6 +2,7 @@ package snail
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"time"
@@ -137,12 +138,22 @@ func (s *Snail) IndexFts(h, id string, fields []fixity.Field) error {
 
 // Index the given key by the given document fields.
 func (s *Snail) Index(h, id string, fields []fixity.Field) error {
+	fmt.Println("snail index was called for", h, id)
+
 	if err := s.IndexFts(h, id, fields); err != nil {
 		return err
 	}
 
 	docFields := map[string]interface{}{}
 	for _, f := range fields {
+		if f.Field == "" {
+			return errors.New("index Field.Field value required")
+		}
+
+		if f.Value == nil {
+			return errors.New("index Field.Value value required")
+		}
+
 		// this is where we'll implement/fork Bleve FTS support.
 		// options not supported yet
 		if f.Options != nil {
@@ -153,6 +164,7 @@ func (s *Snail) Index(h, id string, fields []fixity.Field) error {
 				}
 			}
 		}
+
 		docFields[f.Field] = f.Value
 	}
 

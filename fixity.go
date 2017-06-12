@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 
 	"github.com/leeola/errors"
+	"github.com/leeola/fixity/q"
 )
 
 // Fixity implements writing, indexing and reading with a Fixity store.
@@ -36,7 +37,7 @@ type Fixity interface {
 	Write(id string, r io.Reader, f ...Field) ([]string, error)
 
 	// // Search for documents matching the given query.
-	// Search(*q.Query) ([]string, error)
+	Search(*q.Query) ([]string, error)
 
 	// TODO(leeola): Enable a close method to shutdown any
 	//

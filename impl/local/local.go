@@ -276,6 +276,10 @@ func (l *Local) Write(id string, r io.Reader, f ...fixity.Field) ([]string, erro
 		}
 	}
 
+	if err := l.index.Index(cHash, content.Id, f); err != nil {
+		return nil, err
+	}
+
 	return hashes, nil
 }
 
