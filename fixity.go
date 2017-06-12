@@ -16,7 +16,7 @@ type Fixity interface {
 	// Blob returns a raw blob of the given hash.
 	//
 	// Mainly useful for inspecting the underlying data structure.
-	Blob(hash string) ([]byte, error)
+	Blob(hash string) (io.ReadCloser, error)
 
 	Head() (Block, error)
 
@@ -57,7 +57,7 @@ type Block struct {
 	// BlockHash is the hash of the Block itself, provided by Fixity.
 	BlockHash string `json:"-"`
 
-	// Store allows block methods to load previous blocks and content.
+	// Store allows block method(s) to load previous blocks and content.
 	Store Store `json:"-"`
 }
 
@@ -69,12 +69,19 @@ type Deletion struct {
 type Deletions []Deletion
 
 type Content struct {
-	io.ReadCloser `json:"-"`
-
 	Id                  string `json:"id,omitempty"`
 	PreviousContentHash string `json:"previousContentHash,omitempty"`
 	BlobHash            string `json:"blobHash"`
 	IndexedFields       Fields `json:"indexedFields,omitempty"`
+
+	// ReadCloser allows the Content to be read from directly.
+	io.ReadCloser `json:"-"`
+
+	// ContentHash is the hash of the Content itself, provided by Fixity.
+	ContentHash string `json:"-"`
+
+	// Store allows block method(s) to load previous content.
+	Store Store `json:"-"`
 }
 
 type Blob struct {
@@ -88,7 +95,7 @@ type Chunk struct {
 	Size       int64  `json:"size"`
 }
 
-func (b Block) PreviousBlock() (Block, error) {
+func (b *Block) PreviousBlock() (Block, error) {
 	if b.Store == nil {
 		return Block{}, errors.New("Store not set")
 	}

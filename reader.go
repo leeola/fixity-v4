@@ -1,4 +1,4 @@
-package blobreader
+package fixity
 
 import (
 	"bytes"
@@ -7,26 +7,24 @@ import (
 
 	"github.com/fatih/structs"
 	"github.com/leeola/errors"
-	"github.com/leeola/fixity"
-	"github.com/leeola/fixity/util/storeutil"
 )
 
-type Reader struct {
+type BlobReader struct {
 	blobHash      string
 	loadedChunks  bool
 	hashes        []string
-	store         fixity.Store
+	store         Store
 	currentReader io.ReadCloser
 }
 
-func New(s fixity.Store, blobHash string) *Reader {
-	return &Reader{
+func Reader(s Store, blobHash string) *BlobReader {
+	return &BlobReader{
 		blobHash: blobHash,
 		store:    s,
 	}
 }
 
-func (r *Reader) Read(p []byte) (int, error) {
+func (r *BlobReader) Read(p []byte) (int, error) {
 	if !r.loadedChunks {
 		if err := r.loadChunks(); err != nil {
 			return 0, err
@@ -40,8 +38,8 @@ func (r *Reader) Read(p []byte) (int, error) {
 	if r.currentReader == nil {
 		h := r.hashes[0]
 		r.hashes = r.hashes[1:]
-		var c fixity.Chunk
-		if err := storeutil.ReadAndUnmarshal(r.store, h, &c); err != nil {
+		var c Chunk
+		if err := readAndUnmarshal(r.store, h, &c); err != nil {
 			return 0, err
 		}
 		r.currentReader = ioutil.NopCloser(bytes.NewReader(c.ChunkBytes))
@@ -55,9 +53,9 @@ func (r *Reader) Read(p []byte) (int, error) {
 	return i, err
 }
 
-func (r *Reader) loadChunks() error {
-	var b fixity.Blob
-	if err := storeutil.ReadAndUnmarshal(r.store, r.blobHash, &b); err != nil {
+func (r *BlobReader) loadChunks() error {
+	var b Blob
+	if err := readAndUnmarshal(r.store, r.blobHash, &b); err != nil {
 		return err
 	}
 
@@ -71,7 +69,7 @@ func (r *Reader) loadChunks() error {
 	return nil
 }
 
-func (r *Reader) Close() error {
+func (r *BlobReader) Close() error {
 	r.hashes = nil
 	if r.currentReader == nil {
 		return nil

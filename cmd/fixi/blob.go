@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 
 	"github.com/fatih/color"
@@ -27,7 +28,13 @@ func BlobCmd(ctx *cli.Context) error {
 }
 
 func printHash(fixi fixity.Fixity, h string) error {
-	b, err := fixi.Blob(h)
+	rc, err := fixi.Blob(h)
+	if err != nil {
+		return err
+	}
+	defer rc.Close()
+
+	b, err := ioutil.ReadAll(rc)
 	if err != nil {
 		return err
 	}

@@ -69,11 +69,11 @@ func main() {
 			Action: ReadCmd,
 		},
 		// {
-		// 		Name:      "search",
-		// 		ArgsUsage: "QUERY",
-		// 		Aliases:   []string{"s"},
-		// 		Usage:     "search for hashes matching the query",
-		// 		Action:    SearchCmd,
+		// 	Name:      "search",
+		// 	ArgsUsage: "QUERY",
+		// 	Aliases:   []string{"s"},
+		// 	Usage:     "search for hashes matching the query",
+		// 	Action:    SearchCmd,
 		// },
 		{
 			Name:      "write",

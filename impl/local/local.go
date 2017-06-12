@@ -13,7 +13,6 @@ import (
 	"github.com/inconshreveable/log15"
 	"github.com/leeola/errors"
 	"github.com/leeola/fixity"
-	"github.com/leeola/fixity/blobreader"
 	"github.com/leeola/fixity/q"
 	"github.com/leeola/fixity/rollers/camli"
 )
@@ -75,19 +74,8 @@ func New(c Config) (*Local, error) {
 	}, nil
 }
 
-func (l *Local) Blob(h string) ([]byte, error) {
-	rc, err := l.store.Read(h)
-	if err != nil {
-		return nil, err
-	}
-	defer rc.Close()
-
-	b, err := ioutil.ReadAll(rc)
-	if err != nil {
-		return nil, err
-	}
-
-	return b, nil
+func (l *Local) Blob(h string) (io.ReadCloser, error) {
+	return l.store.Read(h)
 }
 
 func (l *Local) Head() (fixity.Block, error) {
@@ -185,7 +173,9 @@ func (l *Local) ReadHash(h string) (fixity.Content, error) {
 		return fixity.Content{}, fixity.ErrNotContent
 	}
 
-	c.ReadCloser = blobreader.New(l.store, c.BlobHash)
+	c.ContentHash = h
+	c.Store = l.store
+	c.ReadCloser = fixity.Reader(l.store, c.BlobHash)
 
 	return c, nil
 }

@@ -11,7 +11,7 @@ import "github.com/leeola/fixity/q"
 //
 // 1. Translate the Fixity *Query into a format that makes sense in the
 //    indexer, such as translating *Query to a SQL statement as might be
-//    done by postgresql.
+//    done by sqlite.
 // 2. Return hashes of the documents matching the given query.
 // 3. Paginate and limit the searches.
 // 4. Support searching all fields, if a query constraint has a field value
