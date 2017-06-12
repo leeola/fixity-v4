@@ -258,6 +258,15 @@ func (l *Local) Write(id string, r io.Reader, f ...fixity.Field) ([]string, erro
 		ContentHash:       cHash,
 	}
 
+	// if the previous hash is the same as the current hash, drop it.
+	//
+	// There has been no change in the content, so why make a new one
+	// block.
+	if previousBlock.ContentHash == cHash {
+		l.log.Debug("ignoring identical block", "block", previousBlockHash, "contentHash", cHash)
+		return nil, nil
+	}
+
 	bHash, err := MarshalAndWrite(l.store, block)
 	if err != nil {
 		return nil, err
