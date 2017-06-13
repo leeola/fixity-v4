@@ -1,9 +1,7 @@
 package fixity
 
 import (
-	"encoding/json"
 	"io"
-	"io/ioutil"
 
 	"github.com/leeola/errors"
 	"github.com/leeola/fixity/q"
@@ -89,6 +87,9 @@ type Blob struct {
 	ChunkHashes []string `json:"chunkHashes"`
 	Size        int64    `json:"size"`
 	RollSize    int      `json:"rollSize"`
+
+	// ReadCloser allows the Blob to be read from directly.
+	io.ReadCloser `json:"-"`
 }
 
 type Chunk struct {
@@ -105,19 +106,9 @@ func (b *Block) PreviousBlock() (Block, error) {
 		return Block{}, nil
 	}
 
-	rc, err := b.Store.Read(b.PreviousBlockHash)
-	if err != nil {
-		return Block{}, err
-	}
-	defer rc.Close()
-
-	bB, err := ioutil.ReadAll(rc)
-	if err != nil {
-		return Block{}, err
-	}
-
 	var previousBlock Block
-	if err := json.Unmarshal(bB, &previousBlock); err != nil {
+	err := readAndUnmarshal(b.Store, b.PreviousBlockHash, &previousBlock)
+	if err != nil {
 		return Block{}, err
 	}
 
@@ -125,4 +116,22 @@ func (b *Block) PreviousBlock() (Block, error) {
 	previousBlock.Store = b.Store
 
 	return previousBlock, nil
+}
+
+func (b *Block) Content() (Content, error) {
+	if b.Store == nil {
+		return Content{}, errors.New("Store not set")
+	}
+
+	if b.ContentHash == "" {
+		return Content{}, errors.New("contentHash is empty")
+	}
+
+	var c Content
+	err := readAndUnmarshal(b.Store, b.ContentHash, &c)
+	if err != nil {
+		return Content{}, err
+	}
+
+	return c, nil
 }

@@ -36,8 +36,12 @@ func main() {
 			Usage: "inspect the fixity blockchain",
 			Flags: []cli.Flag{
 				cli.BoolFlag{
-					Name:  "long-hashes",
+					Name:  "block-hashes",
 					Usage: "display full block hashes",
+				},
+				cli.BoolFlag{
+					Name:  "content-hashes",
+					Usage: "display full content hashes",
 				},
 				cli.IntFlag{
 					Name:  "limit",

@@ -20,39 +20,63 @@ func BlocksCmd(ctx *cli.Context) error {
 		return err
 	}
 
+	blockPad := util.NewPad(" ", 4)
+
 	b, err := fixity.Head()
 	if err != nil {
 		return err
 	}
 
-	longHashes := ctx.Bool("long-hashes")
+	c, err := b.Content()
+	if err != nil {
+		return err
+	}
 
-	blockPad := util.NewPad(" ", 4)
-	printBlock(blockPad, longHashes, b)
+	showBlockHashes := ctx.Bool("block-hashes")
+	showContentHashes := ctx.Bool("content-hashes")
+
+	block := blockPad.LeftPad(strconv.Itoa(b.Block))
+	bHash := sumHash(b.BlockHash, showBlockHashes)
+	cHash := sumHash(b.ContentHash, showContentHashes)
+
+	printBlock(block, bHash, cHash, c.Id, c.IndexedFields)
 
 	for i := 0; i < ctx.Int("limit") && b.PreviousBlockHash != ""; i++ {
-		p, err := b.PreviousBlock()
+		b, err = b.PreviousBlock()
 		if err != nil {
 			return err
 		}
-		b = p
 
-		printBlock(blockPad, longHashes, b)
+		c, err = b.Content()
+		if err != nil {
+			return err
+		}
+
+		block := blockPad.LeftPad(strconv.Itoa(b.Block))
+		bHash := sumHash(b.BlockHash, showBlockHashes)
+		cHash := sumHash(b.ContentHash, showContentHashes)
+
+		printBlock(block, bHash, cHash, c.Id, c.IndexedFields)
 	}
 
 	return nil
 }
 
-func printBlock(blockPad *util.AdjustPad, longHashes bool, b fixity.Block) {
-	var blockHash string
-	if longHashes {
-		blockHash = b.BlockHash
-	} else {
-		blockHash = b.BlockHash[len(b.BlockHash)-8:]
-	}
-
-	fmt.Printf("%s %s\n",
-		color.GreenString(blockPad.LeftPad(strconv.Itoa(b.Block))),
-		color.YellowString(blockHash),
+func printBlock(block, bHash, cHash, id string, fields fixity.Fields) {
+	fmt.Printf(
+		" %s  %s  %s  %s",
+		color.GreenString(block),
+		color.GreenString(bHash),
+		color.YellowString(cHash),
+		color.YellowString(id),
 	)
+
+	fmt.Print("\n")
+}
+
+func sumHash(h string, doNothing bool) string {
+	if doNothing {
+		return h
+	}
+	return h[len(h)-8:]
 }
