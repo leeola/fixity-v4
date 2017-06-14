@@ -2,11 +2,12 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"strconv"
 
 	"github.com/fatih/color"
 	"github.com/leeola/fixity"
-	"github.com/leeola/fixity/util"
+	"github.com/leeola/fixity/util/dyntabwriter"
 	"github.com/urfave/cli"
 )
 
@@ -19,8 +20,6 @@ func BlocksCmd(ctx *cli.Context) error {
 	if err != nil {
 		return err
 	}
-
-	blockPad := util.NewPad(" ", 4)
 
 	b, err := fixity.Head()
 	if err != nil {
@@ -35,13 +34,19 @@ func BlocksCmd(ctx *cli.Context) error {
 	showBlockHashes := ctx.Bool("block-hashes")
 	showContentHashes := ctx.Bool("content-hashes")
 
-	block := blockPad.LeftPad(strconv.Itoa(b.Block))
 	bHash := sumHash(b.BlockHash, showBlockHashes)
 	cHash := sumHash(b.ContentHash, showContentHashes)
 
-	printBlock(block, bHash, cHash, c.Id, c.IndexedFields)
+	w := dyntabwriter.New(os.Stdout)
+	w.Print(" ", "BLOCK", "HASH", "CONTENT", "ID")
+	w.Print(" ",
+		color.GreenString(strconv.Itoa(b.Block)),
+		color.GreenString(bHash),
+		color.YellowString(cHash),
+		color.YellowString(c.Id),
+	)
 
-	for i := 0; i < ctx.Int("limit") && b.PreviousBlockHash != ""; i++ {
+	for i := 0; i < ctx.Int("limit")-1 && b.PreviousBlockHash != ""; i++ {
 		b, err = b.PreviousBlock()
 		if err != nil {
 			return err
@@ -52,11 +57,15 @@ func BlocksCmd(ctx *cli.Context) error {
 			return err
 		}
 
-		block := blockPad.LeftPad(strconv.Itoa(b.Block))
 		bHash := sumHash(b.BlockHash, showBlockHashes)
 		cHash := sumHash(b.ContentHash, showContentHashes)
 
-		printBlock(block, bHash, cHash, c.Id, c.IndexedFields)
+		w.Print(" ",
+			color.GreenString(strconv.Itoa(b.Block)),
+			color.GreenString(bHash),
+			color.YellowString(cHash),
+			color.YellowString(c.Id),
+		)
 	}
 
 	return nil
