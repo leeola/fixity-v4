@@ -38,8 +38,8 @@ func BlocksCmd(ctx *cli.Context) error {
 	cHash := sumHash(b.ContentHash, showContentHashes)
 
 	w := dyntabwriter.New(os.Stdout)
-	w.Print(" ", "BLOCK", "HASH", "CONTENT", "ID")
-	w.Print(" ",
+	w.Header(" ", "BLOCK", "HASH", "CONTENT", "ID")
+	w.Println(" ",
 		color.GreenString(strconv.Itoa(b.Block)),
 		color.GreenString(bHash),
 		color.YellowString(cHash),
@@ -60,7 +60,7 @@ func BlocksCmd(ctx *cli.Context) error {
 		bHash := sumHash(b.BlockHash, showBlockHashes)
 		cHash := sumHash(b.ContentHash, showContentHashes)
 
-		w.Print(" ",
+		w.Println(" ",
 			color.GreenString(strconv.Itoa(b.Block)),
 			color.GreenString(bHash),
 			color.YellowString(cHash),

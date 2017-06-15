@@ -38,9 +38,10 @@ func (c *Column) RightPad(src []byte) []byte {
 	dstLen := srcLen + padWidth
 	dst := make([]byte, dstLen)
 	copy(dst, src)
-	for i := srcLen; i < dstLen; i++ {
-		dst[i] = c.Pad
+	for n := 0; n < padWidth; n++ {
+		dst[n+srcLen] = c.Pad
 	}
+
 	return dst
 }
 
@@ -65,4 +66,12 @@ func NoColorLen(b []byte) int {
 		l++
 	}
 	return l
+}
+
+func CopyBytes(p []byte) []byte {
+	b := make([]byte, len(p))
+	for i, p := range p {
+		b[i] = p
+	}
+	return b
 }
