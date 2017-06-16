@@ -30,7 +30,7 @@ type Config struct {
 	RootPath string       `toml:"rootPath"`
 }
 
-type Local struct {
+type Fixity struct {
 	config Config
 	db     *bolt.DB
 	index  fixity.Index
@@ -38,7 +38,7 @@ type Local struct {
 	log    log15.Logger
 }
 
-func New(c Config) (*Local, error) {
+func New(c Config) (*Fixity, error) {
 	if c.RootPath == "" {
 		return nil, errors.New("missing required config: rootPath")
 	}
@@ -55,7 +55,7 @@ func New(c Config) (*Local, error) {
 		c.Log = log15.New()
 	}
 
-	dbPath := filepath.Join(c.RootPath, "local", "blocks.db")
+	dbPath := filepath.Join(c.RootPath, "local", "local.db")
 	if err := os.MkdirAll(filepath.Dir(dbPath), 0755); err != nil {
 		return nil, err
 	}
@@ -65,7 +65,7 @@ func New(c Config) (*Local, error) {
 		return nil, err
 	}
 
-	return &Local{
+	return &Fixity{
 		config: c,
 		db:     db,
 		index:  c.Index,
@@ -74,11 +74,14 @@ func New(c Config) (*Local, error) {
 	}, nil
 }
 
-func (l *Local) Blob(h string) (io.ReadCloser, error) {
+func (l *Fixity) Blob(h string) (io.ReadCloser, error) {
 	return l.store.Read(h)
 }
 
-func (l *Local) Head() (fixity.Block, error) {
+func (l *Fixity) Blockchain() fixity.Blockchain {
+}
+
+func (l *Fixity) Head() (fixity.Block, error) {
 	h, b, err := l.getHead()
 	if err != nil {
 		return fixity.Block{}, nil
@@ -90,11 +93,11 @@ func (l *Local) Head() (fixity.Block, error) {
 
 }
 
-func (l *Local) Search(q *q.Query) ([]string, error) {
+func (l *Fixity) Search(q *q.Query) ([]string, error) {
 	return l.index.Search(q)
 }
 
-func (l *Local) getHead() (string, fixity.Block, error) {
+func (l *Fixity) getHead() (string, fixity.Block, error) {
 	var h string
 	err := l.db.View(func(tx *bolt.Tx) error {
 		bkt := tx.Bucket(blockMetaBucketKey)
@@ -122,7 +125,7 @@ func (l *Local) getHead() (string, fixity.Block, error) {
 	return h, b, nil
 }
 
-func (l *Local) getIdHash(id string) (string, error) {
+func (l *Fixity) getIdHash(id string) (string, error) {
 	var h string
 	err := l.db.View(func(tx *bolt.Tx) error {
 		bkt := tx.Bucket(idsBucketKey)
@@ -141,7 +144,7 @@ func (l *Local) getIdHash(id string) (string, error) {
 	return h, err
 }
 
-func (l *Local) setHead(h string) error {
+func (l *Fixity) setHead(h string) error {
 	return l.db.Update(func(tx *bolt.Tx) error {
 		bkt, err := tx.CreateBucketIfNotExists(blockMetaBucketKey)
 		if err != nil {
@@ -152,7 +155,7 @@ func (l *Local) setHead(h string) error {
 	})
 }
 
-func (l *Local) setIdHash(id, h string) error {
+func (l *Fixity) setIdHash(id, h string) error {
 	return l.db.Update(func(tx *bolt.Tx) error {
 		bkt, err := tx.CreateBucketIfNotExists(idsBucketKey)
 		if err != nil {
@@ -163,7 +166,7 @@ func (l *Local) setIdHash(id, h string) error {
 	})
 }
 
-func (l *Local) ReadHash(h string) (fixity.Content, error) {
+func (l *Fixity) ReadHash(h string) (fixity.Content, error) {
 	var c fixity.Content
 	if err := ReadAndUnmarshal(l.store, h, &c); err != nil {
 		return fixity.Content{}, err
@@ -180,7 +183,7 @@ func (l *Local) ReadHash(h string) (fixity.Content, error) {
 	return c, nil
 }
 
-func (l *Local) Read(id string) (fixity.Content, error) {
+func (l *Fixity) Read(id string) (fixity.Content, error) {
 	h, err := l.getIdHash(id)
 	if err != nil {
 		return fixity.Content{}, err
@@ -189,11 +192,11 @@ func (l *Local) Read(id string) (fixity.Content, error) {
 	return l.ReadHash(h)
 }
 
-func (l *Local) Remove(id string) error {
+func (l *Fixity) Remove(id string) error {
 	return errors.New("not implemented")
 }
 
-func (l *Local) Write(id string, r io.Reader, f ...fixity.Field) ([]string, error) {
+func (l *Fixity) Write(id string, r io.Reader, f ...fixity.Field) ([]string, error) {
 	if r == nil {
 		return nil, errors.New("no data given to write")
 	}

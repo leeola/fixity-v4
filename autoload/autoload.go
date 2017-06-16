@@ -7,7 +7,7 @@ import (
 	"github.com/leeola/fixity/autoload/registry"
 	cu "github.com/leeola/fixity/util/configunmarshaller"
 
-	_ "github.com/leeola/fixity/impl/local/regloader"
+	_ "github.com/leeola/fixity/fixities/local/regloader"
 	_ "github.com/leeola/fixity/indexes/snail/regloader"
 	_ "github.com/leeola/fixity/stores/disk/regloader"
 )
