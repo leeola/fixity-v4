@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"os"
 	"strconv"
 
@@ -23,7 +22,7 @@ func BlocksCmd(ctx *cli.Context) error {
 
 	w := dyntabwriter.New(os.Stdout)
 	defer w.Flush()
-	w.Header(" ", "BLOCK", "HASH", "CONTENT", "ID")
+	w.Header(" ", "BLOCK", "HASH", "TYPE", "CONTENT", "ID")
 
 	b, err := fixi.Blockchain().Head()
 	if err == fixity.ErrEmptyBlockchain {
@@ -47,6 +46,7 @@ func BlocksCmd(ctx *cli.Context) error {
 	w.Println(" ",
 		color.GreenString(strconv.Itoa(b.Block)),
 		color.GreenString(bHash),
+		color.GreenString(blockType(b)),
 		color.YellowString(cHash),
 		color.YellowString(c.Id),
 	)
@@ -68,6 +68,7 @@ func BlocksCmd(ctx *cli.Context) error {
 		w.Println(" ",
 			color.GreenString(strconv.Itoa(b.Block)),
 			color.GreenString(bHash),
+			color.GreenString(blockType(b)),
 			color.YellowString(cHash),
 			color.YellowString(c.Id),
 		)
@@ -76,21 +77,18 @@ func BlocksCmd(ctx *cli.Context) error {
 	return nil
 }
 
-func printBlock(block, bHash, cHash, id string, fields fixity.Fields) {
-	fmt.Printf(
-		" %s  %s  %s  %s",
-		color.GreenString(block),
-		color.GreenString(bHash),
-		color.YellowString(cHash),
-		color.YellowString(id),
-	)
-
-	fmt.Print("\n")
-}
-
 func sumHash(h string, doNothing bool) string {
 	if doNothing {
 		return h
 	}
 	return h[len(h)-8:]
+}
+
+func blockType(b fixity.Block) string {
+	switch {
+	case b.ContentHash != "":
+		return "content"
+	default:
+		return "unknown"
+	}
 }
