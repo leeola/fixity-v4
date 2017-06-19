@@ -5,7 +5,7 @@ import (
 	"github.com/leeola/errors"
 	"github.com/leeola/fixity"
 	"github.com/leeola/fixity/autoload/registry"
-	"github.com/leeola/fixity/impl/local"
+	"github.com/leeola/fixity/fixities/local"
 	cu "github.com/leeola/fixity/util/configunmarshaller"
 )
 

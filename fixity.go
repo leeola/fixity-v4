@@ -106,19 +106,19 @@ type Fixity interface {
 //
 // This interface focuses on all of the above functionality.
 type Blockchain interface {
-	// AppendBlocks locks the store and writes the given blocks in order.
-	//
-	// The field PreviousBlockHash's value of all blocks *must* be empty.
-	//
-	// The returned Block array will contain the new hashes of the given
-	// blocks.
-	AppendBlocks(appendTo Block, blocks []Block) ([]Block, error)
+	// // AppendBlocks locks the store and writes the given blocks in order.
+	// //
+	// // The field PreviousBlockHash's value of all blocks *must* be empty.
+	// //
+	// // The returned Block array will contain the new hashes of the given
+	// // blocks.
+	// AppendBlocks(appendTo Block, blocks []Block) ([]Block, error)
 
 	// Head returns the latest block in the blockchain.
 	Head() (Block, error)
 
-	// SkipBlock removes the given block from the blockchain.
-	SkipBlock(Block) ([]Block, error)
+	// // SkipBlock removes the given block from the blockchain.
+	// SkipBlock(Block) ([]Block, error)
 }
 
 // Block serves as a ledger for mutations of the fixity datastore.
@@ -275,6 +275,9 @@ func (b *Block) Content() (Content, error) {
 	if err != nil {
 		return Content{}, err
 	}
+
+	c.ContentHash = b.ContentHash
+	c.Store = b.Store
 
 	return c, nil
 }

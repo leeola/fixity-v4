@@ -31,11 +31,12 @@ type Config struct {
 }
 
 type Fixity struct {
-	config Config
-	db     *bolt.DB
-	index  fixity.Index
-	store  fixity.Store
-	log    log15.Logger
+	config     Config
+	blockchain *Blockchain
+	db         *bolt.DB
+	index      fixity.Index
+	store      fixity.Store
+	log        log15.Logger
 }
 
 func New(c Config) (*Fixity, error) {
@@ -65,64 +66,19 @@ func New(c Config) (*Fixity, error) {
 		return nil, err
 	}
 
+	blockchain := &Blockchain{
+		db:    db,
+		store: c.Store,
+	}
+
 	return &Fixity{
-		config: c,
-		db:     db,
-		index:  c.Index,
-		store:  c.Store,
-		log:    c.Log,
+		config:     c,
+		blockchain: blockchain,
+		db:         db,
+		index:      c.Index,
+		store:      c.Store,
+		log:        c.Log,
 	}, nil
-}
-
-func (l *Fixity) Blob(h string) (io.ReadCloser, error) {
-	return l.store.Read(h)
-}
-
-func (l *Fixity) Blockchain() fixity.Blockchain {
-}
-
-func (l *Fixity) Head() (fixity.Block, error) {
-	h, b, err := l.getHead()
-	if err != nil {
-		return fixity.Block{}, nil
-	}
-
-	b.BlockHash = h
-	b.Store = l.store
-	return b, err
-
-}
-
-func (l *Fixity) Search(q *q.Query) ([]string, error) {
-	return l.index.Search(q)
-}
-
-func (l *Fixity) getHead() (string, fixity.Block, error) {
-	var h string
-	err := l.db.View(func(tx *bolt.Tx) error {
-		bkt := tx.Bucket(blockMetaBucketKey)
-		// if bucket does not exist, this will be nil
-		if bkt == nil {
-			return nil
-		}
-
-		hB := bkt.Get(lastBlockKey)
-		if hB != nil {
-			h = string(hB)
-		}
-
-		return nil
-	})
-	if err != nil {
-		return "", fixity.Block{}, err
-	}
-
-	var b fixity.Block
-	if err := ReadAndUnmarshal(l.store, h, &b); err != nil {
-		return "", fixity.Block{}, err
-	}
-
-	return h, b, nil
 }
 
 func (l *Fixity) getIdHash(id string) (string, error) {
@@ -144,17 +100,6 @@ func (l *Fixity) getIdHash(id string) (string, error) {
 	return h, err
 }
 
-func (l *Fixity) setHead(h string) error {
-	return l.db.Update(func(tx *bolt.Tx) error {
-		bkt, err := tx.CreateBucketIfNotExists(blockMetaBucketKey)
-		if err != nil {
-			return err
-		}
-
-		return bkt.Put(lastBlockKey, []byte(h))
-	})
-}
-
 func (l *Fixity) setIdHash(id, h string) error {
 	return l.db.Update(func(tx *bolt.Tx) error {
 		bkt, err := tx.CreateBucketIfNotExists(idsBucketKey)
@@ -164,6 +109,26 @@ func (l *Fixity) setIdHash(id, h string) error {
 
 		return bkt.Put([]byte(id), []byte(h))
 	})
+}
+
+func (l *Fixity) Blob(h string) (io.ReadCloser, error) {
+	return l.store.Read(h)
+}
+
+func (l *Fixity) Blockchain() fixity.Blockchain {
+	return l.blockchain
+}
+
+func (f *Fixity) Close() error {
+	return f.db.Close()
+}
+
+func (l *Fixity) Delete(string) error {
+	return errors.New("not implemented")
+}
+
+func (l *Fixity) Search(q *q.Query) ([]string, error) {
+	return l.index.Search(q)
 }
 
 func (l *Fixity) ReadHash(h string) (fixity.Content, error) {
@@ -233,7 +198,7 @@ func (l *Fixity) Write(id string, r io.Reader, f ...fixity.Field) ([]string, err
 	}
 	hashes = append(hashes, blobHash)
 
-	previousBlockHash, previousBlock, err := l.getHead()
+	previousBlockHash, previousBlock, err := l.blockchain.getHead()
 	if err != nil {
 		return nil, err
 	}
@@ -278,7 +243,7 @@ func (l *Fixity) Write(id string, r io.Reader, f ...fixity.Field) ([]string, err
 	hashes = append(hashes, bHash)
 
 	// set the head block so we can iterate next time
-	if err := l.setHead(bHash); err != nil {
+	if err := l.blockchain.setHead(bHash); err != nil {
 		return nil, err
 	}
 

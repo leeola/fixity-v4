@@ -21,7 +21,7 @@ func BlocksCmd(ctx *cli.Context) error {
 		return err
 	}
 
-	b, err := fixity.Head()
+	b, err := fixity.Blockchain().Head()
 	if err != nil {
 		return err
 	}

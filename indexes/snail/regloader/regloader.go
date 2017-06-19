@@ -7,7 +7,7 @@ import (
 	"github.com/leeola/errors"
 	"github.com/leeola/fixity"
 	"github.com/leeola/fixity/autoload/registry"
-	"github.com/leeola/fixity/impl/local"
+	"github.com/leeola/fixity/fixities/local"
 	"github.com/leeola/fixity/indexes/snail"
 	cu "github.com/leeola/fixity/util/configunmarshaller"
 	homedir "github.com/mitchellh/go-homedir"
