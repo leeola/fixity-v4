@@ -3,6 +3,11 @@ package fixity
 import "github.com/leeola/errors"
 
 var (
+	// ErrEmptyBlockchain is to be returned when no blockchain is available.
+	//
+	// Such as when a Blockchain has not yet been written to.
+	ErrEmptyBlockchain = errors.New("empty blockchain")
+
 	// HashNotFoundErr is to be returned by Store implementors when they cannot find
 	// content for the given hash.
 	ErrHashNotFound = errors.New("hash not found")

@@ -41,6 +41,10 @@ func (l *Blockchain) getHead() (string, fixity.Block, error) {
 		return "", fixity.Block{}, err
 	}
 
+	if h == "" {
+		return "", fixity.Block{}, fixity.ErrEmptyBlockchain
+	}
+
 	var b fixity.Block
 	if err := ReadAndUnmarshal(l.store, h, &b); err != nil {
 		return "", fixity.Block{}, err
