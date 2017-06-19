@@ -140,6 +140,7 @@ func (w *DynTabWriter) Flush() error {
 		return nil
 	}
 
+	w.bufferCount = -1
 	_, err := w.writeLine(b)
 	return err
 }

@@ -199,7 +199,7 @@ func (l *Fixity) Write(id string, r io.Reader, f ...fixity.Field) ([]string, err
 	hashes = append(hashes, blobHash)
 
 	previousBlockHash, previousBlock, err := l.blockchain.getHead()
-	if err != nil {
+	if err != nil && err != fixity.ErrEmptyBlockchain {
 		return nil, err
 	}
 

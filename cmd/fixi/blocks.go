@@ -16,12 +16,19 @@ const (
 )
 
 func BlocksCmd(ctx *cli.Context) error {
-	fixity, err := loadFixity(ctx)
+	fixi, err := loadFixity(ctx)
 	if err != nil {
 		return err
 	}
 
-	b, err := fixity.Blockchain().Head()
+	w := dyntabwriter.New(os.Stdout)
+	defer w.Flush()
+	w.Header(" ", "BLOCK", "HASH", "CONTENT", "ID")
+
+	b, err := fixi.Blockchain().Head()
+	if err == fixity.ErrEmptyBlockchain {
+		return nil
+	}
 	if err != nil {
 		return err
 	}
@@ -37,8 +44,6 @@ func BlocksCmd(ctx *cli.Context) error {
 	bHash := sumHash(b.BlockHash, showBlockHashes)
 	cHash := sumHash(b.ContentHash, showContentHashes)
 
-	w := dyntabwriter.New(os.Stdout)
-	w.Header(" ", "BLOCK", "HASH", "CONTENT", "ID")
 	w.Println(" ",
 		color.GreenString(strconv.Itoa(b.Block)),
 		color.GreenString(bHash),
