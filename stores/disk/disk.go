@@ -59,6 +59,10 @@ func (s *Disk) Exists(h string) (bool, error) {
 }
 
 func (s *Disk) Read(h string) (io.ReadCloser, error) {
+	if h == "" {
+		return nil, errors.New("hash cannot be empty")
+	}
+
 	p := filepath.Join(s.path, h)
 
 	var rc io.ReadCloser
