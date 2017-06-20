@@ -202,15 +202,6 @@ type Content struct {
 	// store basic metadata about the content.
 	IndexedFields Fields `json:"indexedFields,omitempty"`
 
-	// ReadCloser allows the Content to be read from directly.
-	//
-	// TODO(leeola): Remove this in favor of a Blob() method which
-	// returns the Blob & embedded reader. This saves creation of the
-	// reader until it's been explicitly requested.
-	//
-	// This value is not stored.
-	io.ReadCloser `json:"-"`
-
 	// Hash is the hash of the Content itself, provided by Fixity.
 	//
 	// This value is not stored.
@@ -239,15 +230,15 @@ type Blob struct {
 	// // into to memory to be split up into many parts.
 	// NextBlobHash string `json:"nextBlobHash,omitempty"`
 
-	// ReadCloser allows the Blob to be read from directly.
-	//
-	// This value is not stored.
-	io.ReadCloser `json:"-"`
-
 	// Hash is the hash of the Blob itself, provided by Fixity.
 	//
 	// This value is not stored.
 	Hash string `json:"-"`
+
+	// Store allows block method(s) to load previous content.
+	//
+	// This value is not stored.
+	Store Store `json:"-"`
 }
 
 type Chunk struct {
@@ -257,7 +248,7 @@ type Chunk struct {
 
 func (b *Block) PreviousBlock() (Block, error) {
 	if b.Store == nil {
-		return Block{}, errors.New("Store not set")
+		return Block{}, errors.New("previousblock: Store not set")
 	}
 
 	if b.PreviousBlockHash == "" {
@@ -278,11 +269,11 @@ func (b *Block) PreviousBlock() (Block, error) {
 
 func (b *Block) Content() (Content, error) {
 	if b.Store == nil {
-		return Content{}, errors.New("Store not set")
+		return Content{}, errors.New("content: Store not set")
 	}
 
 	if b.ContentHash == "" {
-		return Content{}, errors.New("contentHash is empty")
+		return Content{}, errors.New("content: contentHash is empty")
 	}
 
 	var c Content
@@ -299,11 +290,11 @@ func (b *Block) Content() (Content, error) {
 
 func (c *Content) Blob() (Blob, error) {
 	if c.Store == nil {
-		return Blob{}, errors.New("Store not set")
+		return Blob{}, errors.New("blob: Store not set")
 	}
 
 	if c.BlobHash == "" {
-		return Blob{}, errors.New("blobHash is empty")
+		return Blob{}, errors.New("blob: blobHash is empty")
 	}
 
 	var b Blob
@@ -312,6 +303,24 @@ func (c *Content) Blob() (Blob, error) {
 		return Blob{}, err
 	}
 	b.Hash = c.BlobHash
+	b.Store = c.Store
 
 	return b, nil
+}
+
+func (c *Content) Read() (io.ReadCloser, error) {
+	b, err := c.Blob()
+	if err != nil {
+		return nil, err
+	}
+
+	return b.Read()
+}
+
+func (b *Blob) Read() (io.ReadCloser, error) {
+	if b.Store == nil {
+		return nil, errors.New("read: Store not set")
+	}
+
+	return Reader(b.Store, b.Hash), nil
 }

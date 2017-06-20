@@ -37,6 +37,12 @@ func ReadCmd(ctx *cli.Context) error {
 		return err
 	}
 
+	rc, err := content.Read()
+	if err != nil {
+		return err
+	}
+	defer rc.Close()
+
 	var out io.Writer
 	if useStdout {
 		out = os.Stdout
@@ -49,6 +55,6 @@ func ReadCmd(ctx *cli.Context) error {
 		out = f
 	}
 
-	_, err = io.Copy(out, &content)
+	_, err = io.Copy(out, rc)
 	return err
 }

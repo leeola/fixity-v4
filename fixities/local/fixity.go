@@ -146,7 +146,6 @@ func (l *Fixity) ReadHash(h string) (fixity.Content, error) {
 
 	c.Hash = h
 	c.Store = l.store
-	c.ReadCloser = fixity.Reader(l.store, c.BlobHash)
 
 	return c, nil
 }
