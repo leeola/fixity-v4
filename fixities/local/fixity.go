@@ -183,8 +183,12 @@ func (l *Fixity) WriteRequest(req *fixity.WriteRequest) (fixity.Content, error) 
 	if req.Id != "" {
 		l.log.Warn("previous roll size is not being loaded")
 	}
-	rollSize := camli.DefaultMinRollSize
-	roller, err := camli.New(req.Blob, rollSize)
+
+	if req.RollSize == 0 {
+		req.RollSize = fixity.DefaultRollSize
+	}
+
+	roller, err := camli.New(req.Blob, req.RollSize)
 	if err != nil {
 		return fixity.Content{}, err
 	}
@@ -197,7 +201,7 @@ func (l *Fixity) WriteRequest(req *fixity.WriteRequest) (fixity.Content, error) 
 	blob := fixity.Blob{
 		ChunkHashes: cHashes,
 		Size:        totalSize,
-		RollSize:    rollSize,
+		RollSize:    req.RollSize,
 	}
 
 	blobHash, err := MarshalAndWrite(l.store, blob)

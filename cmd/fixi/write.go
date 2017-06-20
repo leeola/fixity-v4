@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"strconv"
 	"strings"
@@ -23,29 +24,44 @@ func WriteCmd(ctx *cli.Context) error {
 		return err
 	}
 
-	var in io.Reader
+	req := fixity.NewWrite(ctx.String("id"), nil)
+	req.Fields = fields
+
+	if rollSize := ctx.Int("manual-rollsize"); rollSize != 0 {
+		req.RollSize = int64(rollSize)
+	}
+
 	if ctx.Bool("cli") {
-		in = strings.NewReader(strings.Join(ctx.Args(), " "))
+		req.Blob = ioutil.NopCloser(strings.NewReader(strings.Join(ctx.Args(), " ")))
 	} else if ctx.Bool("stdin") {
-		in = os.Stdin
+		req.Blob = ioutil.NopCloser(os.Stdout)
 	} else {
-		// TODO(leeola): append unix metadata to fields array
-		f, err := os.OpenFile(ctx.Args().First(), os.O_RDONLY, 0644)
+		path := ctx.Args().First()
+
+		fi, err := os.Stat(path)
 		if err != nil {
 			return err
 		}
-		defer f.Close()
-		in = f
-	}
 
-	out := os.Stdout
+		// TODO(leeola): append unix metadata to fields array
+
+		if req.RollSize == fixity.DefaultRollSize {
+			req.SetRollFromFileInfo(fi)
+		}
+
+		f, err := os.OpenFile(path, os.O_RDONLY, 0644)
+		if err != nil {
+			return err
+		}
+		req.Blob = f
+	}
 
 	fixi, err := loadFixity(ctx)
 	if err != nil {
 		return err
 	}
 
-	c, err := fixi.Write(ctx.String("id"), in, fields...)
+	c, err := fixi.WriteRequest(req)
 	if err != nil {
 		return err
 	}
@@ -55,6 +71,7 @@ func WriteCmd(ctx *cli.Context) error {
 		return err
 	}
 
+	out := os.Stdout
 	inspect := ctx.Bool("inspect")
 	spamBytes := ctx.Bool("spam-bytes")
 

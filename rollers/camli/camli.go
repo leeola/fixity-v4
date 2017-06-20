@@ -11,23 +11,13 @@ import (
 	"github.com/leeola/fixity"
 )
 
-const (
-	// The arbitrarily chosen default chunk size. Ideally it should strike a balance
-	// between too many chunks written/indexed, and still allowing frequent changes
-	// to files to reduce chunk size.
-	//
-	// If a file format is commonly editing the first X bytes, this value should likely
-	// be overridden in the Roller itself.
-	DefaultMinRollSize = 4096000
-)
-
 type Roller struct {
 	reader      *bufio.Reader
 	rollSum     *rollsum.RollSum
 	minRollSize int64
 }
 
-func New(r io.Reader, rollSize int) (*Roller, error) {
+func New(r io.Reader, rollSize int64) (*Roller, error) {
 	if r == nil {
 		return nil, errors.New("missing Reader")
 	}
@@ -36,7 +26,7 @@ func New(r io.Reader, rollSize int) (*Roller, error) {
 		// TODO(leeola): explicitly declare the buffer size.
 		reader:      bufio.NewReader(r),
 		rollSum:     rollsum.New(),
-		minRollSize: int64(rollSize),
+		minRollSize: rollSize,
 	}, nil
 }
 

@@ -227,7 +227,7 @@ type Content struct {
 type Blob struct {
 	ChunkHashes []string `json:"chunkHashes"`
 	Size        int64    `json:"size,omitempty"`
-	RollSize    int      `json:"rollSize,omitempty"`
+	RollSize    int64    `json:"rollSize,omitempty"`
 
 	// NextBlobHash is not currently supported / implemented anywhere, but
 	// is required for very large storage. Eg, if there are so many chunks

@@ -101,6 +101,10 @@ func main() {
 					Name:  "id",
 					Usage: "the id of the content",
 				},
+				cli.IntFlag{
+					Name:  "manual-rollsize",
+					Usage: "the rollsize in B",
+				},
 				cli.StringSliceFlag{
 					Name:  "index",
 					Usage: "a field or field=value to index",
