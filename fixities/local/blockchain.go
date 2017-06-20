@@ -107,6 +107,10 @@ func (b *Blockchain) AppendContent(c fixity.Content) (fixity.Block, error) {
 	block.Hash = bHash
 	block.Store = b.store
 
+	if err := b.setHead(bHash); err != nil {
+		return fixity.Block{}, err
+	}
+
 	return block, nil
 }
 
