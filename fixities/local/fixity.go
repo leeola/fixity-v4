@@ -164,20 +164,27 @@ func (l *Fixity) Remove(id string) error {
 }
 
 func (l *Fixity) Write(id string, r io.Reader, f ...fixity.Field) (fixity.Content, error) {
+	req := fixity.NewWrite(id, ioutil.NopCloser(r))
+	req.Fields = f
+	return l.WriteRequest(req)
+}
+
+func (l *Fixity) WriteRequest(req *fixity.WriteRequest) (fixity.Content, error) {
 	// TODO(leeola): use a locker if id is not nil
 
-	if r == nil {
+	if req.Blob == nil {
 		return fixity.Content{}, errors.New("no data given to write")
 	}
+	defer req.Blob.Close()
 
 	// this warning is a bit silly, seeing as we already warn below.. but this
 	// part is really important, as it's possible to duplicate data if incorrect
 	// roll sizes are used.
-	if id != "" {
+	if req.Id != "" {
 		l.log.Warn("previous roll size is not being loaded")
 	}
 	rollSize := camli.DefaultMinRollSize
-	roller, err := camli.New(r, rollSize)
+	roller, err := camli.New(req.Blob, rollSize)
 	if err != nil {
 		return fixity.Content{}, err
 	}
@@ -198,14 +205,14 @@ func (l *Fixity) Write(id string, r io.Reader, f ...fixity.Field) (fixity.Conten
 		return fixity.Content{}, err
 	}
 
-	if id != "" {
+	if req.Id != "" {
 		l.log.Warn("loading previous content hash not implemented")
 	}
 
 	content := fixity.Content{
-		Id:            id,
+		Id:            req.Id,
 		BlobHash:      blobHash,
-		IndexedFields: f,
+		IndexedFields: req.Fields,
 	}
 
 	cHash, err := MarshalAndWrite(l.store, content)
@@ -221,15 +228,15 @@ func (l *Fixity) Write(id string, r io.Reader, f ...fixity.Field) (fixity.Conten
 	}
 
 	// if the id was supplied, update the new id
-	if id != "" {
-		if err := l.setIdHash(id, cHash); err != nil {
+	if req.Id != "" {
+		if err := l.setIdHash(req.Id, cHash); err != nil {
 			return fixity.Content{}, err
 		}
 	}
 
 	// TODO(leeola): move this to a goroutine, no reason to
 	// block writes while we index in the background.
-	if err := l.index.Index(cHash, content.Id, f); err != nil {
+	if err := l.index.Index(cHash, content.Id, req.Fields); err != nil {
 		return fixity.Content{}, err
 	}
 

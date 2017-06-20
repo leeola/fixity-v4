@@ -15,6 +15,11 @@ type Fixity interface {
 	// Blob returns a raw blob of the given hash.
 	//
 	// Mainly useful for inspecting the underlying data structure.
+	//
+	// TODO(leeola): change the name of this to something that does not conflict
+	// with the Blob type. Since the Blob type is used to fetch the full rolled
+	// contents of all the chunks, this method's name has an implication, which
+	// is incorrect.
 	Blob(hash string) (io.ReadCloser, error)
 
 	// Blockchain allows one to manage and inspect the Fixity Blockchain.
@@ -22,6 +27,9 @@ type Fixity interface {
 	// The blockchain is low level and should be used with care. See Blockchain
 	// docstring for further details.
 	Blockchain() Blockchain
+
+	// Close shuts down any connections that may need to be closed.
+	Close() error
 
 	// Delete the given id's content from the fixity store.
 	//
@@ -38,14 +46,16 @@ type Fixity interface {
 	// Read the Content with the given hash.
 	ReadHash(hash string) (Content, error)
 
-	// Write the given reader to the fixity store and index fields.
-	Write(id string, r io.Reader, f ...Field) (Content, error)
-
 	// Search for documents matching the given query.
 	Search(*q.Query) ([]string, error)
 
-	// Close shuts down any connections that may need to be closed.
-	Close() error
+	// Write the given reader to the fixity store and index fields.
+	//
+	// This is a shorthand for manually creating a WriteRequest.
+	Write(id string, r io.Reader, f ...Field) (Content, error)
+
+	// WriteRequest writes the given blob to Fixity with the associated settings.
+	WriteRequest(*WriteRequest) (Content, error)
 }
 
 // Blockchain implements low level block management methods for Fixity.
