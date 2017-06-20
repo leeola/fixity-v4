@@ -82,12 +82,16 @@ func main() {
 		{
 			Name:      "write",
 			Aliases:   []string{"w"},
-			ArgsUsage: "CLIJSON",
+			ArgsUsage: "FILE",
 			Usage:     "write a content to fixity",
 			Flags: []cli.Flag{
-				cli.StringFlag{
-					Name:  "file",
-					Usage: "upload a file from `PATH`",
+				cli.BoolFlag{
+					Name:  "cli",
+					Usage: "upload from cli args",
+				},
+				cli.BoolFlag{
+					Name:  "stdin",
+					Usage: "upload from stdin",
 				},
 				cli.StringFlag{
 					Name:  "id",

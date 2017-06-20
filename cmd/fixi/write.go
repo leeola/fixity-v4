@@ -1,9 +1,7 @@
 package main
 
 import (
-	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -11,38 +9,42 @@ import (
 	"strings"
 
 	"github.com/leeola/fixity"
-	"github.com/leeola/fixity/util/clijson"
 	"github.com/urfave/cli"
 )
 
 func WriteCmd(ctx *cli.Context) error {
-	if len(ctx.Args()) == 0 {
+	if len(ctx.Args()) == 0 && !ctx.Bool("stdin") {
 		return cli.ShowCommandHelp(ctx, "write")
 	}
 
-	out := os.Stdout
-
-	filePath := ctx.String("file")
-	if filePath != "" {
-		return errors.New("--file not implemented yet")
+	fields, err := fieldsFromCtx(ctx)
+	if err != nil {
+		return err
 	}
+
+	var in io.Reader
+	if ctx.Bool("cli") {
+		in = strings.NewReader(strings.Join(ctx.Args(), " "))
+	} else if ctx.Bool("stdin") {
+		in = os.Stdin
+	} else {
+		// TODO(leeola): append unix metadata to fields array
+		f, err := os.OpenFile(ctx.Args().First(), os.O_RDONLY, 0644)
+		if err != nil {
+			return err
+		}
+		defer f.Close()
+		in = f
+	}
+
+	out := os.Stdout
 
 	fixi, err := loadFixity(ctx)
 	if err != nil {
 		return err
 	}
 
-	jsonB, err := clijson.CliJson(ctx.Args())
-	if err != nil {
-		return err
-	}
-
-	fields, err := jsonToFields(ctx, jsonB)
-	if err != nil {
-		return err
-	}
-
-	c, err := fixi.Write(ctx.String("id"), bytes.NewReader(jsonB), fields...)
+	c, err := fixi.Write(ctx.String("id"), in, fields...)
 	if err != nil {
 		return err
 	}
@@ -84,7 +86,7 @@ func WriteCmd(ctx *cli.Context) error {
 	return nil
 }
 
-func jsonToFields(ctx *cli.Context, b []byte) (fixity.Fields, error) {
+func fieldsFromCtx(ctx *cli.Context) (fixity.Fields, error) {
 	indexFields := ctx.StringSlice("index")
 	ftsFields := ctx.StringSlice("fts")
 	hasIndexFields := len(indexFields) > 0
