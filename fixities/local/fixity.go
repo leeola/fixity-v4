@@ -92,7 +92,15 @@ func (l *Fixity) getIdHash(id string) (string, error) {
 
 		return nil
 	})
-	return h, err
+	if err != nil {
+		return "", err
+	}
+
+	if h == "" {
+		return "", fixity.ErrIdNotFound
+	}
+
+	return h, nil
 }
 
 func (l *Fixity) setIdHash(id, h string) error {

@@ -8,6 +8,9 @@ var (
 	// Such as when a Blockchain has not yet been written to.
 	ErrEmptyBlockchain = errors.New("empty blockchain")
 
+	// ErrIdNotFound is returned when an id cannot be found.
+	ErrIdNotFound = errors.New("id not found")
+
 	// HashNotFoundErr is to be returned by Store implementors when they cannot find
 	// content for the given hash.
 	ErrHashNotFound = errors.New("hash not found")
