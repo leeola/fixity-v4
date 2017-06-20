@@ -102,8 +102,8 @@ func main() {
 					Usage: "a field or field=value to index with full text search",
 				},
 				cli.BoolFlag{
-					Name:  "print",
-					Usage: "print the created hashes",
+					Name:  "inspect",
+					Usage: "inspect the written data structure",
 				},
 			},
 			Action: WriteCmd,

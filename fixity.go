@@ -39,7 +39,7 @@ type Fixity interface {
 	ReadHash(hash string) (Content, error)
 
 	// Write the given reader to the fixity store and index fields.
-	Write(id string, r io.Reader, f ...Field) ([]string, error)
+	Write(id string, r io.Reader, f ...Field) (Content, error)
 
 	// Search for documents matching the given query.
 	Search(*q.Query) ([]string, error)
@@ -243,6 +243,11 @@ type Blob struct {
 	//
 	// This value is not stored.
 	io.ReadCloser `json:"-"`
+
+	// Hash is the hash of the Blob itself, provided by Fixity.
+	//
+	// This value is not stored.
+	Hash string `json:"-"`
 }
 
 type Chunk struct {
@@ -290,4 +295,23 @@ func (b *Block) Content() (Content, error) {
 	c.Store = b.Store
 
 	return c, nil
+}
+
+func (c *Content) Blob() (Blob, error) {
+	if c.Store == nil {
+		return Blob{}, errors.New("Store not set")
+	}
+
+	if c.BlobHash == "" {
+		return Blob{}, errors.New("blobHash is empty")
+	}
+
+	var b Blob
+	err := readAndUnmarshal(c.Store, c.BlobHash, &b)
+	if err != nil {
+		return Blob{}, err
+	}
+	b.Hash = c.BlobHash
+
+	return b, nil
 }

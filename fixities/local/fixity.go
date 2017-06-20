@@ -156,14 +156,12 @@ func (l *Fixity) Remove(id string) error {
 	return errors.New("not implemented")
 }
 
-func (l *Fixity) Write(id string, r io.Reader, f ...fixity.Field) ([]string, error) {
+func (l *Fixity) Write(id string, r io.Reader, f ...fixity.Field) (fixity.Content, error) {
 	// TODO(leeola): use a locker if id is not nil
 
 	if r == nil {
-		return nil, errors.New("no data given to write")
+		return fixity.Content{}, errors.New("no data given to write")
 	}
-
-	var hashes []string
 
 	// this warning is a bit silly, seeing as we already warn below.. but this
 	// part is really important, as it's possible to duplicate data if incorrect
@@ -174,14 +172,13 @@ func (l *Fixity) Write(id string, r io.Reader, f ...fixity.Field) ([]string, err
 	rollSize := camli.DefaultMinRollSize
 	roller, err := camli.New(r, rollSize)
 	if err != nil {
-		return nil, err
+		return fixity.Content{}, err
 	}
 
 	cHashes, totalSize, err := WriteRoller(l.store, roller)
 	if err != nil {
-		return nil, err
+		return fixity.Content{}, err
 	}
-	hashes = append(hashes, cHashes...)
 
 	blob := fixity.Blob{
 		ChunkHashes: cHashes,
@@ -191,9 +188,8 @@ func (l *Fixity) Write(id string, r io.Reader, f ...fixity.Field) ([]string, err
 
 	blobHash, err := MarshalAndWrite(l.store, blob)
 	if err != nil {
-		return nil, err
+		return fixity.Content{}, err
 	}
-	hashes = append(hashes, blobHash)
 
 	if id != "" {
 		l.log.Warn("loading previous content hash not implemented")
@@ -207,30 +203,30 @@ func (l *Fixity) Write(id string, r io.Reader, f ...fixity.Field) ([]string, err
 
 	cHash, err := MarshalAndWrite(l.store, content)
 	if err != nil {
-		return nil, err
+		return fixity.Content{}, err
 	}
-	hashes = append(hashes, cHash)
+	content.Store = l.store
 	content.Hash = cHash
 
 	// TODO(leeola): return the block instead of hashes directly.
 	if _, err := l.Blockchain().AppendContent(content); err != nil {
-		return nil, err
+		return fixity.Content{}, err
 	}
 
 	// if the id was supplied, update the new id
 	if id != "" {
 		if err := l.setIdHash(id, cHash); err != nil {
-			return nil, err
+			return fixity.Content{}, err
 		}
 	}
 
 	// TODO(leeola): move this to a goroutine, no reason to
 	// block writes while we index in the background.
 	if err := l.index.Index(cHash, content.Id, f); err != nil {
-		return nil, err
+		return fixity.Content{}, err
 	}
 
-	return hashes, nil
+	return content, nil
 }
 
 // WriteReader writes the given reader's content to the store.

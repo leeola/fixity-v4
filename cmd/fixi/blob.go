@@ -39,6 +39,10 @@ func printHash(fixi fixity.Fixity, h string) error {
 		return err
 	}
 
+	return printJsonBytes(os.Stdout, b)
+}
+
+func printJsonBytes(out io.Writer, b []byte) error {
 	f := jsoncolor.NewFormatter()
 
 	f.SpaceColor = color.New(color.FgRed, color.Bold)
@@ -58,8 +62,7 @@ func printHash(fixi fixity.Fixity, h string) error {
 		return err
 	}
 
-	_, err = io.Copy(os.Stdout, &prettyJson)
-	if err != nil {
+	if _, err := io.Copy(out, &prettyJson); err != nil {
 		return err
 	}
 

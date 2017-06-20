@@ -2,8 +2,11 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"os"
 	"strconv"
 	"strings"
 
@@ -16,6 +19,8 @@ func WriteCmd(ctx *cli.Context) error {
 	if len(ctx.Args()) == 0 {
 		return cli.ShowCommandHelp(ctx, "write")
 	}
+
+	out := os.Stdout
 
 	filePath := ctx.String("file")
 	if filePath != "" {
@@ -37,20 +42,43 @@ func WriteCmd(ctx *cli.Context) error {
 		return err
 	}
 
-	hashes, err := fixi.Write(ctx.String("id"), bytes.NewReader(jsonB), fields...)
+	c, err := fixi.Write(ctx.String("id"), bytes.NewReader(jsonB), fields...)
 	if err != nil {
 		return err
 	}
 
-	if ctx.Bool("print") {
-		for _, h := range hashes {
-			fmt.Println(h)
+	b, err := c.Blob()
+	if err != nil {
+		return err
+	}
+
+	inspect := ctx.Bool("inspect")
+	fmt.Fprintln(out, c.Hash)
+
+	if inspect {
+		if err := printStruct(out, c); err != nil {
+			return err
+		}
+	}
+
+	fmt.Fprintln(out, b.Hash)
+	if inspect {
+		if err := printStruct(out, c); err != nil {
+			return err
+		}
+	}
+
+	// TODO(leeola): cap the total chunks printed to something small..
+	// like 5. The ux should probably also be limited by an --unsafe flag.
+	// Eg, printing even a single chunkhash might be massive if the rollsize
+	// was set to 5MB or something.
+	for _, h := range b.ChunkHashes {
+		fmt.Fprintln(out, h)
+		if inspect {
 			if err := printHash(fixi, h); err != nil {
 				return err
 			}
 		}
-	} else {
-		fmt.Println(strings.Join(hashes, "\n"))
 	}
 
 	return nil
@@ -102,4 +130,13 @@ func splitKeyValue(s string) (string, interface{}) {
 		return k, v
 	}
 	return k, sv
+}
+
+func printStruct(out io.Writer, v interface{}) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	return printJsonBytes(os.Stdout, b)
 }
