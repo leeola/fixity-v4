@@ -93,6 +93,10 @@ func main() {
 					Name:  "stdin",
 					Usage: "upload from stdin",
 				},
+				cli.BoolFlag{
+					Name:  "spam-bytes",
+					Usage: "do not hide large chunks byte contents",
+				},
 				cli.StringFlag{
 					Name:  "id",
 					Usage: "the id of the content",

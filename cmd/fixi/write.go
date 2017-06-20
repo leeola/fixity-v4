@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/leeola/fixity"
+	"github.com/leeola/fixity/util/fixityutil"
 	"github.com/urfave/cli"
 )
 
@@ -55,31 +56,37 @@ func WriteCmd(ctx *cli.Context) error {
 	}
 
 	inspect := ctx.Bool("inspect")
-	fmt.Fprintln(out, c.Hash)
+	spamBytes := ctx.Bool("spam-bytes")
 
-	if inspect {
-		if err := printStruct(out, c); err != nil {
-			return err
+	for _, h := range b.ChunkHashes {
+		fmt.Fprintln(out, h)
+		if inspect {
+			var c fixity.Chunk
+			if err := fixityutil.ReadAndUnmarshal(fixi, h, &c); err != nil {
+				return err
+			}
+
+			if len(c.ChunkBytes) > 50 && !spamBytes {
+				c.ChunkBytes = []byte("...spam bytes hidden...")
+			}
+
+			if err := printStruct(out, c); err != nil {
+				return err
+			}
 		}
 	}
 
 	fmt.Fprintln(out, b.Hash)
 	if inspect {
-		if err := printStruct(out, c); err != nil {
+		if err := printStruct(out, b); err != nil {
 			return err
 		}
 	}
 
-	// TODO(leeola): cap the total chunks printed to something small..
-	// like 5. The ux should probably also be limited by an --unsafe flag.
-	// Eg, printing even a single chunkhash might be massive if the rollsize
-	// was set to 5MB or something.
-	for _, h := range b.ChunkHashes {
-		fmt.Fprintln(out, h)
-		if inspect {
-			if err := printHash(fixi, h); err != nil {
-				return err
-			}
+	fmt.Fprintln(out, c.Hash)
+	if inspect {
+		if err := printStruct(out, c); err != nil {
+			return err
 		}
 	}
 
