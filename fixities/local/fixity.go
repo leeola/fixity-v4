@@ -136,7 +136,7 @@ func (l *Fixity) ReadHash(h string) (fixity.Content, error) {
 		return fixity.Content{}, fixity.ErrNotContent
 	}
 
-	c.ContentHash = h
+	c.Hash = h
 	c.Store = l.store
 	c.ReadCloser = fixity.Reader(l.store, c.BlobHash)
 
@@ -210,7 +210,7 @@ func (l *Fixity) Write(id string, r io.Reader, f ...fixity.Field) ([]string, err
 		return nil, err
 	}
 	hashes = append(hashes, cHash)
-	content.ContentHash = cHash
+	content.Hash = cHash
 
 	// TODO(leeola): return the block instead of hashes directly.
 	if _, err := l.Blockchain().AppendContent(content); err != nil {

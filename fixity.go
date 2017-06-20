@@ -159,10 +159,14 @@ type Block struct {
 	// ContentHash contains the ContentHash and makes this block a Content block.
 	ContentHash string `json:"cotentHash,omitempty"`
 
-	// BlockHash is the hash of the Block itself, provided by Fixity.
-	BlockHash string `json:"-"`
+	// Hash is the hash of the Block itself, provided by Fixity.
+	//
+	// This value is not stored.
+	Hash string `json:"-"`
 
 	// Store allows block method(s) to load previous blocks and content.
+	//
+	// This value is not stored.
 	Store Store `json:"-"`
 }
 
@@ -207,10 +211,10 @@ type Content struct {
 	// This value is not stored.
 	io.ReadCloser `json:"-"`
 
-	// ContentHash is the hash of the Content itself, provided by Fixity.
+	// Hash is the hash of the Content itself, provided by Fixity.
 	//
 	// This value is not stored.
-	ContentHash string `json:"-"`
+	Hash string `json:"-"`
 
 	// Store allows block method(s) to load previous content.
 	//
@@ -261,7 +265,7 @@ func (b *Block) PreviousBlock() (Block, error) {
 		return Block{}, err
 	}
 
-	previousBlock.BlockHash = b.PreviousBlockHash
+	previousBlock.Hash = b.PreviousBlockHash
 	previousBlock.Store = b.Store
 
 	return previousBlock, nil
@@ -282,7 +286,7 @@ func (b *Block) Content() (Content, error) {
 		return Content{}, err
 	}
 
-	c.ContentHash = b.ContentHash
+	c.Hash = b.ContentHash
 	c.Store = b.Store
 
 	return c, nil

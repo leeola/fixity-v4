@@ -65,46 +65,46 @@ func (l *Blockchain) getHead() (fixity.Block, error) {
 		return fixity.Block{}, err
 	}
 
-	b.BlockHash = h
+	b.Hash = h
 
 	return b, nil
 }
 
 func (b *Blockchain) AppendContent(c fixity.Content) (fixity.Block, error) {
-	if c.ContentHash == "" {
-		return fixity.Block{}, errors.New("content missing ContentHash value")
+	if c.Hash == "" {
+		return fixity.Block{}, errors.New("content missing Hash value")
 	}
 
 	b.lock.Lock()
 	defer b.lock.Unlock()
 
 	previousBlock, err := b.getHead()
-	if err != nil {
+	if err != nil && err != fixity.ErrEmptyBlockchain {
 		return fixity.Block{}, err
 	}
 
 	// if the previous hash is the same as the current hash, don't write a new block.
 	//
 	// There has been no change in the content, so why make a new block.
-	if previousBlock.ContentHash == c.ContentHash {
+	if previousBlock.ContentHash == c.Hash {
 		b.log.Debug("ignoring identical block",
-			"block", previousBlock.BlockHash,
-			"contentHash", c.ContentHash)
+			"block", previousBlock.Hash,
+			"contentHash", c.Hash)
 		return previousBlock, nil
 	}
 
 	block := fixity.Block{
 		// zero value is okay for both of these.
 		Block:             previousBlock.Block + 1,
-		PreviousBlockHash: previousBlock.BlockHash,
-		ContentHash:       c.ContentHash,
+		PreviousBlockHash: previousBlock.Hash,
+		ContentHash:       c.Hash,
 	}
 
 	bHash, err := MarshalAndWrite(b.store, block)
 	if err != nil {
 		return fixity.Block{}, err
 	}
-	block.BlockHash = bHash
+	block.Hash = bHash
 	block.Store = b.store
 
 	return block, nil

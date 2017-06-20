@@ -40,8 +40,8 @@ func BlocksCmd(ctx *cli.Context) error {
 	showBlockHashes := ctx.Bool("block-hashes")
 	showContentHashes := ctx.Bool("content-hashes")
 
-	bHash := sumHash(b.BlockHash, showBlockHashes)
-	cHash := sumHash(b.ContentHash, showContentHashes)
+	bHash := sumHash(b.Hash, showBlockHashes)
+	cHash := sumHash(b.Hash, showContentHashes)
 
 	w.Println(" ",
 		color.GreenString(strconv.Itoa(b.Block)),
@@ -62,8 +62,8 @@ func BlocksCmd(ctx *cli.Context) error {
 			return err
 		}
 
-		bHash := sumHash(b.BlockHash, showBlockHashes)
-		cHash := sumHash(b.ContentHash, showContentHashes)
+		bHash := sumHash(b.Hash, showBlockHashes)
+		cHash := sumHash(b.Hash, showContentHashes)
 
 		w.Println(" ",
 			color.GreenString(strconv.Itoa(b.Block)),
