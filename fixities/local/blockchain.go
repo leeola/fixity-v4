@@ -1,13 +1,28 @@
 package local
 
 import (
+	"sync"
+
 	"github.com/boltdb/bolt"
+	"github.com/inconshreveable/log15"
+	"github.com/leeola/errors"
 	"github.com/leeola/fixity"
 )
 
 type Blockchain struct {
+	lock  *sync.RWMutex
 	db    *bolt.DB
 	store fixity.Store
+	log   log15.Logger
+}
+
+func NewBlockchain(log log15.Logger, db *bolt.DB, s fixity.Store) *Blockchain {
+	return &Blockchain{
+		lock:  &sync.RWMutex{},
+		db:    db,
+		store: s,
+		log:   log,
+	}
 }
 
 func (l *Blockchain) setHead(h string) error {
@@ -21,7 +36,7 @@ func (l *Blockchain) setHead(h string) error {
 	})
 }
 
-func (l *Blockchain) getHead() (string, fixity.Block, error) {
+func (l *Blockchain) getHead() (fixity.Block, error) {
 	var h string
 	err := l.db.View(func(tx *bolt.Tx) error {
 		bkt := tx.Bucket(blockMetaBucketKey)
@@ -38,29 +53,69 @@ func (l *Blockchain) getHead() (string, fixity.Block, error) {
 		return nil
 	})
 	if err != nil {
-		return "", fixity.Block{}, err
+		return fixity.Block{}, err
 	}
 
 	if h == "" {
-		return "", fixity.Block{}, fixity.ErrEmptyBlockchain
+		return fixity.Block{}, fixity.ErrEmptyBlockchain
 	}
 
 	var b fixity.Block
 	if err := ReadAndUnmarshal(l.store, h, &b); err != nil {
-		return "", fixity.Block{}, err
-	}
-
-	return h, b, nil
-}
-
-func (l *Blockchain) Head() (fixity.Block, error) {
-	h, b, err := l.getHead()
-	if err != nil {
 		return fixity.Block{}, err
 	}
 
 	b.BlockHash = h
+
+	return b, nil
+}
+
+func (b *Blockchain) AppendContent(c fixity.Content) (fixity.Block, error) {
+	if c.ContentHash == "" {
+		return fixity.Block{}, errors.New("content missing ContentHash value")
+	}
+
+	b.lock.Lock()
+	defer b.lock.Unlock()
+
+	previousBlock, err := b.getHead()
+	if err != nil {
+		return fixity.Block{}, err
+	}
+
+	// if the previous hash is the same as the current hash, don't write a new block.
+	//
+	// There has been no change in the content, so why make a new block.
+	if previousBlock.ContentHash == c.ContentHash {
+		b.log.Debug("ignoring identical block",
+			"block", previousBlock.BlockHash,
+			"contentHash", c.ContentHash)
+		return previousBlock, nil
+	}
+
+	block := fixity.Block{
+		// zero value is okay for both of these.
+		Block:             previousBlock.Block + 1,
+		PreviousBlockHash: previousBlock.BlockHash,
+		ContentHash:       c.ContentHash,
+	}
+
+	bHash, err := MarshalAndWrite(b.store, block)
+	if err != nil {
+		return fixity.Block{}, err
+	}
+	block.BlockHash = bHash
+	block.Store = b.store
+
+	return block, nil
+}
+
+func (l *Blockchain) Head() (fixity.Block, error) {
+	b, err := l.getHead()
+	if err != nil {
+		return fixity.Block{}, err
+	}
+
 	b.Store = l.store
 	return b, err
-
 }

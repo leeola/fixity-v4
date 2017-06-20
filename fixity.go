@@ -114,6 +114,12 @@ type Blockchain interface {
 	// // blocks.
 	// AppendBlocks(appendTo Block, blocks []Block) ([]Block, error)
 
+	// AppendContent creates a new block with the given content.
+	//
+	// If the block is the same as the current Head() the blockchain must
+	// not be progressed.
+	AppendContent(Content) (Block, error)
+
 	// Head returns the latest block in the blockchain.
 	Head() (Block, error)
 

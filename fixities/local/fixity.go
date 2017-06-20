@@ -66,14 +66,9 @@ func New(c Config) (*Fixity, error) {
 		return nil, err
 	}
 
-	blockchain := &Blockchain{
-		db:    db,
-		store: c.Store,
-	}
-
 	return &Fixity{
 		config:     c,
-		blockchain: blockchain,
+		blockchain: NewBlockchain(c.Log, db, c.Store),
 		db:         db,
 		index:      c.Index,
 		store:      c.Store,
@@ -162,6 +157,8 @@ func (l *Fixity) Remove(id string) error {
 }
 
 func (l *Fixity) Write(id string, r io.Reader, f ...fixity.Field) ([]string, error) {
+	// TODO(leeola): use a locker if id is not nil
+
 	if r == nil {
 		return nil, errors.New("no data given to write")
 	}
@@ -198,11 +195,6 @@ func (l *Fixity) Write(id string, r io.Reader, f ...fixity.Field) ([]string, err
 	}
 	hashes = append(hashes, blobHash)
 
-	previousBlockHash, previousBlock, err := l.blockchain.getHead()
-	if err != nil && err != fixity.ErrEmptyBlockchain {
-		return nil, err
-	}
-
 	if id != "" {
 		l.log.Warn("loading previous content hash not implemented")
 	}
@@ -218,32 +210,10 @@ func (l *Fixity) Write(id string, r io.Reader, f ...fixity.Field) ([]string, err
 		return nil, err
 	}
 	hashes = append(hashes, cHash)
+	content.ContentHash = cHash
 
-	block := fixity.Block{
-		// zero value is okay for both of these.
-		Block:             previousBlock.Block + 1,
-		PreviousBlockHash: previousBlockHash,
-		ContentHash:       cHash,
-	}
-
-	// if the previous hash is the same as the current hash, don't write a new block.
-	//
-	// There has been no change in the content, so why make a new block.
-	if previousBlock.ContentHash == cHash {
-		l.log.Debug("ignoring identical block", "block", previousBlockHash, "contentHash", cHash)
-		// add the previousBlockHash, and return that instead
-		hashes = append(hashes, previousBlockHash)
-		return hashes, nil
-	}
-
-	bHash, err := MarshalAndWrite(l.store, block)
-	if err != nil {
-		return nil, err
-	}
-	hashes = append(hashes, bHash)
-
-	// set the head block so we can iterate next time
-	if err := l.blockchain.setHead(bHash); err != nil {
+	// TODO(leeola): return the block instead of hashes directly.
+	if _, err := l.Blockchain().AppendContent(content); err != nil {
 		return nil, err
 	}
 
@@ -254,6 +224,8 @@ func (l *Fixity) Write(id string, r io.Reader, f ...fixity.Field) ([]string, err
 		}
 	}
 
+	// TODO(leeola): move this to a goroutine, no reason to
+	// block writes while we index in the background.
 	if err := l.index.Index(cHash, content.Id, f); err != nil {
 		return nil, err
 	}
