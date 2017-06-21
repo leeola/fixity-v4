@@ -251,9 +251,28 @@ type Blob struct {
 	Store Store `json:"-"`
 }
 
+// Chunk represents a content defined chunk of data in fixity.
 type Chunk struct {
 	ChunkBytes []byte `json:"chunkBytes"`
 	Size       int64  `json:"size"`
+
+	// Start of this chunk within the bounds of the Blob.
+	//
+	// NOTE: This is not stored in the Fixity Store and is only a means to
+	// allow the chunker to return additional data about the created chunk.
+	// If this was stored in Fixity, each Chunk would have a different
+	// Content Address, defeating the purpose of CDC & Content Addressed
+	// storage.
+	StartBoundry uint `json:"-"`
+
+	// End of this chunk within the bounds of the Blob.
+	//
+	// NOTE: This is not stored in the Fixity Store and is only a means to
+	// allow the chunker to return additional data about the created chunk.
+	// If this was stored in Fixity, each Chunk would have a different
+	// Content Address, defeating the purpose of CDC & Content Addressed
+	// storage.
+	EndBoundry uint `json:"-"`
 }
 
 func (b *Block) PreviousBlock() (Block, error) {
