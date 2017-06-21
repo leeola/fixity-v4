@@ -62,7 +62,7 @@ func (r *Roller) Roll() (fixity.Chunk, error) {
 
 		r.rollSum.Roll(c)
 
-		if r.rollSum.OnSplit() && byteCount > r.minRollSize {
+		if byteCount > r.minRollSize && r.rollSum.OnSplit() {
 			break
 		}
 	}

@@ -14,7 +14,7 @@ import (
 	"github.com/leeola/errors"
 	"github.com/leeola/fixity"
 	"github.com/leeola/fixity/q"
-	"github.com/leeola/fixity/rollers/camli"
+	"github.com/leeola/fixity/rollers/restic"
 )
 
 var (
@@ -185,10 +185,10 @@ func (l *Fixity) WriteRequest(req *fixity.WriteRequest) (fixity.Content, error) 
 	}
 
 	if req.RollSize == 0 {
-		req.RollSize = fixity.DefaultRollSize
+		req.RollSize = fixity.DefaultMaxChunkSize
 	}
 
-	roller, err := camli.New(req.Blob, req.RollSize)
+	roller, err := restic.New(req.Blob, fixity.DefaultMinChunkSize, fixity.DefaultMaxChunkSize)
 	if err != nil {
 		return fixity.Content{}, err
 	}

@@ -1,0 +1,42 @@
+package restic
+
+import (
+	"io"
+
+	"github.com/leeola/errors"
+	"github.com/leeola/fixity"
+	"github.com/restic/chunker"
+)
+
+type Roller struct {
+	buf     []byte
+	chunker *chunker.Chunker
+}
+
+func New(r io.Reader, min, max int64) (*Roller, error) {
+	if r == nil {
+		return nil, errors.New("missing Reader")
+	}
+
+	return &Roller{
+		// does this size matter?
+		buf:     make([]byte, 8*1024*1024),
+		chunker: chunker.NewWithBoundaries(r, chunker.Pol(0x3DA3358B4DC173), uint(min), uint(max)),
+	}, nil
+}
+
+func (c *Roller) Roll() (fixity.Chunk, error) {
+	// TODO(leeola): Add a peek method to break out of the loop if the end of the
+	// roller is near. This way we don't create small tailing chunks if possible.
+
+	chunk, err := c.chunker.Next(c.buf)
+	// eof is okay to pass on immediately
+	if err != nil {
+		return fixity.Chunk{}, err
+	}
+
+	return fixity.Chunk{
+		ChunkBytes: chunk.Data,
+		Size:       int64(chunk.Length),
+	}, nil
+}

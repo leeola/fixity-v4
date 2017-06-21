@@ -17,7 +17,8 @@ const (
 	//
 	// If a file format is commonly editing the first X bytes, this value should
 	// be overridden in the WriteRequest itself.
-	DefaultRollSize int64 = 4194304
+	DefaultMinChunkSize int64 = 51200
+	DefaultMaxChunkSize int64 = 4194304
 
 	// autoChunkCount is the number of chunks SetRollFromBytes/etc will set to.
 	//
@@ -25,12 +26,6 @@ const (
 	// then it will divide 1,048,576 by eg, 10 to set the rollSize to
 	// 104,857, effectively rolling the bytes into 10 parts when it's written.
 	autoChunkCount = 6
-
-	// minAutoChunk is the smallest rollSize set by SetRollFromBytes/etc.
-	minAutoChunk int64 = 1024
-
-	// minAutoChunk is the largest rollSize set by SetRollFromBytes/etc.
-	maxAutoChunk int64 = DefaultRollSize
 )
 
 // WriteRequest represents a blob to be written alone with metadata.
@@ -45,18 +40,18 @@ type WriteRequest struct {
 func NewWrite(id string, rc io.ReadCloser, f ...Field) *WriteRequest {
 	return &WriteRequest{
 		Id:       id,
-		RollSize: DefaultRollSize,
+		RollSize: DefaultMaxChunkSize,
 		Fields:   f,
 		Blob:     rc,
 	}
 }
 
 func (req *WriteRequest) setRollSizeWithMin(roll int64) {
-	if roll < minAutoChunk {
-		roll = minAutoChunk
+	if roll < DefaultMinChunkSize {
+		roll = DefaultMinChunkSize
 	}
-	if roll > maxAutoChunk {
-		roll = DefaultRollSize
+	if roll > DefaultMaxChunkSize {
+		roll = DefaultMaxChunkSize
 	}
 	req.RollSize = roll
 }

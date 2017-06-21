@@ -45,7 +45,7 @@ func WriteCmd(ctx *cli.Context) error {
 
 		// TODO(leeola): append unix metadata to fields array
 
-		if req.RollSize == fixity.DefaultRollSize {
+		if req.RollSize == fixity.DefaultMaxChunkSize {
 			req.SetRollFromFileInfo(fi)
 		}
 
