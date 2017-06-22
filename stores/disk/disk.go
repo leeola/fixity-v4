@@ -1,13 +1,13 @@
 package disk
 
 import (
-	"encoding/hex"
 	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 
 	"github.com/inconshreveable/log15"
+	base58 "github.com/jbenet/go-base58"
 	"github.com/leeola/errors"
 	"github.com/leeola/fixity"
 	blake2b "github.com/minio/blake2b-simd"
@@ -75,8 +75,8 @@ func (s *Disk) Read(h string) (io.ReadCloser, error) {
 }
 
 func (s *Disk) Hash(b []byte) string {
-	h := blake2b.Sum256(b)
-	return "blake2b256-" + hex.EncodeToString(h[:])
+	hB := blake2b.Sum256(b)
+	return "b2b256-" + base58.Encode(hB[:])
 }
 
 func (s *Disk) Write(b []byte) (string, error) {
