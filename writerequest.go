@@ -6,18 +6,43 @@ import (
 )
 
 const (
-	// DefaultRollSize is the minimum size for rolling a blob.
+
+	// DefaultMinChunkSize is the minimum size for rolling a blob
 	//
-	// See WriteRequest.RollSize documentation for further explanation of RollSizes.
+	// See WriteRequest.MinChunkSize documentation for further explanation of
+	// chunk sizes.
 	//
-	// This value is (1024^2)*4 bytes, 4MiB, chosen as a reasonable size for
-	// random data sources. Ideally it should strike a balance between too many
-	// chunks written while still mitigating data duplication caused by
-	// frequent changes to files.
+	// This value is 1024*12 bytes, 12KiB, chosen as a reasonable size for the
+	// lower allowed chunk size of common modifications.
+	// Ideally it should strike a balance between too many chunks written while
+	// still mitigating data duplication caused by frequent changes to files
+	// and written data.
 	//
-	// If a file format is commonly editing the first X bytes, this value should
+	// If written data is commonly editing the first X bytes, this value should
 	// be overridden in the WriteRequest itself.
-	DefaultMinChunkSize int64 = 51200
+	//
+	// IMPORTANT: Implementations of chunkers may not make use of both min and
+	// max chunk sizes. Read the implementations specific documentation to ensure
+	// chunking values will work as expected.
+	DefaultMinChunkSize int64 = 12288
+
+	// DefaultMaxChunkSize is the maximum size for rolling a blob.
+	//
+	// See WriteRequest.MaxChunkSize documentation for further explanation of
+	// chunk sizes.
+	//
+	// This value is 1024*12 bytes, 12KiB, chosen as a reasonable size for the
+	// upper allowed chunk size of infrequent modifications.
+	// Ideally it should strike a balance between too many chunks written while
+	// still mitigating data duplication caused by frequent changes to files
+	// and written data.
+	//
+	// If written data is commonly editing the first X bytes, this value should
+	// be overridden in the WriteRequest itself.
+	//
+	// IMPORTANT: Implementations of chunkers may not make use of both min and
+	// max chunk sizes. Read the implementations specific documentation to ensure
+	// chunking values will work as expected.
 	DefaultMaxChunkSize int64 = 4194304
 
 	// autoChunkCount is the number of chunks SetRollFromBytes/etc will set to.
