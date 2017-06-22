@@ -3,10 +3,16 @@ package restic
 import (
 	"io"
 
+	"github.com/leeola/chunker"
 	"github.com/leeola/errors"
 	"github.com/leeola/fixity"
-	"github.com/restic/chunker"
 )
+
+// averageBits of 14 is resulting in roughly chunks of 12KiB by default.
+//
+// This size should be low enough to allow small writes to be split up,
+// even at the cost of write performance (within reason).
+const averageBits = 14
 
 type Roller struct {
 	buf     []byte
@@ -20,8 +26,13 @@ func New(r io.Reader, min, max int64) (*Roller, error) {
 
 	return &Roller{
 		// does this size matter?
-		buf:     make([]byte, 8*1024*1024),
-		chunker: chunker.NewWithBoundaries(r, chunker.Pol(0x3DA3358B4DC173), uint(min), uint(max)),
+		buf: make([]byte, 8*1024*1024),
+		chunker: chunker.NewWithConfig(r, chunker.Pol(0x3DA3358B4DC173),
+			chunker.ChunkerConfig{
+				MinSize:     uint(min),
+				MaxSize:     uint(max),
+				AverageBits: averageBits,
+			}),
 	}, nil
 }
 
