@@ -76,7 +76,7 @@ func (s *Disk) Read(h string) (io.ReadCloser, error) {
 
 func (s *Disk) Hash(b []byte) string {
 	hB := blake2b.Sum256(b)
-	return "b2b256-" + base58.Encode(hB[:])
+	return base58.Encode(hB[:])
 }
 
 func (s *Disk) Write(b []byte) (string, error) {
