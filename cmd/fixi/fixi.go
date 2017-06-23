@@ -102,8 +102,8 @@ func main() {
 					Usage: "the id of the content",
 				},
 				cli.IntFlag{
-					Name:  "manual-rollsize",
-					Usage: "the rollsize in B",
+					Name:  "manual-chunksize",
+					Usage: "the average chunksize in B",
 				},
 				cli.StringSliceFlag{
 					Name:  "index",

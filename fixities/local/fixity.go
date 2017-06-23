@@ -184,11 +184,11 @@ func (l *Fixity) WriteRequest(req *fixity.WriteRequest) (fixity.Content, error) 
 		l.log.Warn("previous roll size is not being loaded")
 	}
 
-	if req.RollSize == 0 {
-		req.RollSize = fixity.DefaultAverageChunkSize
+	if req.AverageChunkSize == 0 {
+		req.AverageChunkSize = fixity.DefaultAverageChunkSize
 	}
 
-	roller, err := restic.New(req.Blob, req.RollSize)
+	roller, err := restic.New(req.Blob, req.AverageChunkSize)
 	if err != nil {
 		return fixity.Content{}, err
 	}
@@ -199,9 +199,9 @@ func (l *Fixity) WriteRequest(req *fixity.WriteRequest) (fixity.Content, error) 
 	}
 
 	blob := fixity.Blob{
-		ChunkHashes: cHashes,
-		Size:        totalSize,
-		RollSize:    req.RollSize,
+		ChunkHashes:      cHashes,
+		Size:             totalSize,
+		AverageChunkSize: req.AverageChunkSize,
 	}
 
 	blobHash, err := MarshalAndWrite(l.store, blob)

@@ -22,9 +22,9 @@ const (
 	// be overridden in the WriteRequest itself.
 	DefaultAverageChunkSize uint64 = 4194304
 
-	// autoChunkCount is the number of chunks SetRollFromBytes/etc will set to.
+	// autoChunkCount is the number of chunks SetChunkFromBytes/etc will set to.
 	//
-	// Eg, if SetRollFromBytes is given a byte array that is 1,048,576 bytes,
+	// Eg, if SetChunkFromBytes is given a byte array that is 1,048,576 bytes,
 	// then it will divide 1,048,576 by eg, 10 to set the rollSize to
 	// 104,857, effectively rolling the bytes into 10 parts when it's written.
 	autoChunkCount = 6
@@ -38,36 +38,60 @@ const (
 
 // WriteRequest represents a blob to be written alone with metadata.
 type WriteRequest struct {
-	Id       string
-	RollSize uint64
-	Fields   Fields
-	Blob     io.ReadCloser
+	// Id is the Content Id used to associate this write with previous writes.
+	//
+	// This association effectively mutates the write from the previous content
+	// with the same Id. Important values are inhereted, such as ChunkSize,
+	// ensuring consistent writes.
+	Id string `json:"id,omitempty"`
+
+	// AverageChunkSize is the average bytes that each chunk is aimed to be.
+	//
+	// Chunks are separated by Cotent Defined Chunks (CDC) and this value
+	// allows mutations of this blob to use the same ChunkSize with each
+	// version. This ensures the chunks are chunk'd by the CDC algorithm
+	// with the same spacing.
+	//
+	// Note that the algorithm is decided by the fixity.Store.
+	AverageChunkSize uint64 `json:"averageChunkSize,omitempty"`
+
+	// Fields are the indexable fields that the data will be indexed with.
+	//
+	// This is often metadata like filename, unix permissions, etc. It can
+	// also be used to retrieve this data later, as the Fields is stored
+	// on the fixity.Content object within the datastore.
+	Fields Fields `json:"fields,omitempty"`
+
+	// Blob is the actual data that is being written, and is required.
+	//
+	// This will be used to build a fixity.Blob type.
+	Blob io.ReadCloser `json:"-"`
 }
 
 // NewWrite creates a new WriteRequest to be used with Fixity.WriteRequest.
 func NewWrite(id string, rc io.ReadCloser, f ...Field) *WriteRequest {
 	return &WriteRequest{
-		Id:       id,
-		RollSize: DefaultAverageChunkSize,
-		Fields:   f,
-		Blob:     rc,
+		Id:               id,
+		AverageChunkSize: DefaultAverageChunkSize,
+		Fields:           f,
+		Blob:             rc,
 	}
 }
 
-func (req *WriteRequest) setRollSize(roll uint64) {
-	if roll < minAutoChunkSize {
-		roll = minAutoChunkSize
+func (req *WriteRequest) setChunkSize(averageChunkSize uint64) {
+	if averageChunkSize < minAutoChunkSize {
+		averageChunkSize = minAutoChunkSize
 	}
-	if roll > maxAutoChunkSize {
-		roll = maxAutoChunkSize
+	if averageChunkSize > maxAutoChunkSize {
+		averageChunkSize = maxAutoChunkSize
 	}
-	req.RollSize = roll
+	req.AverageChunkSize = averageChunkSize
 }
 
-func (req *WriteRequest) SetRollFromBytes(b []byte) {
-	req.setRollSize(uint64(len(b)) / autoChunkCount)
+func (req *WriteRequest) SetChunkSizeFromBytes(b []byte) {
+	req.setChunkSize(uint64(len(b)) / autoChunkCount)
 }
 
-func (req *WriteRequest) SetRollFromFileInfo(fi os.FileInfo) {
-	req.setRollSize(uint64(fi.Size()) / autoChunkCount)
+func (req *WriteRequest) SetChunkSizeFromFileInfo(fi os.FileInfo) {
+	req.setChunkSize(uint64(fi.Size()) / autoChunkCount)
 }

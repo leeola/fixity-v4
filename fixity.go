@@ -225,9 +225,24 @@ type Content struct {
 
 // Blob stores a series of ordered ChunkHashes
 type Blob struct {
+	// ChunkHashes contains a slice of chunk hashes for this blob.
+	//
+	// Depending on usage of NextBlobHash, this could be either all
+	// chunk hashes or some chunk hashes.
 	ChunkHashes []string `json:"chunkHashes"`
-	Size        int64    `json:"size,omitempty"`
-	RollSize    uint64   `json:"rollSize,omitempty"`
+
+	// Size is the total bytes for the blob.
+	Size int64 `json:"size,omitempty"`
+
+	// ChunkSize is the average bytes each chunk is aimed to be.
+	//
+	// Chunks are separated by Cotent Defined Chunks (CDC) and this value
+	// allows mutations of this blob to use the same ChunkSize with each
+	// version. This ensures the chunks are chunk'd by the CDC algorithm
+	// with the same spacing.
+	//
+	// Note that the algorithm is decided by the fixity.Store.
+	AverageChunkSize uint64 `json:"averageChunkSize,omitempty"`
 
 	// NextBlobHash is not currently supported / implemented anywhere, but
 	// is required for very large storage. Eg, if there are so many chunks
