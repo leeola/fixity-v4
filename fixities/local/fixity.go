@@ -185,10 +185,10 @@ func (l *Fixity) WriteRequest(req *fixity.WriteRequest) (fixity.Content, error) 
 	}
 
 	if req.RollSize == 0 {
-		req.RollSize = fixity.DefaultMaxChunkSize
+		req.RollSize = fixity.DefaultAverageChunkSize
 	}
 
-	roller, err := restic.New(req.Blob, fixity.DefaultMinChunkSize, fixity.DefaultMaxChunkSize)
+	roller, err := restic.New(req.Blob, req.RollSize)
 	if err != nil {
 		return fixity.Content{}, err
 	}

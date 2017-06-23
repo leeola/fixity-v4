@@ -2,6 +2,7 @@ package restic
 
 import (
 	"io"
+	"math"
 
 	"github.com/leeola/chunker"
 	"github.com/leeola/errors"
@@ -14,12 +15,15 @@ import (
 // even at the cost of write performance (within reason).
 const averageBits = 14
 
+const minSizeMul = 0.5
+const maxSizeMul = 1.5
+
 type Roller struct {
 	buf     []byte
 	chunker *chunker.Chunker
 }
 
-func New(r io.Reader, min, max int64) (*Roller, error) {
+func New(r io.Reader, averageChunkSize uint64) (*Roller, error) {
 	if r == nil {
 		return nil, errors.New("missing Reader")
 	}
@@ -29,8 +33,8 @@ func New(r io.Reader, min, max int64) (*Roller, error) {
 		buf: make([]byte, 8*1024*1024),
 		chunker: chunker.NewWithConfig(r, chunker.Pol(0x3DA3358B4DC173),
 			chunker.ChunkerConfig{
-				MinSize:     uint(min),
-				MaxSize:     uint(max),
+				MinSize:     uint(math.Floor(float64(averageChunkSize) * minSizeMul)),
+				MaxSize:     uint(math.Floor(float64(averageChunkSize) * maxSizeMul)),
 				AverageBits: averageBits,
 			}),
 	}, nil

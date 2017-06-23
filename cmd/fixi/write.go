@@ -28,7 +28,7 @@ func WriteCmd(ctx *cli.Context) error {
 	req.Fields = fields
 
 	if rollSize := ctx.Int("manual-rollsize"); rollSize != 0 {
-		req.RollSize = int64(rollSize)
+		req.RollSize = uint64(rollSize)
 	}
 
 	if ctx.Bool("cli") {
@@ -45,7 +45,7 @@ func WriteCmd(ctx *cli.Context) error {
 
 		// TODO(leeola): append unix metadata to fields array
 
-		if req.RollSize == fixity.DefaultMaxChunkSize {
+		if req.RollSize == fixity.DefaultAverageChunkSize {
 			req.SetRollFromFileInfo(fi)
 		}
 
