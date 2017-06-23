@@ -31,9 +31,9 @@ const (
 
 	// 12KiB so that small files/data won't churn with a ton of chunks.
 	minAutoChunkSize = 12288
-	// 20MiB because chunks too large become hard to store/send/etc. Each
+	// 4MiB because chunks too large become hard to store/send/etc. Each
 	// chunk should be reasonbly fast to send between nodes.
-	maxAutoChunkSize = 20971520
+	maxAutoChunkSize = DefaultAverageChunkSize
 )
 
 // WriteRequest represents a blob to be written alone with metadata.
