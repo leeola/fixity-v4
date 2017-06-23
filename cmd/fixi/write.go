@@ -6,6 +6,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -44,6 +45,14 @@ func WriteCmd(ctx *cli.Context) error {
 		}
 
 		// TODO(leeola): append unix metadata to fields array
+
+		// automatically set the id as the filename, if not provided
+		//
+		// By using isSet we allow the caller to supply an empty id if that's
+		// what they provided.
+		if req.Id == "" && !ctx.IsSet("id") {
+			req.Id = filepath.Base(path)
+		}
 
 		if req.AverageChunkSize == fixity.DefaultAverageChunkSize {
 			req.SetChunkSizeFromFileInfo(fi)
