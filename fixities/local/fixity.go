@@ -13,8 +13,8 @@ import (
 	"github.com/inconshreveable/log15"
 	"github.com/leeola/errors"
 	"github.com/leeola/fixity"
+	"github.com/leeola/fixity/chunkers/restic"
 	"github.com/leeola/fixity/q"
-	"github.com/leeola/fixity/rollers/restic"
 )
 
 var (
@@ -188,12 +188,12 @@ func (l *Fixity) WriteRequest(req *fixity.WriteRequest) (fixity.Content, error) 
 		req.AverageChunkSize = fixity.DefaultAverageChunkSize
 	}
 
-	roller, err := restic.New(req.Blob, req.AverageChunkSize)
+	chunker, err := restic.New(req.Blob, req.AverageChunkSize)
 	if err != nil {
 		return fixity.Content{}, err
 	}
 
-	cHashes, totalSize, err := WriteRoller(l.store, roller)
+	cHashes, totalSize, err := WriteChunker(l.store, chunker)
 	if err != nil {
 		return fixity.Content{}, err
 	}
@@ -315,11 +315,11 @@ func ReadAndUnmarshalWithBytes(s fixity.Store, h string, v interface{}) ([]byte,
 	return b, nil
 }
 
-func WriteRoller(s fixity.Store, r fixity.Roller) ([]string, int64, error) {
+func WriteChunker(s fixity.Store, r fixity.Chunker) ([]string, int64, error) {
 	var totalSize int64
 	var hashes []string
 	for {
-		c, err := r.Roll()
+		c, err := r.Chunk()
 		if err != nil && err != io.EOF {
 			return nil, 0, err
 		}

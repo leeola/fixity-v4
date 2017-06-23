@@ -23,12 +23,12 @@ const minSizeMul = 0.9
 // quite a bit larger than the desired max
 const maxSizeMul = 2.0
 
-type Roller struct {
+type Chunker struct {
 	buf     []byte
 	chunker *chunker.Chunker
 }
 
-func New(r io.Reader, averageChunkSize uint64) (*Roller, error) {
+func New(r io.Reader, averageChunkSize uint64) (*Chunker, error) {
 	if r == nil {
 		return nil, errors.New("missing Reader")
 	}
@@ -36,7 +36,7 @@ func New(r io.Reader, averageChunkSize uint64) (*Roller, error) {
 	min := uint(math.Floor(float64(averageChunkSize) * minSizeMul))
 	max := uint(math.Floor(float64(averageChunkSize) * maxSizeMul))
 
-	return &Roller{
+	return &Chunker{
 		// does this size matter?
 		buf: make([]byte, 8*1024*1024),
 		chunker: chunker.NewWithConfig(r, chunker.Pol(0x3DA3358B4DC173),
@@ -48,7 +48,7 @@ func New(r io.Reader, averageChunkSize uint64) (*Roller, error) {
 	}, nil
 }
 
-func (c *Roller) Roll() (fixity.Chunk, error) {
+func (c *Chunker) Chunk() (fixity.Chunk, error) {
 
 	// TODO(leeola): Add a peek method to break out of the loop if the end of the
 	// roller is near. This way we don't create small tailing chunks if possible.

@@ -39,9 +39,9 @@ type Store interface {
 	// Close() error
 }
 
-// Roller implements chunking over bytes.
-type Roller interface {
-	Roll() (Chunk, error)
+// Chunker implements chunking over bytes.
+type Chunker interface {
+	Chunk() (Chunk, error)
 }
 
 func writeReader(s Store, r io.Reader) (string, error) {
@@ -108,28 +108,4 @@ func readAndUnmarshalWithBytes(s Store, h string, v interface{}) ([]byte, error)
 	}
 
 	return b, nil
-}
-
-func writeRoller(s Store, r Roller) ([]string, int64, error) {
-	var totalSize int64
-	var hashes []string
-	for {
-		c, err := r.Roll()
-		if err != nil && err != io.EOF {
-			return nil, 0, err
-		}
-
-		totalSize += c.Size
-
-		if err == io.EOF {
-			break
-		}
-
-		h, err := marshalAndWrite(s, c)
-		if err != nil {
-			return nil, 0, err
-		}
-		hashes = append(hashes, h)
-	}
-	return hashes, totalSize, nil
 }
