@@ -6,7 +6,6 @@ import (
 )
 
 const (
-
 	// DefaultAverageChunkSize that the chunker will attempt to produce.
 	//
 	// See WriteRequest.AverageChunkSize documentation for further explanation
@@ -30,7 +29,7 @@ const (
 	// 104,857, effectively rolling the bytes into 10 parts when it's written.
 	autoChunkCount = 6
 
-	minAutoChunkSize = 1024
+	minAutoChunkSize = 12288
 	maxAutoChunkSize = 1073741824
 )
 

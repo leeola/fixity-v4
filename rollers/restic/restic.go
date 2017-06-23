@@ -15,8 +15,13 @@ import (
 // even at the cost of write performance (within reason).
 const averageBits = 14
 
-const minSizeMul = 0.5
-const maxSizeMul = 1.5
+// min is pretty harmless so we should aim for it to be close to the original
+// value.
+const minSizeMul = 0.9
+
+// restic chunker puts a hard cap on the max size so this should probably be
+// quite a bit larger than the desired max
+const maxSizeMul = 2.0
 
 type Roller struct {
 	buf     []byte
@@ -28,19 +33,23 @@ func New(r io.Reader, averageChunkSize uint64) (*Roller, error) {
 		return nil, errors.New("missing Reader")
 	}
 
+	min := uint(math.Floor(float64(averageChunkSize) * minSizeMul))
+	max := uint(math.Floor(float64(averageChunkSize) * maxSizeMul))
+
 	return &Roller{
 		// does this size matter?
 		buf: make([]byte, 8*1024*1024),
 		chunker: chunker.NewWithConfig(r, chunker.Pol(0x3DA3358B4DC173),
 			chunker.ChunkerConfig{
-				MinSize:     uint(math.Floor(float64(averageChunkSize) * minSizeMul)),
-				MaxSize:     uint(math.Floor(float64(averageChunkSize) * maxSizeMul)),
+				MinSize:     min,
+				MaxSize:     max,
 				AverageBits: averageBits,
 			}),
 	}, nil
 }
 
 func (c *Roller) Roll() (fixity.Chunk, error) {
+
 	// TODO(leeola): Add a peek method to break out of the loop if the end of the
 	// roller is near. This way we don't create small tailing chunks if possible.
 
