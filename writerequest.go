@@ -51,7 +51,7 @@ func NewWrite(id string, rc io.ReadCloser, f ...Field) *WriteRequest {
 	}
 }
 
-func (req *WriteRequest) setRollSizeWithMin(roll uint64) {
+func (req *WriteRequest) setRollSize(roll uint64) {
 	if roll < minAutoChunkSize {
 		roll = minAutoChunkSize
 	}
@@ -62,9 +62,9 @@ func (req *WriteRequest) setRollSizeWithMin(roll uint64) {
 }
 
 func (req *WriteRequest) SetRollFromBytes(b []byte) {
-	req.setRollSizeWithMin(uint64(len(b)) / autoChunkCount)
+	req.setRollSize(uint64(len(b)) / autoChunkCount)
 }
 
 func (req *WriteRequest) SetRollFromFileInfo(fi os.FileInfo) {
-	req.setRollSizeWithMin(uint64(fi.Size()) / autoChunkCount)
+	req.setRollSize(uint64(fi.Size()) / autoChunkCount)
 }
