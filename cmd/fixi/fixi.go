@@ -56,6 +56,13 @@ func main() {
 			Action: BlocksCmd,
 		},
 		{
+			Name:      "info",
+			ArgsUsage: "ID",
+			Usage:     "return content info such as total size, versions, etc",
+			Flags:     []cli.Flag{},
+			Action:    InfoCmd,
+		},
+		{
 			Name:      "read",
 			ArgsUsage: "ID PATH",
 			Aliases:   []string{"r"},

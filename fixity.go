@@ -352,6 +352,26 @@ func (c *Content) Blob() (Blob, error) {
 	return b, nil
 }
 
+func (c *Content) PreviousContent() (Content, error) {
+	if c.Store == nil {
+		return Content{}, errors.New("content: Store not set")
+	}
+
+	if c.PreviousContentHash == "" {
+		return Content{}, errors.New("content: no previous content")
+	}
+
+	var pc Content
+	err := readAndUnmarshal(c.Store, c.PreviousContentHash, &pc)
+	if err != nil {
+		return Content{}, err
+	}
+	pc.Hash = c.PreviousContentHash
+	pc.Store = c.Store
+
+	return pc, nil
+}
+
 func (c *Content) Read() (io.ReadCloser, error) {
 	b, err := c.Blob()
 	if err != nil {
