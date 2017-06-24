@@ -47,7 +47,8 @@ func New(c Config) (*Disk, error) {
 }
 
 func (s *Disk) Exists(h string) (bool, error) {
-	p := filepath.Join(s.path, h)
+	p := s.pathHash(h)
+
 	_, err := os.Stat(p)
 	if os.IsNotExist(err) {
 		return false, nil
@@ -63,7 +64,7 @@ func (s *Disk) Read(h string) (io.ReadCloser, error) {
 		return nil, errors.New("hash cannot be empty")
 	}
 
-	p := filepath.Join(s.path, h)
+	p := s.pathHash(h)
 
 	var rc io.ReadCloser
 	rc, err := os.Open(p)
@@ -99,7 +100,11 @@ func (s *Disk) WriteHash(h string, b []byte) error {
 //
 // Verification of the content *must be done* before using this method to write.
 func (s *Disk) writeHash(h string, b []byte) error {
-	p := filepath.Join(s.path, h)
+	p := s.pathHash(h)
+
+	if err := os.MkdirAll(filepath.Dir(p), 0755); err != nil {
+		return err
+	}
 
 	err := ioutil.WriteFile(p, b, 0644)
 	return errors.Wrap(err, "failed to write to disk")
@@ -114,6 +119,7 @@ func (s *Disk) List() (<-chan string, error) {
 		s.log.Debug("starting list walk")
 		err := filepath.Walk(s.path, func(p string, _ os.FileInfo, _ error) error {
 			// Trim the store path from the returned paths
+			// TODO(leeola): remove the dirs from the h value
 			h, err := filepath.Rel(s.path, p)
 			if err != nil {
 				return err
