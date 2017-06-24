@@ -81,7 +81,7 @@ func sumHash(h string, doNothing bool) string {
 	if doNothing {
 		return h
 	}
-	return h[len(h)-8:]
+	return h[:8]
 }
 
 func blockType(b fixity.Block) string {
