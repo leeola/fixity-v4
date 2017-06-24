@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"sync"
 	"time"
 
 	"github.com/boltdb/bolt"
@@ -34,6 +35,7 @@ type Fixity struct {
 	config     Config
 	blockchain *Blockchain
 	db         *bolt.DB
+	idLock     *sync.Mutex
 	index      fixity.Index
 	store      fixity.Store
 	log        log15.Logger
@@ -70,6 +72,7 @@ func New(c Config) (*Fixity, error) {
 		config:     c,
 		blockchain: NewBlockchain(c.Log, db, c.Store),
 		db:         db,
+		idLock:     &sync.Mutex{},
 		index:      c.Index,
 		store:      c.Store,
 		log:        c.Log,
@@ -101,6 +104,25 @@ func (l *Fixity) getIdHash(id string) (string, error) {
 	}
 
 	return h, nil
+}
+
+// loadPreviousInfo is a helper to load the hash and the chunksize of the
+// previous content. Empty values are returned if no id is found.
+func (l *Fixity) loadPreviousInfo(id string) (string, uint64, error) {
+	c, err := l.Read(id)
+	if err == fixity.ErrIdNotFound {
+		return "", 0, nil
+	}
+	if err != nil {
+		return "", 0, err
+	}
+
+	b, err := c.Blob()
+	if err != nil {
+		return "", 0, err
+	}
+
+	return c.Hash, b.AverageChunkSize, nil
 }
 
 func (l *Fixity) setIdHash(id, h string) error {
@@ -170,25 +192,30 @@ func (l *Fixity) Write(id string, r io.Reader, f ...fixity.Field) (fixity.Conten
 }
 
 func (l *Fixity) WriteRequest(req *fixity.WriteRequest) (fixity.Content, error) {
-	// TODO(leeola): use a locker if id is not nil
-
 	if req.Blob == nil {
 		return fixity.Content{}, errors.New("no data given to write")
 	}
 	defer req.Blob.Close()
 
-	// this warning is a bit silly, seeing as we already warn below.. but this
-	// part is really important, as it's possible to duplicate data if incorrect
-	// roll sizes are used.
+	averageChunkSize := req.AverageChunkSize
+	var previousContentHash string
 	if req.Id != "" {
-		l.log.Warn("previous roll size is not being loaded")
+		l.idLock.Lock()
+		defer l.idLock.Unlock()
+
+		pch, acs, err := l.loadPreviousInfo(req.Id)
+		if err != nil {
+			return fixity.Content{}, err
+		}
+		previousContentHash = pch
+		averageChunkSize = acs
 	}
 
-	if req.AverageChunkSize == 0 {
-		req.AverageChunkSize = fixity.DefaultAverageChunkSize
+	if averageChunkSize == 0 {
+		averageChunkSize = fixity.DefaultAverageChunkSize
 	}
 
-	chunker, err := restic.New(req.Blob, req.AverageChunkSize)
+	chunker, err := restic.New(req.Blob, averageChunkSize)
 	if err != nil {
 		return fixity.Content{}, err
 	}
@@ -209,14 +236,11 @@ func (l *Fixity) WriteRequest(req *fixity.WriteRequest) (fixity.Content, error) 
 		return fixity.Content{}, err
 	}
 
-	if req.Id != "" {
-		l.log.Warn("loading previous content hash not implemented")
-	}
-
 	content := fixity.Content{
-		Id:            req.Id,
-		BlobHash:      blobHash,
-		IndexedFields: req.Fields,
+		Id:                  req.Id,
+		PreviousContentHash: previousContentHash,
+		BlobHash:            blobHash,
+		IndexedFields:       req.Fields,
 	}
 
 	cHash, err := MarshalAndWrite(l.store, content)
