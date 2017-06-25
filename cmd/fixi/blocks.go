@@ -86,8 +86,10 @@ func sumHash(h string, doNothing bool) string {
 
 func blockType(b fixity.Block) string {
 	switch {
-	case b.ContentHash != "":
+	case b.ContentBlock != nil:
 		return "content"
+	case b.DeleteBlock != nil:
+		return "delete"
 	default:
 		return "unknown"
 	}

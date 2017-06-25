@@ -24,4 +24,7 @@ var (
 
 	// ErrFieldNotFound is returned when a FieldUnmarshaller cannot unmarshal the field.
 	ErrFieldNotFound = errors.New("field ummarshaller cannot find field")
+
+	// ErrNoMore is returned when Previous content/blocks do not exist.
+	ErrNoMore = errors.New("no more")
 )

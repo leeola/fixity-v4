@@ -75,7 +75,7 @@ type Fixity interface {
 //
 // The Fixity blockchain consists of three main parts: The Block number,
 // the PreviousBlockHash and some data effectively giving the Block a
-// "type".
+// "type", such as the ContentBlock and DeleteBlock fields.
 //
 // The Block number is an ever incrementing value and with the help of
 // PreviousBlockHash it provides a way for distributed nodes to achieve
@@ -86,35 +86,14 @@ type Fixity interface {
 // to be mutable, in an immutable environment. More on mutability soon.
 //
 // The Block type is the reason why the block exists. It may have added
-// Content, removed Content, mutated the chain, etc.
+// Content, removed Content, etc.
 //
-// Mutability of the blockchain is achieved by appending new blocks that
-// skip one or more blocks in their PreviousBlockHash. For example, with
-// a blockchain of 5 blocks, Block 6 could be written with a
-// PreviousBlockHash set to the hash of Block 4. Since Block 6 is the head,
-// traversing the blockchain would look like: Block 6 -> Block 4 -> Block 3
-// and so on. Note that Blocks start with 0 index, but for these examples
-// we're not using zero index.
-//
-// To achieve mutability on blocks that aren't currently the Head()
-// as Block 5 was in the previous example, all Blocks from the target
-// Block to the Head() must be rewritten to the blockchain. In order.
-// This means that removing old blocks can be costly and slow.
-//
-// Fixity strives to keep the ledger as a trustable and easy to verify
-// chain. An alternative to block skipping would be to write a content
-// deletion block, essentially writing to the ledger that content is
-// to be garbage collected. However, verifying the ever growing blockchain
-// would mean needing to reference these deletion blocks frequently to know
-// what content should and shouldn't be looked into. In otherwords,
-// content on the blockchain may have a deletion block for it further up
-// the chain, so verifying content of the ledger becomes difficult.
-//
-// The chosen method of content skipping does most of the difficult work
-// up front and results in a very clean ledger. It does this at the cost
-// of needing to complicate the removal/skipping process.
-//
-// This interface focuses on all of the above functionality.
+// Despite the name, a Delete block does not actually remove anything from
+// the blockchain. Instead, as the chain is being traversed from the Head(),
+// blocks that have had their hash written in a DeleteBlock are simply
+// skipped. This method of skipping previous blocks allows multiple
+// Fixity nodes to remove and write content on the fly and decide on
+// consensus in the future. No altering of the chain ever takes place.
 type Blockchain interface {
 	// // AppendBlocks locks the store and writes the given blocks in order.
 	// //
@@ -126,15 +105,22 @@ type Blockchain interface {
 
 	// AppendContent creates a new block with the given content.
 	//
-	// If the block is the same as the current Head() the blockchain must
-	// not be progressed.
+	// If the block content is the same as the current Head() the blockchain
+	// may not be progressed.
 	AppendContent(Content) (Block, error)
 
 	// Head returns the latest block in the blockchain.
 	Head() (Block, error)
 
-	// // SkipBlock removes the given block from the blockchain.
-	// SkipBlock(Block) ([]Block, error)
+	// DeleteContent writes a delete block  blocks with the given content.
+	//
+	// It does this by writing a Delete block onto the chain. Iterating
+	// through the chain will cause the given contents to be skipped
+	// over. The main blockchain is never mutated or altered.
+	//
+	// This does not remove the content, that is handled by the Fixity
+	// implementor.
+	DeleteContent(...Content) (Block, error)
 }
 
 // Block serves as a ledger for mutations of the fixity datastore.
@@ -163,11 +149,15 @@ type Block struct {
 	// and implications of that.
 	PreviousBlockHash string `json:"previousBlockHash"`
 
-	// Skip contains Skip data and makes this Block a Skip Block.
-	Skip *Skip `json:"skip,omitempty"`
+	// Content contains the content hashl for this content block.
+	ContentBlock *ContentBlock `json:"contentBlock,omitempty"`
 
-	// ContentHash contains the ContentHash and makes this block a Content block.
-	ContentHash string `json:"cotentHash,omitempty"`
+	// Delete contains data about block(s) that have been deleted.
+	//
+	// Technically no block is ever deleted on the main blockchain,
+	// however any encountered delete block will cause previous
+	// blocks to be skipped when navigating backwards via the Previous().
+	DeleteBlock *DeleteBlock `json:"deleteBlock,omitempty"`
 
 	// Hash is the hash of the Block itself, provided by Fixity.
 	//
@@ -180,10 +170,16 @@ type Block struct {
 	Store Store `json:"-"`
 }
 
-// Skip blocks provide information about the block that was skipped.
-type Skip struct {
-	// BlockHash of the block to be skipped.
-	BlockHash string `json:"blockHash"`
+// ContentBlock provides information about content on the blockchain.
+type ContentBlock struct {
+	// Hash of the Content.
+	Hash string `json:"hash"`
+}
+
+// DeleteBlock provides information about the block that was deleted.
+type DeleteBlock struct {
+	// Hashes of the deleted blocks.
+	Hashes []string `json:"deletedHashes"`
 }
 
 // Content stores blob, index and history information for Fixity content.
@@ -313,20 +309,20 @@ func (b *Block) PreviousBlock() (Block, error) {
 
 func (b *Block) Content() (Content, error) {
 	if b.Store == nil {
-		return Content{}, errors.New("content: Store not set")
+		return Content{}, errors.New("block: Store not set")
 	}
 
-	if b.ContentHash == "" {
-		return Content{}, errors.New("content: contentHash is empty")
+	if b.ContentBlock == nil {
+		return Content{}, errors.New("block: not content block type")
 	}
 
 	var c Content
-	err := readAndUnmarshal(b.Store, b.ContentHash, &c)
+	err := readAndUnmarshal(b.Store, b.ContentBlock.Hash, &c)
 	if err != nil {
 		return Content{}, err
 	}
 
-	c.Hash = b.ContentHash
+	c.Hash = b.ContentBlock.Hash
 	c.Store = b.Store
 
 	return c, nil

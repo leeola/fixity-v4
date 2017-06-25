@@ -70,48 +70,77 @@ func (l *Blockchain) getHead() (fixity.Block, error) {
 	return b, nil
 }
 
-func (b *Blockchain) AppendContent(c fixity.Content) (fixity.Block, error) {
-	if c.Hash == "" {
-		return fixity.Block{}, errors.New("content missing Hash value")
-	}
+func (bc *Blockchain) writeBlock(cb *fixity.ContentBlock, db *fixity.DeleteBlock) (fixity.Block, error) {
+	bc.lock.Lock()
+	defer bc.lock.Unlock()
 
-	b.lock.Lock()
-	defer b.lock.Unlock()
-
-	previousBlock, err := b.getHead()
+	pb, err := bc.getHead()
 	if err != nil && err != fixity.ErrEmptyBlockchain {
 		return fixity.Block{}, err
 	}
 
-	// if the previous hash is the same as the current hash, don't write a new block.
-	//
-	// There has been no change in the content, so why make a new block.
-	if previousBlock.ContentHash == c.Hash {
-		b.log.Debug("ignoring identical block",
-			"block", previousBlock.Hash,
-			"contentHash", c.Hash)
-		return previousBlock, nil
-	}
-
-	block := fixity.Block{
+	b := fixity.Block{
 		// zero value is okay for both of these.
-		Block:             previousBlock.Block + 1,
-		PreviousBlockHash: previousBlock.Hash,
-		ContentHash:       c.Hash,
+		Block:             pb.Block + 1,
+		PreviousBlockHash: pb.Hash,
+		ContentBlock:      cb,
+		DeleteBlock:       db,
 	}
 
-	bHash, err := MarshalAndWrite(b.store, block)
+	bHash, err := MarshalAndWrite(bc.store, b)
 	if err != nil {
 		return fixity.Block{}, err
 	}
-	block.Hash = bHash
-	block.Store = b.store
+	b.Hash = bHash
+	b.Store = bc.store
 
-	if err := b.setHead(bHash); err != nil {
+	if err := bc.setHead(bHash); err != nil {
 		return fixity.Block{}, err
 	}
 
-	return block, nil
+	return b, nil
+}
+
+func (b *Blockchain) AppendContent(c fixity.Content) (fixity.Block, error) {
+	if c.Hash == "" {
+		return fixity.Block{}, errors.New("Content missing Hash value")
+	}
+
+	contentBlock := &fixity.ContentBlock{
+		Hash: c.Hash,
+	}
+
+	return b.writeBlock(contentBlock, nil)
+}
+
+func (bc *Blockchain) DeleteContent(cs ...fixity.Content) (fixity.Block, error) {
+	if len(cs) == 0 {
+		return fixity.Block{}, nil
+	}
+
+	var blocksToBeDeleted []string
+	for b, err := bc.Head(); err != fixity.ErrNoMore; b, err = b.PreviousBlock() {
+		if err != nil {
+			return fixity.Block{}, err
+		}
+
+		// if this block is not a content block, skip it.
+		if b.Content == nil {
+			continue
+		}
+
+		for _, c := range cs {
+			if b.ContentBlock.Hash == c.Hash {
+				blocksToBeDeleted = append(blocksToBeDeleted, b.Hash)
+			}
+		}
+	}
+
+	deleteBlock := &fixity.DeleteBlock{
+		Hashes: blocksToBeDeleted,
+	}
+
+	return bc.writeBlock(nil, deleteBlock)
 }
 
 func (l *Blockchain) Head() (fixity.Block, error) {
