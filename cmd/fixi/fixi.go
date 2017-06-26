@@ -56,6 +56,13 @@ func main() {
 			Action: BlocksCmd,
 		},
 		{
+			Name:      "delete",
+			ArgsUsage: "ID",
+			Usage:     "delete the given id from the blockchain",
+			Flags:     []cli.Flag{},
+			Action:    DeleteCmd,
+		},
+		{
 			Name:      "info",
 			ArgsUsage: "ID",
 			Usage:     "return content info such as total size, versions, etc",

@@ -31,13 +31,11 @@ type Fixity interface {
 	// Close shuts down any connections that may need to be closed.
 	Close() error
 
-	// Delete the given id's content from the fixity store.
+	// Delete marks the given id's content to be garbage collected.
 	//
 	// Each Content, Blob and Chunk will be deleted if no other block in the
 	// blockchain depends on it. Verifying this is done by the garbage
 	// collector and is a slow process.
-	//
-	// All blocks for the given id will be removed from the blockchain.
 	Delete(id string) error
 
 	// Read the latest Content with the given id.
@@ -287,12 +285,12 @@ type Chunk struct {
 }
 
 func (b *Block) PreviousBlock() (Block, error) {
-	if b.Store == nil {
-		return Block{}, errors.New("previousblock: Store not set")
+	if b.PreviousBlockHash == "" {
+		return Block{}, ErrNoMore
 	}
 
-	if b.PreviousBlockHash == "" {
-		return Block{}, nil
+	if b.Store == nil {
+		return Block{}, errors.New("block: Store not set")
 	}
 
 	var previousBlock Block
@@ -330,11 +328,11 @@ func (b *Block) Content() (Content, error) {
 
 func (c *Content) Blob() (Blob, error) {
 	if c.Store == nil {
-		return Blob{}, errors.New("blob: Store not set")
+		return Blob{}, errors.New("content: Store not set")
 	}
 
 	if c.BlobHash == "" {
-		return Blob{}, errors.New("blob: blobHash is empty")
+		return Blob{}, errors.New("content: blobHash is empty")
 	}
 
 	var b Blob
@@ -349,12 +347,12 @@ func (c *Content) Blob() (Blob, error) {
 }
 
 func (c *Content) PreviousContent() (Content, error) {
-	if c.Store == nil {
-		return Content{}, errors.New("content: Store not set")
+	if c.PreviousContentHash == "" {
+		return Content{}, ErrNoMore
 	}
 
-	if c.PreviousContentHash == "" {
-		return Content{}, errors.New("content: no previous content")
+	if c.Store == nil {
+		return Content{}, errors.New("content: Store not set")
 	}
 
 	var pc Content

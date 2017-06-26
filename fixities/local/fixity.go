@@ -148,8 +148,23 @@ func (f *Fixity) Close() error {
 	return f.db.Close()
 }
 
-func (l *Fixity) Delete(string) error {
-	return errors.New("not implemented")
+func (l *Fixity) Delete(id string) error {
+	c, err := l.Read(id)
+	if err != nil {
+		return err
+	}
+
+	cs := []fixity.Content{c}
+	for c.PreviousContentHash != "" {
+		c, err = c.PreviousContent()
+		if err != nil {
+			return err
+		}
+		cs = append(cs, c)
+	}
+
+	_, err = l.Blockchain().DeleteContent(cs...)
+	return err
 }
 
 func (l *Fixity) Search(q *q.Query) ([]string, error) {
@@ -179,10 +194,6 @@ func (l *Fixity) Read(id string) (fixity.Content, error) {
 	}
 
 	return l.ReadHash(h)
-}
-
-func (l *Fixity) Remove(id string) error {
-	return errors.New("not implemented")
 }
 
 func (l *Fixity) Write(id string, r io.Reader, f ...fixity.Field) (fixity.Content, error) {

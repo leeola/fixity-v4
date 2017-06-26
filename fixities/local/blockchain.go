@@ -125,7 +125,7 @@ func (bc *Blockchain) DeleteContent(cs ...fixity.Content) (fixity.Block, error) 
 		}
 
 		// if this block is not a content block, skip it.
-		if b.Content == nil {
+		if b.ContentBlock == nil {
 			continue
 		}
 
