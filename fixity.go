@@ -346,7 +346,7 @@ func (c *Content) Blob() (Blob, error) {
 	return b, nil
 }
 
-func (c *Content) PreviousContent() (Content, error) {
+func (c *Content) Previous() (Content, error) {
 	if c.PreviousContentHash == "" {
 		return Content{}, ErrNoMore
 	}

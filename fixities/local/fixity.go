@@ -156,7 +156,7 @@ func (l *Fixity) Delete(id string) error {
 
 	cs := []fixity.Content{c}
 	for c.PreviousContentHash != "" {
-		c, err = c.PreviousContent()
+		c, err = c.Previous()
 		if err != nil {
 			return err
 		}

@@ -44,7 +44,7 @@ func InfoCmd(ctx *cli.Context) error {
 	)
 
 	for c.PreviousContentHash != "" {
-		c, err = c.PreviousContent()
+		c, err = c.Previous()
 		if err != nil {
 			return err
 		}
