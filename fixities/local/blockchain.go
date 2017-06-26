@@ -3,7 +3,6 @@ package local
 import (
 	"sync"
 
-	"github.com/boltdb/bolt"
 	"github.com/inconshreveable/log15"
 	"github.com/leeola/errors"
 	"github.com/leeola/fixity"
@@ -11,12 +10,12 @@ import (
 
 type Blockchain struct {
 	lock  *sync.RWMutex
-	db    *bolt.DB
+	db    Db
 	store fixity.Store
 	log   log15.Logger
 }
 
-func NewBlockchain(log log15.Logger, db *bolt.DB, s fixity.Store) *Blockchain {
+func NewBlockchain(log log15.Logger, db Db, s fixity.Store) *Blockchain {
 	return &Blockchain{
 		lock:  &sync.RWMutex{},
 		db:    db,
@@ -25,39 +24,10 @@ func NewBlockchain(log log15.Logger, db *bolt.DB, s fixity.Store) *Blockchain {
 	}
 }
 
-func (l *Blockchain) setHead(h string) error {
-	return l.db.Update(func(tx *bolt.Tx) error {
-		bkt, err := tx.CreateBucketIfNotExists(blockMetaBucketKey)
-		if err != nil {
-			return err
-		}
-
-		return bkt.Put(lastBlockKey, []byte(h))
-	})
-}
-
 func (l *Blockchain) getHead() (fixity.Block, error) {
-	var h string
-	err := l.db.View(func(tx *bolt.Tx) error {
-		bkt := tx.Bucket(blockMetaBucketKey)
-		// if bucket does not exist, this will be nil
-		if bkt == nil {
-			return nil
-		}
-
-		hB := bkt.Get(lastBlockKey)
-		if hB != nil {
-			h = string(hB)
-		}
-
-		return nil
-	})
+	h, err := l.db.GetBlockHead()
 	if err != nil {
 		return fixity.Block{}, err
-	}
-
-	if h == "" {
-		return fixity.Block{}, fixity.ErrEmptyBlockchain
 	}
 
 	var b fixity.Block
@@ -94,7 +64,7 @@ func (bc *Blockchain) writeBlock(cb *fixity.ContentBlock, db *fixity.DeleteBlock
 	b.Hash = bHash
 	b.Store = bc.store
 
-	if err := bc.setHead(bHash); err != nil {
+	if err := bc.db.SetBlockHead(bHash); err != nil {
 		return fixity.Block{}, err
 	}
 

@@ -4,12 +4,8 @@ import (
 	"encoding/json"
 	"io"
 	"io/ioutil"
-	"os"
-	"path/filepath"
 	"sync"
-	"time"
 
-	"github.com/boltdb/bolt"
 	"github.com/fatih/structs"
 	"github.com/inconshreveable/log15"
 	"github.com/leeola/errors"
@@ -34,7 +30,7 @@ type Config struct {
 type Fixity struct {
 	config     Config
 	blockchain *Blockchain
-	db         *bolt.DB
+	db         Db
 	idLock     *sync.Mutex
 	index      fixity.Index
 	store      fixity.Store
@@ -58,12 +54,7 @@ func New(c Config) (*Fixity, error) {
 		c.Log = log15.New()
 	}
 
-	dbPath := filepath.Join(c.RootPath, "local", "local.db")
-	if err := os.MkdirAll(filepath.Dir(dbPath), 0755); err != nil {
-		return nil, err
-	}
-
-	db, err := bolt.Open(dbPath, 0644, &bolt.Options{Timeout: 1 * time.Second})
+	db, err := newBoltDb(c.RootPath)
 	if err != nil {
 		return nil, err
 	}
@@ -77,33 +68,6 @@ func New(c Config) (*Fixity, error) {
 		store:      c.Store,
 		log:        c.Log,
 	}, nil
-}
-
-func (l *Fixity) getIdHash(id string) (string, error) {
-	var h string
-	err := l.db.View(func(tx *bolt.Tx) error {
-		bkt := tx.Bucket(idsBucketKey)
-		// if bucket does not exist, this will be nil
-		if bkt == nil {
-			return nil
-		}
-
-		hB := bkt.Get([]byte(id))
-		if hB != nil {
-			h = string(hB)
-		}
-
-		return nil
-	})
-	if err != nil {
-		return "", err
-	}
-
-	if h == "" {
-		return "", fixity.ErrIdNotFound
-	}
-
-	return h, nil
 }
 
 // loadPreviousInfo is a helper to load the hash and the chunksize of the
@@ -123,17 +87,6 @@ func (l *Fixity) loadPreviousInfo(id string) (string, uint64, error) {
 	}
 
 	return c.Hash, b.AverageChunkSize, nil
-}
-
-func (l *Fixity) setIdHash(id, h string) error {
-	return l.db.Update(func(tx *bolt.Tx) error {
-		bkt, err := tx.CreateBucketIfNotExists(idsBucketKey)
-		if err != nil {
-			return err
-		}
-
-		return bkt.Put([]byte(id), []byte(h))
-	})
 }
 
 func (l *Fixity) Blob(h string) (io.ReadCloser, error) {
@@ -188,7 +141,7 @@ func (l *Fixity) ReadHash(h string) (fixity.Content, error) {
 }
 
 func (l *Fixity) Read(id string) (fixity.Content, error) {
-	h, err := l.getIdHash(id)
+	h, err := l.db.GetIdHash(id)
 	if err != nil {
 		return fixity.Content{}, err
 	}
@@ -268,7 +221,7 @@ func (l *Fixity) WriteRequest(req *fixity.WriteRequest) (fixity.Content, error) 
 
 	// if the id was supplied, update the new id
 	if req.Id != "" {
-		if err := l.setIdHash(req.Id, cHash); err != nil {
+		if err := l.db.SetIdHash(req.Id, cHash); err != nil {
 			return fixity.Content{}, err
 		}
 	}
