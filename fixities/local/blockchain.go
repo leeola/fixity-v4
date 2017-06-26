@@ -119,7 +119,7 @@ func (bc *Blockchain) DeleteContent(cs ...fixity.Content) (fixity.Block, error) 
 	}
 
 	var blocksToBeDeleted []string
-	for b, err := bc.Head(); err != fixity.ErrNoMore; b, err = b.PreviousBlock() {
+	for b, err := bc.Head(); err != fixity.ErrNoMore; b, err = b.Previous() {
 		if err != nil {
 			return fixity.Block{}, err
 		}

@@ -52,7 +52,7 @@ func BlocksCmd(ctx *cli.Context) error {
 	)
 
 	for i := 0; i < ctx.Int("limit")-1 && b.PreviousBlockHash != ""; i++ {
-		b, err = b.PreviousBlock()
+		b, err = b.Previous()
 		if err != nil {
 			return err
 		}

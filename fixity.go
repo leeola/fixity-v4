@@ -284,7 +284,7 @@ type Chunk struct {
 	EndBoundry uint `json:"-"`
 }
 
-func (b *Block) PreviousBlock() (Block, error) {
+func (b *Block) Previous() (Block, error) {
 	if b.PreviousBlockHash == "" {
 		return Block{}, ErrNoMore
 	}
