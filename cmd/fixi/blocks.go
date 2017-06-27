@@ -24,6 +24,8 @@ func BlocksCmd(ctx *cli.Context) error {
 	defer w.Flush()
 	w.Header(" ", "BLOCK", "HASH", "TYPE", "CONTENT", "ID")
 
+	// TODO(leeola): write a utility to make this Head() and Loop code not
+	// duplicated, in a *nice* API.
 	b, err := fixi.Blockchain().Head()
 	if err == fixity.ErrEmptyBlockchain {
 		return nil
@@ -32,9 +34,13 @@ func BlocksCmd(ctx *cli.Context) error {
 		return err
 	}
 
-	c, err := b.Content()
-	if err != nil {
-		return err
+	var c fixity.Content
+	if blockType(b) == "content" {
+		content, err := b.Content()
+		if err != nil {
+			return err
+		}
+		c = content
 	}
 
 	showBlockHashes := ctx.Bool("block-hashes")
@@ -57,9 +63,11 @@ func BlocksCmd(ctx *cli.Context) error {
 			return err
 		}
 
-		c, err = b.Content()
-		if err != nil {
-			return err
+		if blockType(b) == "content" {
+			c, err = b.Content()
+			if err != nil {
+				return err
+			}
 		}
 
 		bHash := sumHash(b.Hash, showBlockHashes)
@@ -78,6 +86,9 @@ func BlocksCmd(ctx *cli.Context) error {
 }
 
 func sumHash(h string, doNothing bool) string {
+	if h == "" {
+		return ""
+	}
 	if doNothing {
 		return h
 	}
