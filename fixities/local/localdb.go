@@ -116,3 +116,41 @@ func (b *boltDb) SetBlockHead(h string) error {
 		return bkt.Put(lastBlockKey, []byte(h))
 	})
 }
+
+type memoryDb struct {
+	head string
+	m    map[string]string
+}
+
+func newMemoryDb() *memoryDb {
+	return &memoryDb{m: map[string]string{}}
+}
+
+func (m *memoryDb) Close() error {
+	return nil
+}
+
+func (m *memoryDb) GetIdHash(id string) (string, error) {
+	h, ok := m.m[id]
+	if !ok {
+		return "", fixity.ErrIdNotFound
+	}
+	return h, nil
+}
+
+func (m *memoryDb) SetIdHash(id, hash string) error {
+	m.m[id] = hash
+	return nil
+}
+
+func (m *memoryDb) GetBlockHead() (string, error) {
+	if m.head == "" {
+		return "", fixity.ErrEmptyBlockchain
+	}
+	return m.head, nil
+}
+
+func (m *memoryDb) SetBlockHead(hash string) error {
+	m.head = hash
+	return nil
+}

@@ -25,6 +25,7 @@ type Config struct {
 	Store    fixity.Store `toml:"-"`
 	Log      log15.Logger `toml:"-"`
 	RootPath string       `toml:"rootPath"`
+	Db       Db           `toml:"-"`
 }
 
 type Fixity struct {
@@ -38,10 +39,6 @@ type Fixity struct {
 }
 
 func New(c Config) (*Fixity, error) {
-	if c.RootPath == "" {
-		return nil, errors.New("missing required config: rootPath")
-	}
-
 	if c.Index == nil {
 		return nil, errors.New("missing reqired config: Index")
 	}
@@ -50,19 +47,27 @@ func New(c Config) (*Fixity, error) {
 		return nil, errors.New("missing reqired config: Store")
 	}
 
+	if c.RootPath == "" && c.Db == nil {
+		return nil, errors.New("missing required config: rootPath")
+	}
+
 	if c.Log == nil {
 		c.Log = log15.New()
 	}
 
-	db, err := newBoltDb(c.RootPath)
-	if err != nil {
-		return nil, err
+	db := c.Db
+	if db == nil {
+		bDb, err := newBoltDb(c.RootPath)
+		if err != nil {
+			return nil, err
+		}
+		db = bDb
 	}
 
 	return &Fixity{
 		config:     c,
 		blockchain: NewBlockchain(c.Log, db, c.Store),
-		db:         db,
+		db:         c.Db,
 		idLock:     &sync.Mutex{},
 		index:      c.Index,
 		store:      c.Store,
