@@ -67,7 +67,7 @@ func New(c Config) (*Fixity, error) {
 	return &Fixity{
 		config:     c,
 		blockchain: NewBlockchain(c.Log, db, c.Store),
-		db:         c.Db,
+		db:         db,
 		idLock:     &sync.Mutex{},
 		index:      c.Index,
 		store:      c.Store,
