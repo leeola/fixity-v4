@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"io"
+	"io/ioutil"
 
 	base58 "github.com/jbenet/go-base58"
 	"github.com/leeola/fixity"
@@ -32,7 +33,7 @@ func (s *Store) Read(h string) (io.ReadCloser, error) {
 		return nil, fixity.ErrHashNotFound
 	}
 
-	return ioutil.NopCoser(bytes.NewReader(b)), nil
+	return ioutil.NopCloser(bytes.NewReader(b)), nil
 }
 
 func (s *Store) Write(b []byte) (string, error) {
@@ -42,11 +43,11 @@ func (s *Store) Write(b []byte) (string, error) {
 	return h, nil
 }
 
-func (s *Store) WriteHash(hash string, b []byte) error {
+func (s *Store) WriteHash(h string, b []byte) error {
 	hB := blake2b.Sum256(b)
 	confirmedHash := base58.Encode(hB[:])
 
-	if hash != confirmedHash {
+	if h != confirmedHash {
 		return fixity.ErrHashNotMatchBytes
 	}
 
