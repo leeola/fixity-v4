@@ -1,11 +1,13 @@
 package local
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"io"
 	"io/ioutil"
 	"sync"
 
+	"github.com/dchest/blake2b"
 	"github.com/fatih/structs"
 	"github.com/inconshreveable/log15"
 	"github.com/leeola/errors"
@@ -189,7 +191,7 @@ func (l *Fixity) WriteRequest(req *fixity.WriteRequest) (fixity.Content, error) 
 		return fixity.Content{}, err
 	}
 
-	cHashes, totalSize, err := WriteChunker(l.store, chunker)
+	cHashes, totalSize, checksum, err := WriteChunker(l.store, chunker)
 	if err != nil {
 		return fixity.Content{}, err
 	}
@@ -197,6 +199,7 @@ func (l *Fixity) WriteRequest(req *fixity.WriteRequest) (fixity.Content, error) 
 	blob := fixity.Blob{
 		ChunkHashes:      cHashes,
 		Size:             totalSize,
+		Checksum:         checksum,
 		AverageChunkSize: req.AverageChunkSize,
 	}
 
@@ -308,13 +311,15 @@ func ReadAndUnmarshalWithBytes(s fixity.Store, h string, v interface{}) ([]byte,
 	return b, nil
 }
 
-func WriteChunker(s fixity.Store, r fixity.Chunker) ([]string, int64, error) {
+func WriteChunker(s fixity.Store, r fixity.Chunker) ([]string, int64, string, error) {
+	hasher := blake2b.New256()
+
 	var totalSize int64
 	var hashes []string
 	for {
 		c, err := r.Chunk()
 		if err != nil && err != io.EOF {
-			return nil, 0, err
+			return nil, 0, "", err
 		}
 
 		totalSize += c.Size
@@ -323,11 +328,17 @@ func WriteChunker(s fixity.Store, r fixity.Chunker) ([]string, int64, error) {
 			break
 		}
 
+		if _, err := hasher.Write(c.ChunkBytes); err != nil {
+			return nil, 0, "", err
+		}
+
 		h, err := MarshalAndWrite(s, c)
 		if err != nil {
-			return nil, 0, err
+			return nil, 0, "", err
 		}
 		hashes = append(hashes, h)
 	}
-	return hashes, totalSize, nil
+
+	hash := hex.EncodeToString(hasher.Sum(nil)[:])
+	return hashes, totalSize, hash, nil
 }

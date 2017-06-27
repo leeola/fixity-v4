@@ -228,6 +228,15 @@ type Blob struct {
 	// Size is the total bytes for the blob.
 	Size int64 `json:"size,omitempty"`
 
+	// Checksum of the blobs real bytes, ie not including the data structure.
+	//
+	// This is not a content address in Fixity! This serves to help verify
+	// the written data and should be hex encoded for common CLI usage.
+	//
+	// The underlying hashing function is up to the store, but usually is the
+	// same as what the store uses to hash the content addresses.
+	Checksum string `json:"checksum,omitempty"`
+
 	// ChunkSize is the average bytes each chunk is aimed to be.
 	//
 	// Chunks are separated by Cotent Defined Chunks (CDC) and this value
