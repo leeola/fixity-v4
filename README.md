@@ -1,28 +1,24 @@
 
-# Fixity (prototype)
+# Fixity (unstable)
 
 _fixity: the quality of being incapable of mutation; immutability_
 
 Fixity is an experimental immutable personal data store.
 
-This is a highly experimental pet project. It will not be performant,
-it will not be efficient. Usage of Fixity to store data is not recommended
-until the API and json formats have been finalized. **Do not use currently.**
-
+This is a highly experimental pet project. API and Json formats are not
+yet final.
 
 ## Project Goals
 
 With much inspiration from [Camlistore](https://camlistore.org),
 Fixity aims to be:
 
-- Low maintenance, small in scope. Both for Fixity dev(s) and users.
-- Easy to migrate away from. The data format isn't binary, it's just Json.
-- Append only, versioned and easy to reason about.
-- Developer friendly. Fixity has a friendly Go and HTTP API.
-- A simple schemaless database. Good for wikis, bookmarks, notes, clipboards, etc.
-- Distributed. Each node has access to the sum of all connected nodes data.
-- Fully usable if nodes are offline. Nodes read whatever data they have access to.
-- Able to deduplicate binary data.
+- Low maintenance, small in scope.
+- Versioned and content addressable.
+- Per-id customizable deduplication for deduping of large and small data.
+- A simple schemaless database.
+- [Distributed](#distributed), and [eventually consistent](#eventually-consistent).
+- Fully usable if any or all nodes are disconnected.
 
 
 ## Motivation
@@ -41,13 +37,48 @@ Along with my needs for file storage, i wanted to store emails, chatlogs,
 wiki pages, home inventory, etc. I wanted a database for my life, schemaless
 and easy to manage.
 
-Fixity is my attempt to implement my desired features in one low maintenance
-package. Fixity should store data in a format that you can read with any
+Fixity is my attempt to implement my desired features in one package.
+Fixity should store data in a format that you can read with any
 text editor and write a program easily to extract, should you so feel the
 need to. It can be used as a simple schemaless database. See also:
 [Project Goals](#project-goals).
 
 
+## Distributed
+
+Fixity aims to connect all of your computers together, to provide
+seamless storage between computers similar to a NAS
+*(Network Attacked Storage)*. Unlike a NAS however, when a computer
+leaves the private network *(such as laptops leaving wifi)*,
+that disconnected computer should still be able to [write and read
+data](#eventually-consistent). There is no hot new tech here,
+Fixity is simply aimed so that laptops and phones can access all
+data of whatever other Fixity nodes are available at any given time.
+The distributed features here are small in scope, boring.
+
+Fixity's features focus on accessibility of data, and allowing data to be
+eventually consistent between nodes.
+For data safety and health, Fixity will focus on backing up data onto
+external hard drives, cloud storage, etc. It will not replicate data
+automatically to ensure data redundancy. Again, small scope.
+
+
+## Eventually Consistent
+
+Because Fixity expects nodes to go offline or go outside of firewalls,
+writing to offline nodes must eventually sync up to the network. This
+is achieved by writing to what Fixity calls a blockchain *ledger*. This
+has nothing to do with cryptocoin, but is a term used to convey how
+Fixity achieves consensus between out of sync nodes. If, for example,
+the same file is written on two disconnected nodes then when they eventually
+do connect they will compare blockchains and one will write it's changes to
+the other.
+
+Conflicts of data like this are automatically resolved. However, since no
+data is lost on this automatic resolution, the user is free to compare
+versions at any time and choose one over the other, or write new data with
+merged values, etc. No conflicts will ever prevent merging previously
+offline nodes.
 
 
 ## License
