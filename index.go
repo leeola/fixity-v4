@@ -48,12 +48,43 @@ type Field struct {
 	Options FieldOptions `json:"options,omitempty"`
 }
 
+func (a *Field) Equal(b Field) bool {
+	switch {
+	case a.Field != b.Field:
+		return false
+	case a.Value != b.Value:
+		return false
+	}
+	for aK, aV := range a.Options {
+		bV, ok := b.Options[aK]
+		if !ok {
+			return false
+		}
+		if aV != bV {
+			return false
+		}
+	}
+	return true
+}
+
 // Fields is a helper type for convenient mutation of a []Field.
 type Fields []Field
 
 // Append the given field to this slice.
 func (fs *Fields) Append(f Field) {
 	*fs = append(*fs, f)
+}
+
+func (a Fields) Equal(b Fields) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i, aF := range a {
+		if !aF.Equal(b[i]) {
+			return false
+		}
+	}
+	return true
 }
 
 // FieldUnmarshaller is responsible for unmarshalling fields from a []byte slice.

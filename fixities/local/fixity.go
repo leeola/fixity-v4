@@ -79,21 +79,21 @@ func New(c Config) (*Fixity, error) {
 
 // loadPreviousInfo is a helper to load the hash and the chunksize of the
 // previous content. Empty values are returned if no id is found.
-func (l *Fixity) loadPreviousInfo(id string) (string, uint64, error) {
+func (l *Fixity) loadPreviousInfo(id string) (fixity.Content, uint64, error) {
 	c, err := l.Read(id)
 	if err == fixity.ErrIdNotFound {
-		return "", 0, nil
+		return fixity.Content{}, 0, nil
 	}
 	if err != nil {
-		return "", 0, err
+		return fixity.Content{}, 0, err
 	}
 
 	b, err := c.Blob()
 	if err != nil {
-		return "", 0, err
+		return fixity.Content{}, 0, err
 	}
 
-	return c.Hash, b.AverageChunkSize, nil
+	return c, b.AverageChunkSize, nil
 }
 
 func (l *Fixity) Blob(h string) (io.ReadCloser, error) {
@@ -169,16 +169,16 @@ func (l *Fixity) WriteRequest(req *fixity.WriteRequest) (fixity.Content, error) 
 	defer req.Blob.Close()
 
 	averageChunkSize := req.AverageChunkSize
-	var previousContentHash string
+	var previousContent fixity.Content
 	if req.Id != "" {
 		l.idLock.Lock()
 		defer l.idLock.Unlock()
 
-		pch, acs, err := l.loadPreviousInfo(req.Id)
+		pc, acs, err := l.loadPreviousInfo(req.Id)
 		if err != nil {
 			return fixity.Content{}, err
 		}
-		previousContentHash = pch
+		previousContent = pc
 		averageChunkSize = acs
 	}
 
@@ -190,7 +190,6 @@ func (l *Fixity) WriteRequest(req *fixity.WriteRequest) (fixity.Content, error) 
 	if err != nil {
 		return fixity.Content{}, err
 	}
-
 	cHashes, totalSize, checksum, err := WriteChunker(l.store, chunker)
 	if err != nil {
 		return fixity.Content{}, err
@@ -200,7 +199,7 @@ func (l *Fixity) WriteRequest(req *fixity.WriteRequest) (fixity.Content, error) 
 		ChunkHashes:      cHashes,
 		Size:             totalSize,
 		Checksum:         checksum,
-		AverageChunkSize: req.AverageChunkSize,
+		AverageChunkSize: averageChunkSize,
 	}
 
 	blobHash, err := MarshalAndWrite(l.store, blob)
@@ -208,9 +207,29 @@ func (l *Fixity) WriteRequest(req *fixity.WriteRequest) (fixity.Content, error) 
 		return fixity.Content{}, err
 	}
 
+	// compare the values of content to ensure two identical contents don't
+	// write repeated values.
+	//
+	// We have to compare the values and not the content hash because
+	// Content.previousContentHash will cause new contents to always be
+	// different than previous contents. So we have to compare the values
+	// of Content.
+	if req.Id != "" && previousContent.Hash != "" {
+		// don't need to compare id, as they've already been compared by loading
+		// the old id.
+		sameBlob := previousContent.BlobHash == blobHash
+		sameFields := previousContent.IndexedFields.Equal(req.Fields)
+		if sameBlob && sameFields {
+			return previousContent, nil
+		}
+	}
+
+	// TODO(leeola): we should probably be copying req.Id and req.Fields to
+	// ensure no modifications after we've calculated things like previousContent
+	// and fields equality
 	content := fixity.Content{
 		Id:                  req.Id,
-		PreviousContentHash: previousContentHash,
+		PreviousContentHash: previousContent.Hash,
 		BlobHash:            blobHash,
 		IndexedFields:       req.Fields,
 	}
