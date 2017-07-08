@@ -276,7 +276,7 @@ func WriteReader(s fixity.Store, r io.Reader) (string, error) {
 		return "", errors.Wrap(err, "failed to readall")
 	}
 
-	h, err := s.Write(b)
+	h, _, err := s.Write(b)
 	return h, errors.Wrap(err, "store failed to write")
 }
 
@@ -294,7 +294,7 @@ func MarshalAndWrite(s fixity.Store, v interface{}) (string, error) {
 		return "", errors.Stack(err)
 	}
 
-	h, err := s.Write(b)
+	h, _, err := s.Write(b)
 	if err != nil {
 		return "", errors.Stack(err)
 	}
