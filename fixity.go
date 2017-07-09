@@ -108,6 +108,8 @@ type Blockchain interface {
 	AppendContent(Content) (Block, error)
 
 	// Head returns the latest block in the blockchain.
+	//
+	// Head must return ErrNoPrev if the blockchain is empty.
 	Head() (Block, error)
 
 	// DeleteContent writes a delete block  blocks with the given content.

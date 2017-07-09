@@ -100,7 +100,7 @@ func (b *boltDb) GetBlockHead() (string, error) {
 	}
 
 	if h == "" {
-		return "", fixity.ErrEmptyBlockchain
+		return "", fixity.ErrNoMore
 	}
 
 	return h, nil
@@ -145,7 +145,7 @@ func (m *memoryDb) SetIdHash(id, hash string) error {
 
 func (m *memoryDb) GetBlockHead() (string, error) {
 	if m.head == "" {
-		return "", fixity.ErrEmptyBlockchain
+		return "", fixity.ErrNoMore
 	}
 	return m.head, nil
 }

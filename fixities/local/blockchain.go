@@ -45,7 +45,7 @@ func (bc *Blockchain) writeBlock(cb *fixity.ContentBlock, db *fixity.DeleteBlock
 	defer bc.lock.Unlock()
 
 	pb, err := bc.getHead()
-	if err != nil && err != fixity.ErrEmptyBlockchain {
+	if err != nil && err != fixity.ErrNoMore {
 		return fixity.Block{}, err
 	}
 

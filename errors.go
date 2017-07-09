@@ -3,11 +3,6 @@ package fixity
 import "github.com/leeola/errors"
 
 var (
-	// ErrEmptyBlockchain is to be returned when no blockchain is available.
-	//
-	// Such as when a Blockchain has not yet been written to.
-	ErrEmptyBlockchain = errors.New("empty blockchain")
-
 	// ErrIdNotFound is returned when an id cannot be found.
 	ErrIdNotFound = errors.New("id not found")
 
