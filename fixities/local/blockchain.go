@@ -45,7 +45,7 @@ func (bc *Blockchain) writeBlock(cb *fixity.ContentBlock, db *fixity.DeleteBlock
 	defer bc.lock.Unlock()
 
 	pb, err := bc.getHead()
-	if err != nil && err != fixity.ErrNoMore {
+	if err != nil && err != fixity.ErrNoPrev {
 		return fixity.Block{}, err
 	}
 
@@ -89,7 +89,7 @@ func (bc *Blockchain) DeleteContent(cs ...fixity.Content) (fixity.Block, error) 
 	}
 
 	var blocksToBeDeleted []string
-	for b, err := bc.Head(); err != fixity.ErrNoMore; b, err = b.Previous() {
+	for b, err := bc.Head(); err != fixity.ErrNoPrev; b, err = b.Previous() {
 		if err != nil {
 			return fixity.Block{}, err
 		}

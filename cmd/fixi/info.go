@@ -39,7 +39,7 @@ func InfoCmd(ctx *cli.Context) error {
 			color.YellowString(strconv.Itoa(int(blob.AverageChunkSize))),
 		)
 	}
-	if err != nil && err != fixity.ErrNoMore {
+	if err != nil && err != fixity.ErrNoPrev {
 		return err
 	}
 

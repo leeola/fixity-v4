@@ -297,7 +297,7 @@ type Chunk struct {
 
 func (b *Block) Previous() (Block, error) {
 	if b.PreviousBlockHash == "" {
-		return Block{}, ErrNoMore
+		return Block{}, ErrNoPrev
 	}
 
 	if b.Store == nil {
@@ -359,7 +359,7 @@ func (c *Content) Blob() (Blob, error) {
 
 func (c *Content) Previous() (Content, error) {
 	if c.PreviousContentHash == "" {
-		return Content{}, ErrNoMore
+		return Content{}, ErrNoPrev
 	}
 
 	if c.Store == nil {

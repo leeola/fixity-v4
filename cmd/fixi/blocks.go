@@ -27,7 +27,7 @@ func BlocksCmd(ctx *cli.Context) error {
 	// TODO(leeola): write a utility to make this Head() and Loop code not
 	// duplicated, in a *nice* API.
 	b, err := fixi.Blockchain().Head()
-	if err == fixity.ErrEmptyBlockchain {
+	if err == fixity.ErrNoPrev {
 		return nil
 	}
 	if err != nil {

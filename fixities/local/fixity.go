@@ -93,7 +93,7 @@ func (f *Fixity) isDuplicateBlob(blobHash string) (bool, fixity.Content, error) 
 			return true, c, nil
 		}
 	}
-	if err != nil && err != fixity.ErrNoMore {
+	if err != nil && err != fixity.ErrNoPrev {
 		return false, fixity.Content{}, err
 	}
 
