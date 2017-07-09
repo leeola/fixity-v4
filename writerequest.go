@@ -55,6 +55,15 @@ type WriteRequest struct {
 	// Note that the algorithm is decided by the fixity.Store.
 	AverageChunkSize uint64 `json:"averageChunkSize,omitempty"`
 
+	// IgnoreDuplicateBlob will ignore this write if the blob exists.
+	//
+	// An existing blob is determined to be one which *exists* on the chain,
+	// not specifically if it is the latest Content for it's id.
+	//
+	// This flag is used to ensure data exists on the blockchain, without
+	// causing any form of versioning contention.
+	IgnoreDuplicateBlob bool
+
 	// Fields are the indexable fields that the data will be indexed with.
 	//
 	// This is often metadata like filename, unix permissions, etc. It can
