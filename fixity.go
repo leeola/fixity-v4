@@ -38,6 +38,19 @@ type Fixity interface {
 	// collector and is a slow process.
 	Delete(id string) error
 
+	// // ChecksumExists checks if the given checksum is in the Fixity store.
+	// //
+	// // This method exists to allow callers to avoid uploading data if it exists
+	// // in the store.
+	// //
+	// // Note that this is the *checksum*, not the hash. Fixity hashes are hashes
+	// // of the json data structure which contains the uploaded data. The checksum
+	// // is the hash of *just* the uploaded data.
+	// //
+	// // The checksum is used so the caller does not have to split the data and
+	// // construct chunks/blobs in the same fashion that Fixity did.
+	// ChecksumExists(checksum string) (bool, error)
+
 	// Read the latest Content with the given id.
 	Read(id string) (Content, error)
 
@@ -211,7 +224,29 @@ type Content struct {
 	// Hash is the hash of the Content itself, provided by Fixity.
 	//
 	// This value is not stored.
+	//
+	// TODO(leeola): enable json marshalling of this value, but ensure that
+	// the writer zero values it before writing. This allows us to send the
+	// Content over http.
 	Hash string `json:"-"`
+
+	// Index of this Content relative to Head Content for this Id.
+	//
+	// Eg, of an id with 5 Contents, the latest has an index of 1. The oldest,
+	// and most outdated, has an index of 5. Calling Previous() on the latest
+	// Content will result in a Content with an index of 2 and so on.
+	//
+	// Note that the Index starts at 1, not 0. This is because there are times
+	// when an index cannot be known. A common example of this is when content
+	// is loaded from a block and not in order from the Head Content. The zero
+	// value conveys that the index of this content for it's Id is not known.
+	//
+	// This value is not stored.
+	//
+	// TODO(leeola): enable json marshalling of this value, but ensure that
+	// the writer zero values it before writing. This allows us to send the
+	// Content over http.
+	Index int `json:"-"`
 
 	// Store allows block method(s) to load previous content.
 	//

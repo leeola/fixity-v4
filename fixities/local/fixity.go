@@ -77,27 +77,19 @@ func New(c Config) (*Fixity, error) {
 	}, nil
 }
 
-func (f *Fixity) isDuplicateBlob(blobHash string) (bool, fixity.Content, error) {
-	b, err := f.Blockchain().Head()
-	for ; err == nil; b, err = b.Previous() {
-		if b.ContentBlock == nil {
-			continue
-		}
-
-		c, err := f.ReadHash(b.ContentBlock.Hash)
-		if err != nil {
-			return false, fixity.Content{}, err
-		}
-
+func (f *Fixity) isDuplicateBlob(headC fixity.Content, blobHash string) (bool, error) {
+	var err error
+	c := headC
+	for ; err == nil; c, err = c.Previous() {
 		if c.BlobHash == blobHash {
-			return true, c, nil
+			return true, nil
 		}
 	}
 	if err != nil && err != fixity.ErrNoPrev {
-		return false, fixity.Content{}, err
+		return false, err
 	}
 
-	return false, fixity.Content{}, nil
+	return false, nil
 }
 
 // loadPreviousInfo is a helper to load the hash and the chunksize of the
@@ -231,13 +223,13 @@ func (l *Fixity) WriteRequest(req *fixity.WriteRequest) (fixity.Content, error) 
 	}
 
 	if req.IgnoreDuplicateBlob {
-		isDuplicate, content, err := l.isDuplicateBlob(blobHash)
-		if err != nil {
+		isDuplicate, err := l.isDuplicateBlob(previousContent, blobHash)
+		if err != nil && err != fixity.ErrNotFound {
 			return fixity.Content{}, err
 		}
 
 		if isDuplicate {
-			return content, nil
+			return previousContent, nil
 		}
 	}
 
