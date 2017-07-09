@@ -81,6 +81,20 @@ merged values, etc. No conflicts will ever prevent merging previously
 offline nodes.
 
 
+## Important Todos
+
+This project is in very early development, so to summarize obvious things it
+may be lacking the following items are notable unfinished TODOs:
+
+- [ ] Distributed node implementation. *(ie, Fixity is not distributed yet)*
+- [ ] Build system with multi-os released binaries.
+- [ ] Continuous integration.
+- [ ] Finish [Snail indexer](https://github.com/leeola/fixity/tree/master/indexes/snail),
+  or find a schemaless indexer to replace Snail.
+- [ ] Node Auth implementation/decisions. To ensure writes only from desired users.
+- [ ] Write signing. To identify the users who wrote the block/content.
+
+
 ## License
 
 MIT
