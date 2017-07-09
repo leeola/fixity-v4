@@ -4,23 +4,8 @@ import (
 	"testing"
 
 	"github.com/leeola/fixity"
-	"github.com/leeola/fixity/indexes/nopindex"
-	"github.com/leeola/fixity/stores/memory"
 	. "github.com/smartystreets/goconvey/convey"
 )
-
-func mustTestLocal() fixity.Fixity {
-	c := Config{
-		Index: nopindex.New(),
-		Store: memory.New(),
-		Db:    newMemoryDb(),
-	}
-	f, err := New(c)
-	if err != nil {
-		panic(err)
-	}
-	return f
-}
 
 func TestBlockchainAppendContent(t *testing.T) {
 	Convey("Scenario: Appending content to the blockchain", t, func() {
