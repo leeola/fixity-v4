@@ -15,6 +15,9 @@ const (
 )
 
 func BlocksCmd(ctx *cli.Context) error {
+	showBlockHashes := ctx.Bool("block-hashes")
+	showContentHashes := ctx.Bool("content-hashes")
+
 	fixi, err := loadFixity(ctx)
 	if err != nil {
 		return err
@@ -27,42 +30,10 @@ func BlocksCmd(ctx *cli.Context) error {
 	// TODO(leeola): write a utility to make this Head() and Loop code not
 	// duplicated, in a *nice* API.
 	b, err := fixi.Blockchain().Head()
-	if err == fixity.ErrNoPrev {
-		return nil
-	}
-	if err != nil {
-		return err
-	}
+	for i := 0; i < ctx.Int("limit")-1 && err == nil; b, err = b.Previous() {
+		i++
 
-	var c fixity.Content
-	if blockType(b) == "content" {
-		content, err := b.Content()
-		if err != nil {
-			return err
-		}
-		c = content
-	}
-
-	showBlockHashes := ctx.Bool("block-hashes")
-	showContentHashes := ctx.Bool("content-hashes")
-
-	bHash := sumHash(b.Hash, showBlockHashes)
-	cHash := sumHash(c.Hash, showContentHashes)
-
-	w.Println(" ",
-		color.GreenString(strconv.Itoa(b.Block)),
-		color.GreenString(bHash),
-		color.GreenString(blockType(b)),
-		color.YellowString(cHash),
-		color.YellowString(c.Id),
-	)
-
-	for i := 0; i < ctx.Int("limit")-1 && b.PreviousBlockHash != ""; i++ {
-		b, err = b.Previous()
-		if err != nil {
-			return err
-		}
-
+		var c fixity.Content
 		if blockType(b) == "content" {
 			c, err = b.Content()
 			if err != nil {
@@ -80,6 +51,9 @@ func BlocksCmd(ctx *cli.Context) error {
 			color.YellowString(cHash),
 			color.YellowString(c.Id),
 		)
+	}
+	if err != nil && err != fixity.ErrNoPrev {
+		return err
 	}
 
 	return nil
