@@ -77,6 +77,29 @@ func New(c Config) (*Fixity, error) {
 	}, nil
 }
 
+func (f *Fixity) isDuplicateBlob(blobHash string) (bool, fixity.Content, error) {
+	b, err := f.Blockchain().Head()
+	for ; err == nil; b, err = b.Previous() {
+		if b.ContentBlock == nil {
+			continue
+		}
+
+		c, err := f.ReadHash(b.ContentBlock.Hash)
+		if err != nil {
+			return false, fixity.Content{}, err
+		}
+
+		if c.BlobHash == blobHash {
+			return true, c, nil
+		}
+	}
+	if err != nil && err != fixity.ErrNoMore && err != fixity.ErrEmptyBlockchain {
+		return false, fixity.Content{}, err
+	}
+
+	return false, fixity.Content{}, nil
+}
+
 // loadPreviousInfo is a helper to load the hash and the chunksize of the
 // previous content. Empty values are returned if no id is found.
 func (l *Fixity) loadPreviousInfo(id string) (fixity.Content, uint64, error) {
@@ -205,6 +228,17 @@ func (l *Fixity) WriteRequest(req *fixity.WriteRequest) (fixity.Content, error) 
 	blobHash, err := MarshalAndWrite(l.store, blob)
 	if err != nil {
 		return fixity.Content{}, err
+	}
+
+	if req.IgnoreDuplicateBlob {
+		isDuplicate, content, err := l.isDuplicateBlob(blobHash)
+		if err != nil {
+			return fixity.Content{}, err
+		}
+
+		if isDuplicate {
+			return content, nil
+		}
 	}
 
 	// compare the values of content to ensure two identical contents don't

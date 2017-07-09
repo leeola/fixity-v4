@@ -39,11 +39,14 @@ func TestFixityIgnoreDuplicateBlob(t *testing.T) {
 				})
 			})
 		})
+
 		Convey("Given the blob existed previously", func() {
 			previousContent, err := f.WriteRequest(req)
 			So(err, ShouldBeNil)
 
 			Convey("When the written", func() {
+				// restore the blob since it was already read from
+				req.Blob = ioutil.NopCloser(strings.NewReader("bar"))
 				c, err := f.WriteRequest(req)
 
 				Convey("Then it should not error", func() {
