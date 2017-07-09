@@ -1,8 +1,8 @@
 package disk
 
 import (
-	"bytes"
 	"io"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -80,19 +80,18 @@ func (s *Disk) Hash(b []byte) string {
 	return base58.Encode(hB[:])
 }
 
-func (s *Disk) Write(b []byte) (string, bool, error) {
+func (s *Disk) Write(b []byte) (string, error) {
 	h := s.Hash(b)
-	created, err := s.writeHash(h, b)
-	if err != nil {
-		return "", created, err
+	if err := s.writeHash(h, b); err != nil {
+		return "", err
 	}
-	return h, created, nil
+	return h, nil
 }
 
-func (s *Disk) WriteHash(h string, b []byte) (bool, error) {
+func (s *Disk) WriteHash(h string, b []byte) error {
 	expectedH := s.Hash(b)
 	if h != expectedH {
-		return false, fixity.ErrHashNotMatchBytes
+		return fixity.ErrHashNotMatchBytes
 	}
 	return s.writeHash(h, b)
 }
@@ -100,45 +99,15 @@ func (s *Disk) WriteHash(h string, b []byte) (bool, error) {
 // writeHash is a trusted implementation of writeHash that does *not* verify the hash
 //
 // Verification of the content *must be done* before using this method to write.
-func (s *Disk) writeHash(h string, b []byte) (bool, error) {
+func (s *Disk) writeHash(h string, b []byte) error {
 	p := s.pathHash(h)
 
 	if err := os.MkdirAll(filepath.Dir(p), 0755); err != nil {
-		return false, err
+		return err
 	}
 
-	// Create or Truncate the file.
-	//
-	// By separating the truncate call, it allows us to know if the file was
-	// created or not. We truncate to ensure we always write the requested data,
-	// to prevent possible partial wrties and "bad data".
-	f, err := os.OpenFile(p, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0644)
-	if err != nil && !os.IsExist(err) {
-		return false, err
-	}
-	// deferring the close is done below the truncate call.
-
-	created := !os.IsExist(err)
-	if !created {
-		file, err := os.OpenFile(p, os.O_TRUNC|os.O_WRONLY, 0644)
-		if err != nil {
-			return false, err
-		}
-		f = file
-	}
-	defer f.Close()
-
-	if _, err := io.Copy(f, bytes.NewReader(b)); err != nil {
-		return false, err
-	}
-
-	// Call Sync to ensure data wrote successfully.
-	// Reference: https://joeshaw.org/dont-defer-close-on-writable-files/
-	if err := f.Sync(); err != nil {
-		return false, err
-	}
-
-	return created, nil
+	err := ioutil.WriteFile(p, b, 0644)
+	return errors.Wrap(err, "failed to write to disk")
 }
 
 func (s *Disk) List() (<-chan string, error) {

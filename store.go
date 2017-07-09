@@ -17,24 +17,14 @@ type Store interface {
 
 	// Write raw data to the store.
 	//
-	// The created return value allows the caller to know if the written content
-	// was already in the store or not. Pre-existing content can signal whether
-	// or not a Fixity block is to be created or not.
-	//
 	// Return the hash of the written data.
-	Write([]byte) (hash string, created bool, err error)
+	Write([]byte) (string, error)
 
 	// Write the given data to the store only if it matches the given hash.
 	//
-	// This is used for Node->Node or Store->Store writes, and ensures a write
-	// is only ever done if the hash matches.
-	//
-	// Like Write(), WriteHash() returns a bool indicating whether the write was
-	// created or not.
-	//
-	// Note that this must compute the hash to ensure the bytes match the given
+	// Note that this must compute the hash to ensure the bytes match the given hex
 	// hash.
-	WriteHash(string, []byte) (created bool, err error)
+	WriteHash(string, []byte) error
 
 	// List records in the store.
 	//
@@ -67,7 +57,7 @@ func writeReader(s Store, r io.Reader) (string, error) {
 		return "", errors.Wrap(err, "failed to readall")
 	}
 
-	h, _, err := s.Write(b)
+	h, err := s.Write(b)
 	return h, errors.Wrap(err, "store failed to write")
 }
 
@@ -84,7 +74,7 @@ func marshalAndWrite(s Store, v interface{}) (string, error) {
 		return "", errors.Stack(err)
 	}
 
-	h, _, err := s.Write(b)
+	h, err := s.Write(b)
 	if err != nil {
 		return "", errors.Stack(err)
 	}
