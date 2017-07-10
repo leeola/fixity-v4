@@ -94,6 +94,21 @@ func main() {
 			Action:    SearchCmd,
 		},
 		{
+			Name:  "sync",
+			Usage: "synchronize the given file or directory with the fixity store",
+			Flags: []cli.Flag{
+				cli.StringFlag{
+					Name:  "folder",
+					Usage: "the folder to store the file(s) under in fixity",
+				},
+				cli.BoolFlag{
+					Name:  "recursive, r",
+					Usage: "recursively sync files",
+				},
+			},
+			Action: SyncCmd,
+		},
+		{
 			Name:      "write",
 			Aliases:   []string{"w"},
 			ArgsUsage: "FILE",
