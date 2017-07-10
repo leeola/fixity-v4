@@ -168,7 +168,15 @@ func (l *Fixity) Read(id string) (fixity.Content, error) {
 		return fixity.Content{}, err
 	}
 
-	return l.ReadHash(h)
+	c, err := l.ReadHash(h)
+	if err != nil {
+		return fixity.Content{}, err
+	}
+
+	// Since this is the latest known id for the given hash, give it a 1 index.
+	c.Index = 1
+
+	return c, nil
 }
 
 func (l *Fixity) Write(id string, r io.Reader, f ...fixity.Field) (fixity.Content, error) {
@@ -266,6 +274,7 @@ func (l *Fixity) WriteRequest(req *fixity.WriteRequest) (fixity.Content, error) 
 	}
 	content.Store = l.store
 	content.Hash = cHash
+	content.Index = 1
 
 	// TODO(leeola): return the block instead of hashes directly.
 	if _, err := l.Blockchain().AppendContent(content); err != nil {

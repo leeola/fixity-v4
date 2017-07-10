@@ -66,6 +66,15 @@ type Fixity interface {
 	Write(id string, r io.Reader, f ...Field) (Content, error)
 
 	// WriteRequest writes the given blob to Fixity with the associated settings.
+	//
+	// The returned Content will either be the newly written Content, or if the
+	// write was ignored due to WriteRequest settings, Content will be whatever
+	// Content matches the settings provided.
+	//
+	// For example, if IgnoreDuplicateBlob is provided, the caller must return
+	// the Content that matches the Blob that would have been written.
+	//
+	// See WriteRequest docstring for documentation on expected behavior.
 	WriteRequest(*WriteRequest) (Content, error)
 }
 
@@ -408,6 +417,10 @@ func (c *Content) Previous() (Content, error) {
 	}
 	pc.Hash = c.PreviousContentHash
 	pc.Store = c.Store
+
+	if c.Index != 0 {
+		pc.Index = c.Index + 1
+	}
 
 	return pc, nil
 }
