@@ -3,6 +3,9 @@ package fixity
 import "github.com/leeola/errors"
 
 var (
+	// ErrNotFound is returned when an id, hash, etc is not found.
+	ErrNotFound = errors.New("not found")
+
 	// ErrIdNotFound is returned when an id cannot be found.
 	ErrIdNotFound = errors.New("id not found")
 
