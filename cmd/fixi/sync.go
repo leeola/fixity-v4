@@ -103,5 +103,5 @@ func SyncCmd(ctx *cli.Context) error {
 
 	// return sync.Sync()
 
-	return nil
+	return errors.New("not implemented")
 }
