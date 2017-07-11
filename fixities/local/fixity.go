@@ -77,19 +77,19 @@ func New(c Config) (*Fixity, error) {
 	}, nil
 }
 
-func (f *Fixity) isDuplicateBlob(headC fixity.Content, blobHash string) (bool, error) {
+func (f *Fixity) isDuplicateBlob(headC fixity.Content, blobHash string) (bool, fixity.Content, error) {
 	var err error
 	c := headC
 	for ; err == nil; c, err = c.Previous() {
 		if c.BlobHash == blobHash {
-			return true, nil
+			return true, c, nil
 		}
 	}
 	if err != nil && err != fixity.ErrNoPrev {
-		return false, err
+		return false, fixity.Content{}, err
 	}
 
-	return false, nil
+	return false, fixity.Content{}, nil
 }
 
 // loadPreviousInfo is a helper to load the hash and the chunksize of the
@@ -231,13 +231,13 @@ func (l *Fixity) WriteRequest(req *fixity.WriteRequest) (fixity.Content, error) 
 	}
 
 	if req.IgnoreDuplicateBlob {
-		isDuplicate, err := l.isDuplicateBlob(previousContent, blobHash)
+		isDuplicate, duplicate, err := l.isDuplicateBlob(previousContent, blobHash)
 		if err != nil && err != fixity.ErrNotFound {
 			return fixity.Content{}, err
 		}
 
 		if isDuplicate {
-			return previousContent, nil
+			return duplicate, nil
 		}
 	}
 
