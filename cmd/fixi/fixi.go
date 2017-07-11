@@ -97,9 +97,29 @@ func main() {
 			Name:  "sync",
 			Usage: "synchronize the given file or directory with the fixity store",
 			Flags: []cli.Flag{
+				cli.BoolFlag{
+					Name:  "cli",
+					Usage: "upload from cli args",
+				},
+				cli.StringFlag{
+					Name:  "id",
+					Usage: "manually specify the id. required if using cli or stdin",
+				},
 				cli.StringFlag{
 					Name:  "folder",
 					Usage: "the folder to store the file(s) under in fixity",
+				},
+				cli.StringSliceFlag{
+					Name:  "index",
+					Usage: "a field or field=value to index",
+				},
+				cli.StringSliceFlag{
+					Name:  "fts",
+					Usage: "a field or field=value to index with full text search",
+				},
+				cli.BoolFlag{
+					Name:  "stdin",
+					Usage: "upload from stdin",
 				},
 				cli.BoolFlag{
 					Name:  "recursive, r",
