@@ -9,6 +9,11 @@ import (
 	"github.com/leeola/fixity"
 )
 
+type Iter interface {
+	Next() (iterHasValue bool)
+	Value() (c fixity.Content, err error)
+}
+
 type Config struct {
 	Path      string
 	Folder    string
@@ -19,7 +24,15 @@ type Config struct {
 type Sync struct {
 	config Config
 	fixi   fixity.Fixity
-	c      chan string
+
+	ch  chan walkResult
+	c   fixity.Content
+	err error
+}
+
+type walkResult struct {
+	Path string
+	Err  error
 }
 
 func New(c Config) (*Sync, error) {
@@ -32,7 +45,14 @@ func New(c Config) (*Sync, error) {
 	}
 
 	if c.Folder == "" {
-		c.Folder = filepath.Dir(c.Path)
+		if folder := filepath.Base(filepath.Dir(c.Path)); folder != "." {
+			c.Folder = folder
+		}
+	}
+
+	// enforcing relative folders will allow exporting to be a bit easier/safer.
+	if filepath.IsAbs(c.Folder) {
+		return nil, errors.New("folder must be relative")
 	}
 
 	if c.Folder == "" {
@@ -45,28 +65,64 @@ func New(c Config) (*Sync, error) {
 	}, nil
 }
 
-func (s *Sync) Sync() error {
-	defer func() {
-		if s.c != nil {
-			close(s.c)
-			s.c = nil
-		}
-	}()
-
-	fi, err := os.Stat(s.config.Path)
-	if err != nil {
-		return err
-	}
-
-	if fi.IsDir() {
-		return s.syncDir(s.config.Path)
+func (s *Sync) walk() {
+	if s.config.Recursive {
+		s.walkRecursive()
 	} else {
-		return s.syncFile(s.config.Path)
+		s.walkFlat()
 	}
 }
 
-func (s *Sync) syncDir(path string) error {
-	return errors.New("not implemented")
+func (s *Sync) walkFlat() {
+	println("walkFlat not implemented")
+	close(s.ch)
+}
+
+func (s *Sync) walkRecursive() {
+	err := filepath.Walk(s.config.Path, func(path string, fi os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if fi.IsDir() {
+			return nil
+		}
+
+		s.ch <- walkResult{Path: path}
+
+		return nil
+	})
+	if err != nil {
+		s.ch <- walkResult{Err: err}
+	}
+	close(s.ch)
+}
+
+func (s *Sync) Next() bool {
+	if s.ch == nil {
+		s.ch = make(chan walkResult)
+		go s.walk()
+	}
+
+	walkResult, ok := <-s.ch
+	if !ok {
+		return false
+	}
+
+	if walkResult.Err != nil {
+		s.c = fixity.Content{}
+		s.err = walkResult.Err
+		// return true because there is an error that the caller
+		// should grab via .Value()
+		return true
+	}
+
+	s.c, s.err = s.syncFile(walkResult.Path)
+	return true
+}
+
+func (s *Sync) Value() (fixity.Content, error) {
+	return s.c, s.err
 }
 
 func (s *Sync) replaceFile(path string, c fixity.Content) error {
@@ -91,45 +147,33 @@ func (s *Sync) replaceFile(path string, c fixity.Content) error {
 	return f.Sync()
 }
 
-func (s *Sync) syncFile(path string) error {
-	// update the update chan with the latest file sync'd
-	defer s.update(path)
-
+func (s *Sync) syncFile(path string) (fixity.Content, error) {
 	c, err := s.uploadFile(s.config.Path)
 	if err != nil {
-		return err
+		return fixity.Content{}, err
 	}
 
 	switch c.Index {
 	case 1:
 		// if the index is 1, this content was appended and was not duplicate.
 		// Syncing back to the filesystem is not needed, so append it.
-		return nil
+		return c, nil
 	case 0:
 		// if the index is 0, we cannot assert if the file needs to be sync'd
 		// or not. Return an error.
 		//
 		// This ensures in the event that we don't know the file order,
 		// we don't overwrite users files.
-		return errors.New("syncFile: unable to sync, unknown Content index of 0")
+		return fixity.Content{}, errors.New("syncFile: unable to sync, unknown Content index of 0")
 	}
 
 	// if the index was larger than 1, then it's either unknown or an older blob.
 	// In that case, read the file from fixity and write to disk.
-	return s.replaceFile(path, c)
-}
-
-func (s *Sync) update(path string) {
-	if s.c != nil {
-		s.c <- path
+	if err := s.replaceFile(path, c); err != nil {
+		return fixity.Content{}, err
 	}
-}
 
-func (s *Sync) Updates() <-chan string {
-	if s.c == nil {
-		s.c = make(chan string, 50)
-	}
-	return s.c
+	return c, nil
 }
 
 func (s *Sync) uploadFile(path string) (fixity.Content, error) {

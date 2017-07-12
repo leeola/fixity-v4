@@ -4,9 +4,12 @@ import (
 	"errors"
 	"io"
 	"os"
+	"strconv"
 	"strings"
 
+	"github.com/fatih/color"
 	"github.com/leeola/fixity/sync"
+	"github.com/leeola/fixity/util/dyntabwriter"
 	"github.com/urfave/cli"
 )
 
@@ -84,24 +87,34 @@ func SyncCmd(ctx *cli.Context) error {
 		return nil
 	}
 
-	// syncConf := sync.Config{
-	// 	Path:      path,
-	// 	Folder:    ctx.String("folder"),
-	// 	Recursive: ctx.Bool("recursive"),
-	// 	Fixity:    fixi,
-	// }
-	// sync, err := sync.New(syncConf)
-	// if err != nil {
-	// 	return err
-	// }
+	syncConf := sync.Config{
+		Path:      path,
+		Folder:    ctx.String("folder"),
+		Recursive: ctx.Bool("recursive"),
+		Fixity:    fixi,
+	}
+	s, err := sync.New(syncConf)
+	if err != nil {
+		return err
+	}
 
-	// go func() {
-	// 	for msg := range sync.Updates() {
-	// 		fmt.Println(msg)
-	// 	}
-	// }()
+	w := dyntabwriter.New(os.Stdout)
+	defer w.Flush()
+	w.Header(" ", "SYNCED", "HASH", "PATH")
 
-	// return sync.Sync()
+	for more := s.Next(); more; more = s.Next() {
+		// no printing needed, io writes to the given stdout.
+		c, err := s.Value()
+		if err != nil {
+			return err
+		}
 
-	return errors.New("not implemented")
+		w.Println(" ",
+			color.GreenString(strconv.FormatBool(c.Index > 1)),
+			color.GreenString(c.Hash),
+			color.GreenString(c.Id),
+		)
+	}
+
+	return nil
 }

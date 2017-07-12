@@ -7,11 +7,6 @@ import (
 	"github.com/leeola/fixity"
 )
 
-type Iter interface {
-	Next() (iterHasValue bool)
-	Value() (c fixity.Content, err error)
-}
-
 type SyncIo struct {
 	fixi   fixity.Fixity
 	id     string
