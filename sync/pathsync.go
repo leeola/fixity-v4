@@ -148,7 +148,7 @@ func (s *Sync) replaceFile(path string, c fixity.Content) error {
 }
 
 func (s *Sync) syncFile(path string) (fixity.Content, error) {
-	c, err := s.uploadFile(s.config.Path)
+	c, err := s.uploadFile(path)
 	if err != nil {
 		return fixity.Content{}, err
 	}
