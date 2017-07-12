@@ -44,9 +44,17 @@ func New(c Config) (*Sync, error) {
 		return nil, errors.New("missing reqired config: Fixity")
 	}
 
+	// if folder is still empty, check if the Path is a directory.
+	// this supports the `sync ./dir` usage.
 	if c.Folder == "" {
-		if folder := filepath.Base(filepath.Dir(c.Path)); folder != "." {
-			c.Folder = folder
+		fi, err := os.Stat(c.Path)
+		if err != nil {
+			return nil, err
+		}
+		if fi.IsDir() {
+			c.Folder = filepath.Base(c.Path)
+		} else if p := filepath.Base(filepath.Dir(c.Path)); p != "." {
+			c.Folder = p
 		}
 	}
 
@@ -125,7 +133,7 @@ func (s *Sync) Value() (fixity.Content, error) {
 	return s.c, s.err
 }
 
-func (s *Sync) replaceFile(path string, c fixity.Content) error {
+func (s *Sync) replaceFile(path string, outdated fixity.Content) error {
 	// using O_CREATE just to be safe, in case something external deletes the
 	// file, no reason we can't still create it.
 	f, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
@@ -133,6 +141,11 @@ func (s *Sync) replaceFile(path string, c fixity.Content) error {
 		return err
 	}
 	defer f.Close()
+
+	c, err := s.fixi.Read(outdated.Id)
+	if err != nil {
+		return err
+	}
 
 	rc, err := c.Read()
 	if err != nil {
@@ -183,8 +196,21 @@ func (s *Sync) uploadFile(path string) (fixity.Content, error) {
 	}
 	defer f.Close()
 
+	// by resolving the path relative to the folder, and then joining
+	// them, we ensure the id is always a subdirectory file of the c.Folder.
+	// While also ensuring we don't double up on the root folder.
+	// Eg:
+	//    sync foodir
+	// doesn't become
+	//    sync foodir/foodir/foofile
+	id, err := filepath.Rel(s.config.Folder, path)
+	if err != nil {
+		return fixity.Content{}, err
+	}
+	id = filepath.Join(s.config.Folder, id)
+
 	// TODO(leeola): include unix metadata
-	req := fixity.NewWrite(path, f)
+	req := fixity.NewWrite(id, f)
 	req.IgnoreDuplicateBlob = true
 
 	return s.fixi.WriteRequest(req)
