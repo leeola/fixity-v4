@@ -74,26 +74,17 @@ func New(c Config) (*Sync, error) {
 }
 
 func (s *Sync) walk() {
-	if s.config.Recursive {
-		s.walkRecursive()
-	} else {
-		s.walkFlat()
-	}
-}
-
-func (s *Sync) walkFlat() {
-	println("walkFlat not implemented")
-	close(s.ch)
-}
-
-func (s *Sync) walkRecursive() {
 	err := filepath.Walk(s.config.Path, func(path string, fi os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
 
 		if fi.IsDir() {
-			return nil
+			if s.config.Recursive || path == s.config.Path {
+				return nil
+			} else {
+				return filepath.SkipDir
+			}
 		}
 
 		s.ch <- walkResult{Path: path}
