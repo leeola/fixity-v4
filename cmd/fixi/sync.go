@@ -100,7 +100,7 @@ func SyncCmd(ctx *cli.Context) error {
 
 	w := dyntabwriter.New(os.Stdout)
 	defer w.Flush()
-	w.Header(" ", "UPDATED", "HASH", "PATH")
+	w.Header(" ", "UPDATED", "HASH", "ID")
 
 	for more := s.Next(); more; more = s.Next() {
 		// no printing needed, io writes to the given stdout.
