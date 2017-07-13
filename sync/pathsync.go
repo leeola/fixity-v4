@@ -25,6 +25,8 @@ type Sync struct {
 	config Config
 	fixi   fixity.Fixity
 
+	trimPath, path, folder string
+
 	ch  chan walkResult
 	c   fixity.Content
 	err error
@@ -44,43 +46,32 @@ func New(c Config) (*Sync, error) {
 		return nil, errors.New("missing reqired config: Fixity")
 	}
 
-	// if folder is still empty, check if the Path is a directory.
-	// this supports the `sync ./dir` usage.
-	if c.Folder == "" {
-		fi, err := os.Stat(c.Path)
-		if err != nil {
-			return nil, err
-		}
-		if fi.IsDir() {
-			c.Folder = filepath.Base(c.Path)
-		} else if p := filepath.Base(filepath.Dir(c.Path)); p != "." {
-			c.Folder = p
-		}
+	trimPath, path, folder, err := ResolveDirs(c.Path, c.Folder)
+	if err != nil {
+		return nil, err
 	}
 
-	// enforcing relative folders will allow exporting to be a bit easier/safer.
-	if filepath.IsAbs(c.Folder) {
-		return nil, errors.New("folder must be relative")
-	}
-
-	if c.Folder == "" {
+	if folder == "" {
 		return nil, errors.New("at least one folder is required")
 	}
 
 	return &Sync{
-		config: c,
-		fixi:   c.Fixity,
+		config:   c,
+		fixi:     c.Fixity,
+		trimPath: trimPath,
+		path:     path,
+		folder:   folder,
 	}, nil
 }
 
 func (s *Sync) walk() {
-	err := filepath.Walk(s.config.Path, func(path string, fi os.FileInfo, err error) error {
+	err := filepath.Walk(s.path, func(path string, fi os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
 
 		if fi.IsDir() {
-			if s.config.Recursive || path == s.config.Path {
+			if s.config.Recursive || path == s.path {
 				return nil
 			} else {
 				return filepath.SkipDir
@@ -187,22 +178,81 @@ func (s *Sync) uploadFile(path string) (fixity.Content, error) {
 	}
 	defer f.Close()
 
-	// by resolving the path relative to the folder, and then joining
+	// by resolving the path relative to the trimPath, and then joining
 	// them, we ensure the id is always a subdirectory file of the c.Folder.
 	// While also ensuring we don't double up on the root folder.
 	// Eg:
 	//    sync foodir
 	// doesn't become
 	//    sync foodir/foodir/foofile
-	id, err := filepath.Rel(s.config.Folder, path)
+	// which is
+	//    sync <providedDir>/<filePath>
+	//
+	// Much of the logic for this is provided via ResolveDirs
+	id, err := filepath.Rel(s.trimPath, path)
 	if err != nil {
 		return fixity.Content{}, err
 	}
-	id = filepath.Join(s.config.Folder, id)
+	id = filepath.Join(s.folder, id)
 
 	// TODO(leeola): include unix metadata
 	req := fixity.NewWrite(id, f)
 	req.IgnoreDuplicateBlob = true
 
 	return s.fixi.WriteRequest(req)
+}
+
+func ResolveDirs(p, explicitFolder string) (trimPath, path, folder string, err error) {
+	p, err = filepath.Abs(p)
+	if err != nil {
+		return "", "", "", err
+	}
+
+	fi, err := os.Stat(p)
+	if err != nil {
+		return "", "", "", err
+	}
+
+	var dirPath, fileName string
+	if fi.IsDir() {
+		dirPath = p
+	} else {
+		dirPath = filepath.Dir(p)
+		fileName = filepath.Base(p)
+	}
+
+	return resolveDirs(dirPath, fileName, explicitFolder)
+}
+
+func resolveDirs(dirPath, fileName, explicitFolder string) (trimPath, path, folder string, err error) {
+	if dirPath == "" {
+		return "", "", "", errors.New("resolveDirs: directory is required")
+	}
+	if !filepath.IsAbs(dirPath) {
+		return "", "", "", errors.New("resolveDirs: must provide absolute dir")
+	}
+	if filepath.IsAbs(explicitFolder) {
+		return "", "", "", errors.New("resolveDirs: folder cannot be absolute")
+	}
+
+	if explicitFolder != "" {
+		folder = explicitFolder
+	} else {
+		base := filepath.Base(dirPath)
+		if base == "/" {
+			return "", "", "", errors.New(
+				"resolveDirs: must provid folder if no available directory to assert folder from")
+		}
+		// this should never happen, but worth checking
+		if base == "." {
+			return "", "", "", errors.New("resolveDirs: base resolved to '.'")
+		}
+		folder = base
+	}
+
+	// TODO(leeola): figure out what to do if a sole dir is provided *and* the
+	// folder is provided. Eg, do we want to embed the dir in the folder? Or
+	// ignore it, and put the dir's files in the providedFolder? etc.
+
+	return dirPath, filepath.Join(dirPath, fileName), folder, nil
 }
