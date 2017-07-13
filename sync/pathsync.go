@@ -14,6 +14,8 @@ type Iter interface {
 	Value() (c fixity.Content, err error)
 }
 
+// TODO(leeola): provide a store path required field, to help ensure Fixity
+// can never upload it's own store and loop endlessly.
 type Config struct {
 	Path      string
 	Folder    string
