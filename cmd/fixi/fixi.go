@@ -105,6 +105,10 @@ func main() {
 					Name:  "id",
 					Usage: "manually specify the id. required if using cli or stdin",
 				},
+				cli.BoolFlag{
+					Name:  "dont-ignore-hidden",
+					Usage: "do not ignore hidden files",
+				},
 				cli.StringFlag{
 					Name:  "folder",
 					Usage: "the folder to store the file(s) under in fixity",

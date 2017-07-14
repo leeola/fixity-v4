@@ -2,9 +2,11 @@ package sync
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/leeola/fixity"
 )
@@ -17,10 +19,11 @@ type Iter interface {
 // TODO(leeola): provide a store path required field, to help ensure Fixity
 // can never upload it's own store and loop endlessly.
 type Config struct {
-	Path      string
-	Folder    string
-	Recursive bool
-	Fixity    fixity.Fixity
+	Path             string
+	Folder           string
+	Recursive        bool
+	DontIgnoreHidden bool
+	Fixity           fixity.Fixity
 }
 
 type Sync struct {
@@ -70,6 +73,22 @@ func (s *Sync) walk() {
 	err := filepath.Walk(s.path, func(path string, fi os.FileInfo, err error) error {
 		if err != nil {
 			return err
+		}
+
+		if !s.config.DontIgnoreHidden {
+			hidden, err := isHidden(fi)
+			if err != nil {
+				return err
+			}
+
+			if hidden {
+				fmt.Println("skipping hidden", fi.Name())
+				if fi.IsDir() {
+					return filepath.SkipDir
+				} else {
+					return nil
+				}
+			}
 		}
 
 		if fi.IsDir() {
@@ -257,4 +276,12 @@ func resolveDirs(dirPath, fileName, explicitFolder string) (trimPath, path, fold
 	// ignore it, and put the dir's files in the providedFolder? etc.
 
 	return dirPath, filepath.Join(dirPath, fileName), folder, nil
+}
+
+// TODO(leeola): make a windows version of this.
+func isHidden(fi os.FileInfo) (bool, error) {
+	if strings.HasPrefix(fi.Name(), ".") {
+		return true, nil
+	}
+	return false, nil
 }

@@ -88,10 +88,11 @@ func SyncCmd(ctx *cli.Context) error {
 	}
 
 	syncConf := sync.Config{
-		Path:      path,
-		Folder:    ctx.String("folder"),
-		Recursive: ctx.Bool("recursive"),
-		Fixity:    fixi,
+		Path:             path,
+		Folder:           ctx.String("folder"),
+		Recursive:        ctx.Bool("recursive"),
+		DontIgnoreHidden: ctx.Bool("dont-ignore-hidden"),
+		Fixity:           fixi,
 	}
 	s, err := sync.New(syncConf)
 	if err != nil {
