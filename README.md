@@ -90,7 +90,7 @@ may be lacking the following items are notable unfinished TODOs:
 - [ ] Build system with multi-os released binaries.
 - [ ] Continuous integration.
 - [ ] Finish [Snail indexer](https://github.com/leeola/fixity/tree/master/indexes/snail),
-  or find a schemaless indexer to replace Snail.
+  or preferably find a schemaless indexer to replace Snail.
 - [ ] Node Auth implementation/decisions. To ensure writes only from desired users.
 - [ ] Write signing. To identify the users who wrote the block/content.
 
