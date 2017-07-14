@@ -20,8 +20,19 @@ const averageBits = 14
 const minSizeMul = 0.9
 
 // restic chunker puts a hard cap on the max size so this should probably be
-// quite a bit larger than the desired max
-const maxSizeMul = 2.0
+// quite a bit larger than the desired max.
+//
+// This is currently set to 3x. So if restic is unable to find a chunk
+// boundry within 3x of the average chunk size, restic will force a
+// chunkboundry.
+// This prevents a boundry from never being found and a potential chunk
+// size of GiBs/etc having to be stored, sent, etc.
+//
+// Fixity expects reasonably small chunk sizes, but we forcing chunk sizes
+// is also very bad as it's not a deterministic boundry, as it would
+// depend on the last boundry. So, this value should strike a good
+// balance between those two issues.
+const maxSizeMul = 3.0
 
 type Chunker struct {
 	buf     []byte
