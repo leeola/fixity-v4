@@ -14,6 +14,7 @@ With much inspiration from [Camlistore](https://camlistore.org),
 Fixity aims to be:
 
 - Low maintenance, small in scope.
+- Easily sync files between computers.
 - Versioned and content addressable.
 - Per-id customizable deduplication for deduping of large and small data.
 - A simple schemaless database.
@@ -28,7 +29,7 @@ in a cloud-like, distributed manner. Eg, to access my files from
 any computer i own regardless of where i am. While open source
 solutions exist, many of them store files in such a way that
 they're centralized, requiring access through the firewall if you're
-outside of the network.
+outside of the network; I did not like this.
 Furthermore, they often store the data in a way that i felt obscured it.
 Meaning it was difficult for me to manage the data myself.. the underlying
 formats did not feel "open" to me.
