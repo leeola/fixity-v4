@@ -199,6 +199,11 @@ func (s *Sync) uploadFile(path string) (fixity.Content, error) {
 	}
 	defer f.Close()
 
+	fi, err := f.Stat()
+	if err != nil {
+		return fixity.Content{}, err
+	}
+
 	// by resolving the path relative to the trimPath, and then joining
 	// them, we ensure the id is always a subdirectory file of the c.Folder.
 	// While also ensuring we don't double up on the root folder.
@@ -219,6 +224,7 @@ func (s *Sync) uploadFile(path string) (fixity.Content, error) {
 	// TODO(leeola): include unix metadata
 	req := fixity.NewWrite(id, f)
 	req.IgnoreDuplicateBlob = true
+	req.SetChunkSizeFromFileInfo(fi)
 
 	return s.fixi.WriteRequest(req)
 }
