@@ -161,6 +161,9 @@ type Block struct {
 	// Each block will be incremented from the previous block.
 	Block int `json:"block"`
 
+	// BlockchainId is the name of the blockchain for this Block.
+	BlockchainId string `json:"blockchainId,omitempty"`
+
 	// PreviousBlockHash is the hash of the block that came before this.
 	//
 	// Note that the blockchain itself is mutable, such that the
@@ -170,6 +173,9 @@ type Block struct {
 	// See FixityBlockchain.SkipBlock for more information on block skipping
 	// and implications of that.
 	PreviousBlockHash string `json:"previousBlockHash"`
+
+	// PreviousMasterBlockHash is the hash of the previous master chain block.
+	PreviousMasterBlockHash string `json:"previousMasterBlockHash"`
 
 	// Content contains the content hashl for this content block.
 	ContentBlock *ContentBlock `json:"contentBlock,omitempty"`
