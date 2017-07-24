@@ -9,10 +9,10 @@ import (
 )
 
 type Store interface {
-	// Check if the given hash exists in the Store
+	// Exists checks if the given hash exists.
 	Exists(string) (bool, error)
 
-	// Takes a hex string of the content hash, and returns a reader for the content
+	// Read content of the given hash.
 	Read(string) (io.ReadCloser, error)
 
 	// Write raw data to the store.

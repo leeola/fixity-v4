@@ -51,6 +51,11 @@ type Blockchain interface {
 	// may not be progressed.
 	AppendContent(Content) (Block, error)
 
+	// FindSet(id string) (Block, error)
+
+	// FindContent returns the first block with the given Content id.
+	FindContent(id string) (Block, error)
+
 	// Head returns the latest block in the blockchain.
 	//
 	// Head must return ErrNoPrev if the blockchain is empty.
@@ -116,6 +121,8 @@ type Block struct {
 
 // ContentBlock provides information about content on the blockchain.
 type ContentBlock struct {
+	Id string `json:"id"`
+
 	// Hash of the Content.
 	Hash string `json:"hash"`
 }
