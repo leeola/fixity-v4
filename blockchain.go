@@ -51,16 +51,6 @@ type Blockchain interface {
 	// may not be progressed.
 	AppendContent(Content) (Block, error)
 
-	// FindSet(id string) (Block, error)
-
-	// FindContent returns the first block with the given Content id.
-	FindContent(id string) (Block, error)
-
-	// Head returns the latest block in the blockchain.
-	//
-	// Head must return ErrNoPrev if the blockchain is empty.
-	Head() (Block, error)
-
 	// DeleteContent writes a delete block  blocks with the given content.
 	//
 	// It does this by writing a Delete block onto the chain. Iterating
@@ -70,6 +60,19 @@ type Blockchain interface {
 	// This does not remove the content, that is handled by the Fixity
 	// implementor.
 	DeleteContent(...Content) (Block, error)
+
+	// FindSet(id string) (Block, error)
+
+	// PreviousContentBlock returns the previous block for the Content.
+	PreviousContentBlock(Block) (Block, error)
+
+	// Head returns the latest block in the blockchain.
+	//
+	// Head must return ErrNoPrev if the blockchain is empty.
+	Head() (Block, error)
+
+	// HeadContentBlock returns the head content block with the given id.
+	HeadContentBlock(id string) (Block, error)
 }
 
 // Block serves as a ledger for mutations of the fixity datastore.
