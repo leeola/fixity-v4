@@ -213,48 +213,6 @@ type Chunk struct {
 	EndBoundry uint `json:"-"`
 }
 
-func (b *Block) Previous() (Block, error) {
-	if b.PreviousBlockHash == "" {
-		return Block{}, ErrNoPrev
-	}
-
-	if b.Store == nil {
-		return Block{}, errors.New("block: Store not set")
-	}
-
-	var previousBlock Block
-	err := readAndUnmarshal(b.Store, b.PreviousBlockHash, &previousBlock)
-	if err != nil {
-		return Block{}, err
-	}
-
-	previousBlock.Hash = b.PreviousBlockHash
-	previousBlock.Store = b.Store
-
-	return previousBlock, nil
-}
-
-func (b *Block) Content() (Content, error) {
-	if b.Store == nil {
-		return Content{}, errors.New("block: Store not set")
-	}
-
-	if b.ContentBlock == nil {
-		return Content{}, errors.New("block: not content block type")
-	}
-
-	var c Content
-	err := readAndUnmarshal(b.Store, b.ContentBlock.Hash, &c)
-	if err != nil {
-		return Content{}, err
-	}
-
-	c.Hash = b.ContentBlock.Hash
-	c.Store = b.Store
-
-	return c, nil
-}
-
 func (c *Content) Blob() (Blob, error) {
 	if c.Store == nil {
 		return Blob{}, errors.New("content: Store not set")
