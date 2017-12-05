@@ -65,8 +65,8 @@ type Blockchain interface {
 
 	// FindSet(id string) (Block, error)
 
-	// PreviousContentBlock returns the previous block for the Content.
-	PreviousContentBlock(Block) (Block, error)
+	// // PreviousContentBlock returns the previous block for the Content.
+	// PreviousContentBlock(Block) (Block, error)
 
 	// Head returns the latest block in the blockchain.
 	//
@@ -74,7 +74,7 @@ type Blockchain interface {
 	Head() (Block, error)
 
 	// HeadContentBlock returns the head content block with the given id.
-	HeadContentBlock(id string) (Block, error)
+	HeadContentBlock(id string) (Block z)
 }
 
 // Block serves as a ledger for mutations of the fixity datastore.

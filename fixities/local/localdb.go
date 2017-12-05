@@ -1,7 +1,6 @@
 package local
 
 import (
-	"io"
 	"os"
 	"path/filepath"
 	"time"
@@ -10,14 +9,16 @@ import (
 	"github.com/leeola/fixity"
 )
 
-type Db interface {
-	io.Closer
+//
+// type mutableBlockchain interface {
+// 	io.Closer
 
-	GetIdHash(id string) (string, error)
-	SetIdHash(id, hash string) error
-	GetBlockHead() (hash string, err error)
-	SetBlockHead(hash string) error
-}
+// 	// Sync
+// 	Sync(s fixity.Store, headHash string)
+
+// 	Head() (mutableBlock, err error)
+// 	Write(mutableBlock) error
+// }
 
 type boltDb struct {
 	Db *bolt.DB
@@ -79,7 +80,7 @@ func (b *boltDb) SetIdHash(id, h string) error {
 	})
 }
 
-func (b *boltDb) GetBlockHead() (string, error) {
+func (b *boltDb) Get() (string, error) {
 	var h string
 	err := b.Db.View(func(tx *bolt.Tx) error {
 		bkt := tx.Bucket(blockMetaBucketKey)
@@ -106,7 +107,7 @@ func (b *boltDb) GetBlockHead() (string, error) {
 	return h, nil
 }
 
-func (b *boltDb) SetBlockHead(h string) error {
+func (b *boltDb) Set(h string) error {
 	return b.Db.Update(func(tx *bolt.Tx) error {
 		bkt, err := tx.CreateBucketIfNotExists(blockMetaBucketKey)
 		if err != nil {
@@ -143,14 +144,14 @@ func (m *memoryDb) SetIdHash(id, hash string) error {
 	return nil
 }
 
-func (m *memoryDb) GetBlockHead() (string, error) {
+func (m *memoryDb) Get() (string, error) {
 	if m.head == "" {
 		return "", fixity.ErrNoPrev
 	}
 	return m.head, nil
 }
 
-func (m *memoryDb) SetBlockHead(hash string) error {
+func (m *memoryDb) Set(hash string) error {
 	m.head = hash
 	return nil
 }

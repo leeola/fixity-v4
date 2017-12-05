@@ -25,7 +25,7 @@ func NewBlockchain(log log15.Logger, db Db, s fixity.Store) *Blockchain {
 }
 
 func (l *Blockchain) getHead() (fixity.Block, error) {
-	h, err := l.db.GetBlockHead()
+	h, err := l.db.Get()
 	if err != nil {
 		return fixity.Block{}, err
 	}
@@ -64,7 +64,7 @@ func (bc *Blockchain) writeBlock(cb *fixity.ContentBlock, db *fixity.DeleteBlock
 	b.Hash = bHash
 	b.Store = bc.store
 
-	if err := bc.db.SetBlockHead(bHash); err != nil {
+	if err := bc.db.Set(bHash); err != nil {
 		return fixity.Block{}, err
 	}
 
@@ -120,5 +120,32 @@ func (l *Blockchain) Head() (fixity.Block, error) {
 	}
 
 	b.Store = l.store
+	return b, err
+}
+
+func (l *Blockchain) HeadContentBlock(id string) (fixity.Block, error) {
+	b, err := l.getHead()
+	if err != nil {
+		return fixity.Block{}, err
+	}
+	b.Store = l.store
+
+	for {
+		if b.ContentBlock != nil && b.ContentBlock.Id == id {
+			break
+		}
+
+		bl, err := b.Previous()
+		// TODO(leeola): if no previous content exists, then we've not found
+		// the a block matching this id.
+		//
+		// This needs to be tested, but it's not handled currently at all,
+		// as it's implementation is going to be handled by the db / blockchain.
+		if err != nil {
+			return fixity.Block{}, err
+		}
+		b = bl
+	}
+
 	return b, err
 }
