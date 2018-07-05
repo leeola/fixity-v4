@@ -11,24 +11,31 @@ yet final.
 
 ## Project Goals
 
-With much inspiration from [Perkeep](https://perkeep.org),
+With massive inspiration from [Perkeep](https://perkeep.org),
 Fixity aims to be:
 
 - Low maintenance, small in scope.
-- Easily sync files between computers.
 - Versioned and content addressable.
-- An embeddable database "for your life"
+- An embeddable database "for your life".
+- Syncable with safety and confidence _(content addressable)_.
 
 
-## Why not Perkeep _(née Camlistore)_?
+## Perkeep _(née Camlistore)_?
 
-None, you should use Perkeep. As far as why i develop Fixity?
-Experimentation and and flexibility, primarily. I want the ability
+There are no reasons, you should use Perkeep.
+
+
+## Why write this then?
+
+Experimentation and flexibility, primarily. I want the ability
 to control drastic changes to the underlying system and design.
-As this project has done, many times prior.
+For example, being a small embeddable database is important
+to me and the design will reflect that.
 
 With that said, as time goes on there may be a small differences
 in this project that give it merit. Only time will tell.
+
+For now, your data is important. Use Perkeep.
 
 
 ## License
