@@ -21,10 +21,7 @@ func WriteCmd(clictx *cli.Context) error {
 		return err
 	}
 
-	id, err := s.NewID(context.Background())
-	if err != nil {
-		return fmt.Errorf("newid: %v", err)
-	}
+	id := "foo"
 
 	hashes, err := s.Write(context.Background(), id, strings.NewReader("foo"))
 	if err != nil {

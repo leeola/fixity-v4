@@ -11,6 +11,7 @@ import (
 	"sync"
 
 	base58 "github.com/jbenet/go-base58"
+	"github.com/leeola/fixity"
 	blake2b "github.com/minio/blake2b-simd"
 )
 
@@ -38,7 +39,7 @@ func New(path string) (*Blobstore, error) {
 	}, nil
 }
 
-func (s *Blobstore) Read(_ context.Context, h string) (io.ReadCloser, error) {
+func (s *Blobstore) Read(_ context.Context, h fixity.Ref) (io.ReadCloser, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -46,7 +47,7 @@ func (s *Blobstore) Read(_ context.Context, h string) (io.ReadCloser, error) {
 		return nil, errors.New("hash cannot be empty")
 	}
 
-	p := s.pathHash(h)
+	p := s.pathHash(string(h))
 
 	rc, err := os.Open(p)
 	if os.IsNotExist(err) {
@@ -64,7 +65,7 @@ func (s *Blobstore) Hash(b []byte) string {
 	return base58.Encode(hB[:])
 }
 
-func (s *Blobstore) Write(_ context.Context, b []byte) (string, error) {
+func (s *Blobstore) Write(_ context.Context, b []byte) (fixity.Ref, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -79,5 +80,5 @@ func (s *Blobstore) Write(_ context.Context, b []byte) (string, error) {
 		return "", fmt.Errorf("writefile: %v", err)
 	}
 
-	return h, nil
+	return fixity.Ref(h), nil
 }

@@ -9,26 +9,27 @@ import (
 	"sync"
 
 	base58 "github.com/jbenet/go-base58"
+	"github.com/leeola/fixity"
 	blake2b "github.com/minio/blake2b-simd"
 )
 
 // Store is a memory store used for testing.
 type Store struct {
 	mu sync.Mutex
-	m  map[string][]byte
+	m  map[fixity.Ref][]byte
 }
 
 func New() *Store {
 	return &Store{
-		m: map[string][]byte{},
+		m: map[fixity.Ref][]byte{},
 	}
 }
 
-func (s *Store) Read(_ context.Context, h string) (io.ReadCloser, error) {
+func (s *Store) Read(_ context.Context, ref fixity.Ref) (io.ReadCloser, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	b, ok := s.m[h]
+	b, ok := s.m[ref]
 	if !ok {
 		return nil, os.ErrNotExist
 	}
@@ -36,12 +37,12 @@ func (s *Store) Read(_ context.Context, h string) (io.ReadCloser, error) {
 	return ioutil.NopCloser(bytes.NewReader(b)), nil
 }
 
-func (s *Store) Write(_ context.Context, b []byte) (string, error) {
+func (s *Store) Write(_ context.Context, b []byte) (fixity.Ref, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	hB := blake2b.Sum256(b)
-	h := base58.Encode(hB[:])
-	s.m[h] = b
-	return h, nil
+	ref := fixity.Ref(base58.Encode(hB[:]))
+	s.m[ref] = b
+	return ref, nil
 }
