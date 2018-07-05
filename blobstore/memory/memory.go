@@ -14,8 +14,8 @@ import (
 
 // Store is a memory store used for testing.
 type Store struct {
-	sync.Mutex
-	m map[string][]byte
+	mu sync.Mutex
+	m  map[string][]byte
 }
 
 func New() *Store {
@@ -25,8 +25,8 @@ func New() *Store {
 }
 
 func (s *Store) Read(_ context.Context, h string) (io.ReadCloser, error) {
-	s.Mutex.Lock()
-	defer s.Mutex.Unlock()
+	s.mu.Lock()
+	defer s.mu.Unlock()
 
 	b, ok := s.m[h]
 	if !ok {
@@ -37,8 +37,8 @@ func (s *Store) Read(_ context.Context, h string) (io.ReadCloser, error) {
 }
 
 func (s *Store) Write(_ context.Context, b []byte) (string, error) {
-	s.Mutex.Lock()
-	defer s.Mutex.Unlock()
+	s.mu.Lock()
+	defer s.mu.Unlock()
 
 	hB := blake2b.Sum256(b)
 	h := base58.Encode(hB[:])

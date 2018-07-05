@@ -8,40 +8,40 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"sync"
 
-	"github.com/inconshreveable/log15"
 	base58 "github.com/jbenet/go-base58"
 	blake2b "github.com/minio/blake2b-simd"
 )
 
-type Config struct {
-	// Path is the *directory* to contain the store content and metadata.
-	//
-	// This will be created if it does not exist.
-	Path string
-}
-
 // Disk implements a Fixity Store for an simple Filesystem.
+//
+// NOTE: Disk is not safe for concurrent use out of process, but
+// side effects are mostly harmless. Safe readers of partial writes
+// should verify data regardless.
 type Disk struct {
+	mu   sync.Mutex
 	path string
-	log  log15.Logger
 }
 
-func New(c Config) (*Disk, error) {
-	if c.Path == "" {
+func New(path string) (*Disk, error) {
+	if path == "" {
 		return nil, errors.New("missing required Config field: Path")
 	}
 
-	if err := os.MkdirAll(c.Path, 0755); err != nil {
+	if err := os.MkdirAll(path, 0755); err != nil {
 		return nil, err
 	}
 
 	return &Disk{
-		path: c.Path,
+		path: path,
 	}, nil
 }
 
 func (s *Disk) Read(_ context.Context, h string) (io.ReadCloser, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	if h == "" {
 		return nil, errors.New("hash cannot be empty")
 	}
@@ -65,8 +65,10 @@ func (s *Disk) Hash(b []byte) string {
 }
 
 func (s *Disk) Write(_ context.Context, b []byte) (string, error) {
-	h := s.Hash(b)
+	s.mu.Lock()
+	defer s.mu.Unlock()
 
+	h := s.Hash(b)
 	p := s.pathHash(h)
 
 	if err := os.MkdirAll(filepath.Dir(p), 0755); err != nil {
