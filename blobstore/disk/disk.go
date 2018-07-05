@@ -14,17 +14,17 @@ import (
 	blake2b "github.com/minio/blake2b-simd"
 )
 
-// Disk implements a Fixity Store for an simple Filesystem.
+// Blobstore implements a Fixity Blobstore for an simple Filesystem.
 //
-// NOTE: Disk is not safe for concurrent use out of process, but
+// NOTE: Blobstore is not safe for concurrent use out of process, but
 // side effects are mostly harmless. Safe readers of partial writes
 // should verify data regardless.
-type Disk struct {
+type Blobstore struct {
 	mu   sync.Mutex
 	path string
 }
 
-func New(path string) (*Disk, error) {
+func New(path string) (*Blobstore, error) {
 	if path == "" {
 		return nil, errors.New("missing required Config field: Path")
 	}
@@ -33,12 +33,12 @@ func New(path string) (*Disk, error) {
 		return nil, err
 	}
 
-	return &Disk{
+	return &Blobstore{
 		path: path,
 	}, nil
 }
 
-func (s *Disk) Read(_ context.Context, h string) (io.ReadCloser, error) {
+func (s *Blobstore) Read(_ context.Context, h string) (io.ReadCloser, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -59,12 +59,12 @@ func (s *Disk) Read(_ context.Context, h string) (io.ReadCloser, error) {
 	return rc, nil
 }
 
-func (s *Disk) Hash(b []byte) string {
+func (s *Blobstore) Hash(b []byte) string {
 	hB := blake2b.Sum256(b)
 	return base58.Encode(hB[:])
 }
 
-func (s *Disk) Write(_ context.Context, b []byte) (string, error) {
+func (s *Blobstore) Write(_ context.Context, b []byte) (string, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 

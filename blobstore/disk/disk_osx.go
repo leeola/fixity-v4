@@ -8,7 +8,7 @@ import (
 	base58 "github.com/jbenet/go-base58"
 )
 
-func (s *Disk) pathHash(h string) string {
+func (s *Blobstore) pathHash(h string) string {
 	// use hex paths on osx because it does not support case sensitive paths.
 	h = hex.EncodeToString(base58.Decode(h))
 
