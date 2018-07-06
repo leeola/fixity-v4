@@ -20,7 +20,7 @@ Fixity aims to be:
 - Syncable with safety and confidence _(content addressable)_.
 
 
-## Perkeep _(née Camlistore)_?
+## Why not Perkeep _(née Camlistore)_?
 
 There are no reasons, you should use Perkeep.
 
