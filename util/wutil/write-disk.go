@@ -32,9 +32,9 @@ func WriteContent(ctx context.Context, w blobstore.Writer,
 			endBound = startBound + chunkRefLen%partSize
 		}
 
-		part := fixity.Part{
-			Chunks:   chunkRefs[startBound:endBound],
-			NextPart: lastPart,
+		part := fixity.Parts{
+			Parts:     chunkRefs[startBound:endBound],
+			MoreParts: lastPart,
 		}
 
 		ref, err := MarshalAndWrite(ctx, w, part)
@@ -52,9 +52,9 @@ func WriteContent(ctx context.Context, w blobstore.Writer,
 	// now we've written all the parts except for the most important
 	// one, the content which has a part embedded.
 	content := fixity.Content{
-		Part: fixity.Part{
-			Chunks:   chunkRefs[0:endBound],
-			NextPart: lastPart,
+		Parts: fixity.Parts{
+			Parts:     chunkRefs[0:endBound],
+			MoreParts: lastPart,
 		},
 		Size: totalSize,
 	}
