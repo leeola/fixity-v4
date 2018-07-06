@@ -30,9 +30,14 @@ func (s *Store) WriteTime(ctx context.Context, t time.Time, id string, r io.Read
 		return nil, fmt.Errorf("restic new: %v", err)
 	}
 
-	cHashes, _, _, err := wutil.WriteChunker(ctx, s.bs, chunker)
+	cHashes, totalSize, checksum, err := wutil.WriteChunks(ctx, s.bs, chunker)
 	if err != nil {
 		return nil, fmt.Errorf("writechunker: %v", err)
+	}
+
+	cHashes, err = wutil.WriteContent(ctx, s.bs, cHashes, totalSize, checksum)
+	if err != nil {
+		return nil, fmt.Errorf("writecontent: %v", err)
 	}
 
 	return cHashes, nil

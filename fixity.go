@@ -8,10 +8,14 @@ type Mutation struct {
 	Blob Ref    `json:"blob"`
 }
 
-type Blob struct {
-	Chunks        []Ref `json:"chunks"`
-	BlobContinued Ref   `json:"blobContinued"`
+type Content struct {
+	Part
 
 	// Size is the total bytes for the blob.
 	Size int64 `json:"size,omitempty"`
+}
+
+type Part struct {
+	Chunks   []Ref `json:"chunks"`
+	NextPart *Ref  `json:"nextPart,omitempty"`
 }

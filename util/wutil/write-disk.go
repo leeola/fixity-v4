@@ -3,6 +3,7 @@ package wutil
 import (
 	"context"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"io"
 
@@ -12,7 +13,61 @@ import (
 	"github.com/leeola/fixity/chunk"
 )
 
-func WriteChunker(ctx context.Context, w blobstore.Writer, r chunk.Chunker) (
+const partSize = 3 // low for testing
+
+func WriteContent(ctx context.Context, w blobstore.Writer,
+	chunkRefs []fixity.Ref, totalSize int64, contentHash string) ([]fixity.Ref, error) {
+
+	chunkRefLen := len(chunkRefs)
+	partCount := chunkRefLen / partSize
+
+	var lastPart *fixity.Ref
+
+	// write all of the parts first, including the partial final part..
+	// ie, the part that has less than the max chunks.
+	for i := partCount; i > 0; i-- {
+		startBound := partSize * i
+		endBound := startBound + partSize
+		if i == partCount {
+			endBound = startBound + chunkRefLen%partSize
+		}
+
+		part := fixity.Part{
+			Chunks:   chunkRefs[startBound:endBound],
+			NextPart: lastPart,
+		}
+
+		ref, err := MarshalAndWrite(ctx, w, part)
+		if err != nil {
+			return nil, fmt.Errorf("marshalandwrite part %d: %v", i, err)
+		}
+		chunkRefs = append(chunkRefs, ref)
+	}
+
+	endBound := partSize
+	if chunkRefLen < partSize {
+		endBound = chunkRefLen
+	}
+
+	// now we've written all the parts except for the most important
+	// one, the content which has a part embedded.
+	content := fixity.Content{
+		Part: fixity.Part{
+			Chunks:   chunkRefs[0:endBound],
+			NextPart: lastPart,
+		},
+		Size: totalSize,
+	}
+
+	ref, err := MarshalAndWrite(ctx, w, content)
+	if err != nil {
+		return nil, fmt.Errorf("marshalandwrite content: %v", err)
+	}
+
+	return append(chunkRefs, ref), nil
+}
+
+func WriteChunks(ctx context.Context, w blobstore.Writer, r chunk.Chunker) (
 	refs []fixity.Ref, totalSize int64, contentHash string, err error) {
 
 	hasher := blake2b.New256()
@@ -44,4 +99,18 @@ func WriteChunker(ctx context.Context, w blobstore.Writer, r chunk.Chunker) (
 
 	hash := hex.EncodeToString(hasher.Sum(nil)[:])
 	return hashes, totalSize, hash, nil
+}
+
+func MarshalAndWrite(ctx context.Context, w blobstore.Writer, v interface{}) (fixity.Ref, error) {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return "", fmt.Errorf("marshal: %v", err)
+	}
+
+	ref, err := w.Write(ctx, b)
+	if err != nil {
+		return "", fmt.Errorf("blob write: %v", err)
+	}
+
+	return ref, nil
 }
