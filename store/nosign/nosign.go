@@ -9,6 +9,7 @@ import (
 	"github.com/leeola/fixity"
 	"github.com/leeola/fixity/blobstore"
 	"github.com/leeola/fixity/chunk/resticfork"
+	"github.com/leeola/fixity/reader/blobreader"
 	"github.com/leeola/fixity/util/wutil"
 )
 
@@ -25,6 +26,12 @@ func (s *Store) Write(ctx context.Context, id string, r io.Reader) ([]fixity.Ref
 }
 
 func (s *Store) WriteTime(ctx context.Context, t time.Time, id string, r io.Reader) ([]fixity.Ref, error) {
+	return s.WriteTimeNamespace(ctx, t, id, "", r)
+}
+
+func (s *Store) WriteTimeNamespace(ctx context.Context,
+	t time.Time, id, namespace string, r io.Reader) ([]fixity.Ref, error) {
+
 	chunker, err := resticfork.New(r, resticfork.DefaultAverageChunkSize)
 	if err != nil {
 		return nil, fmt.Errorf("restic new: %v", err)
@@ -52,4 +59,15 @@ func (s *Store) WriteTime(ctx context.Context, t time.Time, id string, r io.Read
 	}
 
 	return append(cHashes, ref), nil
+}
+
+func (s *Store) Blob(ctx context.Context, ref fixity.Ref) (fixity.BlobReadCloser, error) {
+	rc, err := s.bs.Read(ctx, ref)
+	if err != nil {
+		// not wrapping to let error values fall through. The error context
+		// from this store is likely meaningless here.
+		return nil, err
+	}
+
+	return blobreader.New(rc), nil
 }
