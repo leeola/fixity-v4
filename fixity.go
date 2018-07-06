@@ -3,9 +3,9 @@ package fixity
 type Ref string
 
 type Mutation struct {
-	ID   string `json:"id"`
-	Time string `json:"time"`
-	Blob Ref    `json:"blob"`
+	ID      string `json:"id"`
+	Time    string `json:"time"`
+	Content Ref    `json:"blob"`
 }
 
 type Content struct {

@@ -40,5 +40,16 @@ func (s *Store) WriteTime(ctx context.Context, t time.Time, id string, r io.Read
 		return nil, fmt.Errorf("writecontent: %v", err)
 	}
 
-	return cHashes, nil
+	mutation := fixity.Mutation{
+		ID:      id,
+		Time:    t.String(), // TODO(leeola): parse?
+		Content: cHashes[len(cHashes)-1],
+	}
+
+	ref, err := wutil.MarshalAndWrite(ctx, s.bs, mutation)
+	if err != nil {
+		return nil, fmt.Errorf("marshalandwrite mutation: %v", err)
+	}
+
+	return append(cHashes, ref), nil
 }
