@@ -21,17 +21,17 @@ func New(bs blobstore.ReadWriter) (*Store, error) {
 	return &Store{bs: bs}, nil
 }
 
-func (s *Store) Write(ctx context.Context, id string, v fixity.ValueMap, r io.Reader) ([]fixity.Ref, error) {
+func (s *Store) Write(ctx context.Context, id string, v fixity.Values, r io.Reader) ([]fixity.Ref, error) {
 	return s.WriteTime(ctx, time.Now(), id, v, r)
 }
 
-func (s *Store) WriteTime(ctx context.Context, t time.Time, id string, v fixity.ValueMap, r io.Reader) ([]fixity.Ref, error) {
+func (s *Store) WriteTime(ctx context.Context, t time.Time, id string, v fixity.Values, r io.Reader) ([]fixity.Ref, error) {
 	// default to user namespace, ie ""
 	return s.WriteTimeNamespace(ctx, t, id, "", v, r)
 }
 
 func (s *Store) WriteTimeNamespace(ctx context.Context,
-	t time.Time, id, namespace string, v fixity.ValueMap, r io.Reader) ([]fixity.Ref, error) {
+	t time.Time, id, namespace string, v fixity.Values, r io.Reader) ([]fixity.Ref, error) {
 
 	if v == nil && r == nil {
 		return nil, errors.New("values and data cannot be nil")
@@ -74,10 +74,10 @@ func (s *Store) WriteTimeNamespace(ctx context.Context,
 		Schema: fixity.Schema{
 			SchemaType: fixity.BlobTypeMutation,
 		},
-		ID:     id,
-		Time:   t.String(), // TODO(leeola): parse?
-		Data:   dataRef,
-		Values: valuesRef,
+		ID:        id,
+		Time:      t.String(), // TODO(leeola): parse?
+		Data:      dataRef,
+		ValuesMap: valuesRef,
 	}
 
 	ref, err := wutil.MarshalAndWrite(ctx, s.bs, mutation)

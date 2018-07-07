@@ -10,7 +10,7 @@ type Mutation struct {
 	Namespace string `json:"namespace"`
 	Signer    string `json:"signer"`
 	Time      string `json:"time"`
-	Values    Ref    `json:"values,omitempty"`
+	ValuesMap Ref    `json:"valuesMap,omitempty"`
 	Data      Ref    `json:"data,omitempty"`
 	Signature string `json:"signature"`
 }
@@ -28,7 +28,7 @@ type Parts struct {
 	MoreParts *Ref  `json:"moreParts,omitempty"`
 }
 
-type Values struct {
+type ValuesMap struct {
 	Schema
-	ValueMap ValueMap `json:"valueMap"`
+	Values Values `json:"value"`
 }

@@ -121,11 +121,11 @@ func MarshalAndWrite(ctx context.Context, w blobstore.Writer, v interface{}) (fi
 	return ref, nil
 }
 
-func WriteValues(ctx context.Context, w blobstore.Writer, v fixity.ValueMap) (fixity.Ref, error) {
-	return MarshalAndWrite(ctx, w, fixity.Values{
+func WriteValues(ctx context.Context, w blobstore.Writer, v fixity.Values) (fixity.Ref, error) {
+	return MarshalAndWrite(ctx, w, fixity.ValuesMap{
 		Schema: fixity.Schema{
 			SchemaType: fixity.BlobTypeValues,
 		},
-		ValueMap: v,
+		Values: v,
 	})
 }

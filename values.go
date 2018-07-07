@@ -1,6 +1,6 @@
 package fixity
 
-type ValueMap map[string]Value
+type Values map[string]Value
 
 type Value struct {
 	Type        ValueType
@@ -15,14 +15,14 @@ const (
 	ValueTypeString ValueType = 2
 )
 
-func (m ValueMap) SetInt(key string, v int) {
+func (m Values) SetInt(key string, v int) {
 	m[key] = Value{
 		Type:     ValueTypeInt,
 		IntValue: v,
 	}
 }
 
-func (m ValueMap) Int(key string) (int, bool) {
+func (m Values) Int(key string) (int, bool) {
 	v, ok := m[key]
 	if !ok {
 		return 0, false
