@@ -30,8 +30,8 @@ func main() {
 			Action:    BlobCmd,
 			Flags: []cli.Flag{
 				cli.BoolFlag{
-					Name:  "not-safe",
-					Usage: "do not prevent printing schemaless bytes",
+					Name:  "allow-unsafe",
+					Usage: "allow printing schemaless bytes",
 				},
 			},
 		},
@@ -44,6 +44,14 @@ func main() {
 				cli.BoolFlag{
 					Name:  "stdin",
 					Usage: "upload from stdin",
+				},
+				cli.BoolFlag{
+					Name:  "preview",
+					Usage: "preview blobs with schemas",
+				},
+				cli.BoolFlag{
+					Name:  "allow-unsafe",
+					Usage: "allow previewing schemaless bytes",
 				},
 			},
 			Action: WriteCmd,
