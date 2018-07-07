@@ -10,9 +10,7 @@ import (
 	"path/filepath"
 	"sync"
 
-	base58 "github.com/jbenet/go-base58"
 	"github.com/leeola/fixity"
-	blake2b "github.com/minio/blake2b-simd"
 )
 
 // Blobstore implements a Fixity Blobstore for an simple Filesystem.
@@ -60,17 +58,16 @@ func (s *Blobstore) Read(_ context.Context, h fixity.Ref) (io.ReadCloser, error)
 	return rc, nil
 }
 
-func (s *Blobstore) Hash(b []byte) string {
-	hB := blake2b.Sum256(b)
-	return base58.Encode(hB[:])
-}
-
 func (s *Blobstore) Write(_ context.Context, b []byte) (fixity.Ref, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	h := s.Hash(b)
-	p := s.pathHash(h)
+	h, err := fixity.Hash(b)
+	if err != nil {
+		return "", fmt.Errorf("hash: %v", err)
+	}
+
+	p := s.pathHash(string(h))
 
 	if err := os.MkdirAll(filepath.Dir(p), 0755); err != nil {
 		return "", fmt.Errorf("mkdirall: %v", err)
@@ -80,5 +77,5 @@ func (s *Blobstore) Write(_ context.Context, b []byte) (fixity.Ref, error) {
 		return "", fmt.Errorf("writefile: %v", err)
 	}
 
-	return fixity.Ref(h), nil
+	return h, nil
 }
