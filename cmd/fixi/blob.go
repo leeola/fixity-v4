@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -22,9 +23,11 @@ func BlobCmd(clictx *cli.Context) error {
 		return err
 	}
 
+	notSafe := clictx.Bool("not-safe")
+
 	for _, sRef := range clictx.Args() {
 		ref := fixity.Ref(sRef)
-		if err := printBlob(context.Background(), s, ref); err != nil {
+		if err := printBlob(context.Background(), s, ref, notSafe); err != nil {
 			return fmt.Errorf("printblob %q: %v", ref, err)
 		}
 	}
@@ -36,7 +39,7 @@ type store interface {
 	Blob(ctx context.Context, ref fixity.Ref) (io.ReadCloser, error)
 }
 
-func printBlob(ctx context.Context, s store, ref fixity.Ref) error {
+func printBlob(ctx context.Context, s store, ref fixity.Ref, notSafe bool) error {
 	rc, err := s.Blob(ctx, ref)
 	if err != nil {
 		return fmt.Errorf("blob: %v", err)
@@ -53,12 +56,15 @@ func printBlob(ctx context.Context, s store, ref fixity.Ref) error {
 		return fmt.Errorf("readall: %v", err)
 	}
 
-	if bt != fixity.BlobTypeSchemaless {
+	switch {
+	case bt != fixity.BlobTypeSchemaless:
 		if err := printJsonBytes(os.Stdout, b); err != nil {
 			return fmt.Errorf("printjsonbytes: %v", err)
 		}
-	} else {
+	case notSafe:
 		fmt.Println(string(b))
+	default:
+		return errors.New("use --not-safe to print schemaless blobs")
 	}
 
 	return nil

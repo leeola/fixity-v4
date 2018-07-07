@@ -26,8 +26,14 @@ func main() {
 		{
 			Name:      "blob",
 			ArgsUsage: "HASH",
-			Usage:     "inspect a raw blob from HASH",
+			Usage:     "inspect a blob from HASH",
 			Action:    BlobCmd,
+			Flags: []cli.Flag{
+				cli.BoolFlag{
+					Name:  "not-safe",
+					Usage: "do not prevent printing schemaless bytes",
+				},
+			},
 		},
 		{
 			Name:      "write",
