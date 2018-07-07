@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/dchest/blake2b"
 	"github.com/leeola/fixity"
 	"github.com/leeola/fixity/blobstore"
 	"github.com/leeola/fixity/chunk"
@@ -85,7 +84,10 @@ func WriteData(ctx context.Context, w blobstore.Writer,
 func WriteChunks(ctx context.Context, w blobstore.Writer, r chunk.Chunker) (
 	refs []fixity.Ref, totalSize int64, contentHash string, err error) {
 
-	hasher := blake2b.New256()
+	hasher, err := fixity.Hasher(fixity.DefaultMultihashName)
+	if err != nil {
+		return nil, 0, "", fmt.Errorf("hasher: %v", err)
+	}
 
 	var hashes []fixity.Ref
 	for {
