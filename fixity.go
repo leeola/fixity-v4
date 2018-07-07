@@ -1,18 +1,20 @@
 package fixity
 
+import "time"
+
 //go:generate stringer -type=BlobType -output=fixity_string.go
 
 type Ref string
 
 type Mutation struct {
 	Schema
-	ID        string `json:"id"`
-	Namespace string `json:"namespace"`
-	Signer    string `json:"signer"`
-	Time      string `json:"time"`
-	ValuesMap Ref    `json:"valuesMap,omitempty"`
-	Data      Ref    `json:"data,omitempty"`
-	Signature string `json:"signature"`
+	ID        string    `json:"id"`
+	Namespace string    `json:"namespace"`
+	Signer    string    `json:"signer"`
+	Time      time.Time `json:"time"`
+	ValuesMap Ref       `json:"valuesMap,omitempty"`
+	Data      Ref       `json:"data,omitempty"`
+	Signature string    `json:"signature"`
 }
 
 type Data struct {

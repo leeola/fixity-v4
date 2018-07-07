@@ -75,7 +75,7 @@ func (s *Store) WriteTimeNamespace(ctx context.Context,
 			SchemaType: fixity.BlobTypeMutation,
 		},
 		ID:        id,
-		Time:      t.String(), // TODO(leeola): parse?
+		Time:      t,
 		Data:      dataRef,
 		ValuesMap: valuesRef,
 	}
