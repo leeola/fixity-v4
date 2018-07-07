@@ -111,8 +111,5 @@ func previewBlob(ctx context.Context, s store, ref fixity.Ref, notSafe bool) err
 		fmt.Println(string(b))
 	}
 
-	// newline
-	fmt.Println("")
-
 	return nil
 }
