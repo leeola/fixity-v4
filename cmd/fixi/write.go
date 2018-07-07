@@ -14,14 +14,22 @@ import (
 )
 
 func WriteCmd(clictx *cli.Context) error {
-	id := clictx.String("id")
-
 	useStdin := clictx.Bool("stdin")
 
-	var r io.Reader
-	switch {
-	case useStdin:
-		r = os.Stdin
+	id := clictx.String("id")
+
+	filenames := clictx.Args()
+	filenamesLen := len(filenames)
+	useFiles := filenamesLen > 0
+
+	if filenamesLen > 1 && id != "" {
+		return errors.New("cannot write multiple files to a single id")
+	}
+	if !useFiles && !useStdin {
+		return errors.New("missing files or stdin to write")
+	}
+	if useFiles && id == "" {
+		id = filenames[0]
 	}
 
 	s, err := storeFromCli(clictx)
@@ -30,6 +38,28 @@ func WriteCmd(clictx *cli.Context) error {
 		return err
 	}
 
+	if useStdin {
+		return writeReadCloser(clictx, s, ioutil.NopCloser(os.Stdin), id)
+	}
+
+	for _, filename := range filenames {
+		f, err := os.OpenFile(filename, os.O_RDONLY, 0644)
+		if err != nil {
+			return fmt.Errorf("openfile %q: %v", filename, err)
+		}
+
+		// func closes
+		if err := writeReadCloser(clictx, s, f, id); err != nil {
+			return fmt.Errorf("writereadcloser %q: %v", filename, err)
+		}
+	}
+
+	return nil
+}
+
+func writeReadCloser(clictx *cli.Context, s store, rc io.ReadCloser, id string) error {
+	defer rc.Close()
+
 	preview := clictx.Bool("preview")
 	allowUnsafe := clictx.Bool("allow-unsafe")
 
@@ -37,7 +67,7 @@ func WriteCmd(clictx *cli.Context) error {
 		return errors.New("id must be defined if it cannot be inferred")
 	}
 
-	hashes, err := s.Write(context.Background(), id, nil, r)
+	hashes, err := s.Write(context.Background(), id, nil, rc)
 	if err != nil {
 		return fmt.Errorf("write: %v", err)
 	}

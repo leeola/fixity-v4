@@ -23,7 +23,7 @@ func BlobCmd(clictx *cli.Context) error {
 		return err
 	}
 
-	notSafe := clictx.Bool("not-safe")
+	notSafe := clictx.Bool("allow-unsafe")
 
 	for _, sRef := range clictx.Args() {
 		ref := fixity.Ref(sRef)
@@ -36,6 +36,7 @@ func BlobCmd(clictx *cli.Context) error {
 }
 
 type store interface {
+	Write(ctx context.Context, id string, v fixity.Values, r io.Reader) ([]fixity.Ref, error)
 	Blob(ctx context.Context, ref fixity.Ref) (io.ReadCloser, error)
 }
 
