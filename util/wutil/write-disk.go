@@ -13,22 +13,29 @@ import (
 	"github.com/leeola/fixity/chunk"
 )
 
-const partSize = 3 // low for testing
+const partSize = 2 // low for testing
 
 func WriteData(ctx context.Context, w blobstore.Writer,
 	chunkRefs []fixity.Ref, totalSize int64, contentHash string) ([]fixity.Ref, error) {
 
 	chunkRefLen := len(chunkRefs)
-	partCount := chunkRefLen / partSize
+
+	// -1 ensures that the morePartCount doesn't increase at an equal divide,
+	// like 2 items for a pagesize of 2, would only need 1 page, yet morePartCount
+	// would indicate that there's a morePart page as well.
+	//
+	//
+	// I feel like that made no sense.
+	morePartCount := (chunkRefLen - 1) / partSize
 
 	var lastPart *fixity.Ref
 
 	// write all of the parts first, including the partial final part..
 	// ie, the part that has less than the max chunks.
-	for i := partCount; i > 0; i-- {
+	for i := morePartCount; i > 0; i-- {
 		startBound := partSize * i
 		endBound := startBound + partSize
-		if i == partCount {
+		if i == morePartCount {
 			endBound = startBound + chunkRefLen%partSize
 		}
 
