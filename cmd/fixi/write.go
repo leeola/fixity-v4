@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -13,6 +14,8 @@ import (
 )
 
 func WriteCmd(clictx *cli.Context) error {
+	id := clictx.String("id")
+
 	useStdin := clictx.Bool("stdin")
 
 	var r io.Reader
@@ -30,7 +33,9 @@ func WriteCmd(clictx *cli.Context) error {
 	preview := clictx.Bool("preview")
 	allowUnsafe := clictx.Bool("allow-unsafe")
 
-	id := "foo"
+	if id == "" {
+		return errors.New("id must be defined if it cannot be inferred")
+	}
 
 	hashes, err := s.Write(context.Background(), id, nil, r)
 	if err != nil {

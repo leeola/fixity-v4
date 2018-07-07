@@ -41,6 +41,10 @@ func main() {
 			ArgsUsage: "FILE",
 			Usage:     "write a content to fixity",
 			Flags: []cli.Flag{
+				cli.StringFlag{
+					Name:  "id",
+					Usage: "id of written data",
+				},
 				cli.BoolFlag{
 					Name:  "stdin",
 					Usage: "upload from stdin",
