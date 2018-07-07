@@ -2,8 +2,8 @@ package fixity
 
 import "io"
 
-type ReadCloser interface {
-	io.ReadCloser
+type Reader interface {
+	io.Reader
 
 	Size() int64
 
