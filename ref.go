@@ -1,29 +1,30 @@
 package fixity
 
 import (
-	"strings"
+	"fmt"
 
 	base58 "github.com/jbenet/go-base58"
+	multihash "github.com/multiformats/go-multihash"
 )
 
-func NewRef(hasher string, b []byte) Ref {
-	return Ref(hasher + "-" + base58.Encode(b))
+func NewRef(b []byte) Ref {
+	return Ref(base58.Encode(b))
 }
 
 func (r Ref) Decode() []byte {
-	h := nthSplit("-", string(r), 2, 1)
-	return base58.Decode(h)
+	return base58.Decode(string(r))
 }
 
-func (r Ref) HasherName() string {
-	return nthSplit("-", string(r), 2, 0)
-}
-
-func nthSplit(char, s string, n, i int) string {
-	split := strings.SplitN(char, s, n)
-	if len(split) <= i {
-		return ""
+func (r Ref) HashName() (string, error) {
+	mh, err := multihash.FromB58String(string(r))
+	if err != nil {
+		return "", fmt.Errorf("fromb58string: %v", err)
 	}
 
-	return split[i]
+	decoded, err := multihash.Decode(mh)
+	if err != nil {
+		return "", fmt.Errorf("fromb58string: %v", err)
+	}
+
+	return decoded.Name, nil
 }
