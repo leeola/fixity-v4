@@ -7,11 +7,12 @@ type Mutation struct {
 	Namespace string `json:"namespace"`
 	Signer    string `json:"signer"`
 	Time      string `json:"time"`
-	Content   Ref    `json:"content"`
+	Values    Ref    `json:"values,omitempty"`
+	Data      Ref    `json:"data,omitempty"`
 	Signature string `json:"signature"`
 }
 
-type Content struct {
+type Data struct {
 	Parts
 
 	// Size is the total bytes for the content.
@@ -21,4 +22,8 @@ type Content struct {
 type Parts struct {
 	Parts     []Ref `json:"parts"`
 	MoreParts *Ref  `json:"moreParts,omitempty"`
+}
+
+type Values struct {
+	ValueMap ValueMap `json:"valueMap"`
 }

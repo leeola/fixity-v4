@@ -48,9 +48,9 @@ func (s *Store) WriteTimeNamespace(ctx context.Context,
 	}
 
 	mutation := fixity.Mutation{
-		ID:      id,
-		Time:    t.String(), // TODO(leeola): parse?
-		Content: cHashes[len(cHashes)-1],
+		ID:   id,
+		Time: t.String(), // TODO(leeola): parse?
+		Data: cHashes[len(cHashes)-1],
 	}
 
 	ref, err := wutil.MarshalAndWrite(ctx, s.bs, mutation)
