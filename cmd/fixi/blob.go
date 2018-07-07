@@ -10,6 +10,7 @@ import (
 
 	"github.com/fatih/color"
 	"github.com/leeola/fixity"
+	"github.com/leeola/fixity/reader/blobreader"
 	"github.com/nwidger/jsoncolor"
 	"github.com/urfave/cli"
 )
@@ -32,7 +33,7 @@ func BlobCmd(clictx *cli.Context) error {
 }
 
 type store interface {
-	Blob(ctx context.Context, ref fixity.Ref) (fixity.BlobReadCloser, error)
+	Blob(ctx context.Context, ref fixity.Ref) (io.ReadCloser, error)
 }
 
 func printBlob(ctx context.Context, s store, ref fixity.Ref) error {
@@ -42,19 +43,22 @@ func printBlob(ctx context.Context, s store, ref fixity.Ref) error {
 	}
 	defer rc.Close()
 
-	// Disabled currently.
-	// bt, err := rc.BlobType()
-	// if err != nil {
-	// 	return fmt.Errorf("blobtype: %v", err)
-	// }
+	r, bt, err := blobreader.BlobType(rc)
+	if err != nil {
+		return fmt.Errorf("blobtype: %v", err)
+	}
 
-	b, err := ioutil.ReadAll(rc)
+	b, err := ioutil.ReadAll(r)
 	if err != nil {
 		return fmt.Errorf("readall: %v", err)
 	}
 
-	if err := printJsonBytes(os.Stdout, b); err != nil {
-		return fmt.Errorf("printjsonbytes: %v", err)
+	if bt != fixity.BlobTypeSchemaless {
+		if err := printJsonBytes(os.Stdout, b); err != nil {
+			return fmt.Errorf("printjsonbytes: %v", err)
+		}
+	} else {
+		fmt.Println(string(b))
 	}
 
 	return nil

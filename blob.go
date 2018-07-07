@@ -5,10 +5,11 @@ import "io"
 type BlobType int
 
 const (
-	BlobTypeMutation = iota + 1
-	BlobTypeContent
+	BlobTypeSchemaless BlobType = iota
 	BlobTypeParts
-	BlobTypePartBytes
+	BlobTypeData
+	BlobTypeValues
+	BlobTypeMutation
 )
 
 type BlobTyper interface {

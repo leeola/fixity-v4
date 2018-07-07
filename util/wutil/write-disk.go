@@ -33,6 +33,9 @@ func WriteData(ctx context.Context, w blobstore.Writer,
 		}
 
 		part := fixity.Parts{
+			Schema: fixity.Schema{
+				SchemaType: fixity.BlobTypeParts,
+			},
 			Parts:     chunkRefs[startBound:endBound],
 			MoreParts: lastPart,
 		}
@@ -53,6 +56,9 @@ func WriteData(ctx context.Context, w blobstore.Writer,
 	// one, the content which has a part embedded.
 	data := fixity.Data{
 		Parts: fixity.Parts{
+			Schema: fixity.Schema{
+				SchemaType: fixity.BlobTypeData,
+			},
 			Parts:     chunkRefs[0:endBound],
 			MoreParts: lastPart,
 		},
@@ -116,5 +122,10 @@ func MarshalAndWrite(ctx context.Context, w blobstore.Writer, v interface{}) (fi
 }
 
 func WriteValues(ctx context.Context, w blobstore.Writer, v fixity.ValueMap) (fixity.Ref, error) {
-	return MarshalAndWrite(ctx, w, v)
+	return MarshalAndWrite(ctx, w, fixity.Values{
+		Schema: fixity.Schema{
+			SchemaType: fixity.BlobTypeValues,
+		},
+		ValueMap: v,
+	})
 }

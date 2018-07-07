@@ -10,7 +10,6 @@ import (
 	"github.com/leeola/fixity"
 	"github.com/leeola/fixity/blobstore"
 	"github.com/leeola/fixity/chunk/resticfork"
-	"github.com/leeola/fixity/reader/blobreader"
 	"github.com/leeola/fixity/util/wutil"
 )
 
@@ -72,6 +71,9 @@ func (s *Store) WriteTimeNamespace(ctx context.Context,
 	}
 
 	mutation := fixity.Mutation{
+		Schema: fixity.Schema{
+			SchemaType: fixity.BlobTypeMutation,
+		},
 		ID:     id,
 		Time:   t.String(), // TODO(leeola): parse?
 		Data:   dataRef,
@@ -86,7 +88,7 @@ func (s *Store) WriteTimeNamespace(ctx context.Context,
 	return append(refs, ref), nil
 }
 
-func (s *Store) Blob(ctx context.Context, ref fixity.Ref) (fixity.BlobReadCloser, error) {
+func (s *Store) Blob(ctx context.Context, ref fixity.Ref) (io.ReadCloser, error) {
 	rc, err := s.bs.Read(ctx, ref)
 	if err != nil {
 		// not wrapping to let error values fall through. The error context
@@ -94,5 +96,5 @@ func (s *Store) Blob(ctx context.Context, ref fixity.Ref) (fixity.BlobReadCloser
 		return nil, err
 	}
 
-	return blobreader.New(rc), nil
+	return rc, nil
 }
