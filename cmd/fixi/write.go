@@ -7,6 +7,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 
 	"github.com/leeola/fixity"
 	"github.com/leeola/fixity/reader/blobreader"
@@ -28,9 +29,6 @@ func WriteCmd(clictx *cli.Context) error {
 	if !useFiles && !useStdin {
 		return errors.New("missing files or stdin to write")
 	}
-	if useFiles && id == "" {
-		id = filenames[0]
-	}
 
 	s, err := storeFromCli(clictx)
 	if err != nil {
@@ -43,13 +41,7 @@ func WriteCmd(clictx *cli.Context) error {
 	}
 
 	for _, filename := range filenames {
-		f, err := os.OpenFile(filename, os.O_RDONLY, 0644)
-		if err != nil {
-			return fmt.Errorf("openfile %q: %v", filename, err)
-		}
-
-		// func closes
-		if err := writeReadCloser(clictx, s, f, id); err != nil {
+		if err := writeFile(clictx, s, id, filename); err != nil {
 			return fmt.Errorf("writereadcloser %q: %v", filename, err)
 		}
 	}
@@ -57,9 +49,34 @@ func WriteCmd(clictx *cli.Context) error {
 	return nil
 }
 
-func writeReadCloser(clictx *cli.Context, s store, rc io.ReadCloser, id string) error {
-	defer rc.Close()
+func writeFile(clictx *cli.Context, s store, id, filename string) error {
+	if id == "" {
+		paths := []string{"files"}
+		if dir := filepath.Base(filepath.Dir(filename)); dir != "" {
+			paths = append(paths, dir)
+		}
+		paths = append(paths, filepath.Base(filename))
+		id = filepath.Join(paths...)
+	}
 
+	f, err := os.OpenFile(filename, os.O_RDONLY, 0644)
+	if err != nil {
+		return fmt.Errorf("openfile %q: %v", filename, err)
+	}
+	defer f.Close()
+
+	if err := writeReadCloser(clictx, s, f, id); err != nil {
+		return fmt.Errorf("writereadcloser %q: %v", filename, err)
+	}
+
+	if err := f.Sync(); err != nil {
+		return fmt.Errorf("sync: %v", err)
+	}
+
+	return nil
+}
+
+func writeReadCloser(clictx *cli.Context, s store, r io.Reader, id string) error {
 	preview := clictx.Bool("preview")
 	allowUnsafe := clictx.Bool("allow-unsafe")
 
@@ -67,7 +84,7 @@ func writeReadCloser(clictx *cli.Context, s store, rc io.ReadCloser, id string) 
 		return errors.New("id must be defined if it cannot be inferred")
 	}
 
-	hashes, err := s.Write(context.Background(), id, nil, rc)
+	hashes, err := s.Write(context.Background(), id, nil, r)
 	if err != nil {
 		return fmt.Errorf("write: %v", err)
 	}
