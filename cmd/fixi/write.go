@@ -2,11 +2,10 @@ package main
 
 import (
 	"context"
-	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
-	"strings"
 
 	"github.com/leeola/fixity"
 	"github.com/leeola/fixity/reader/blobreader"
@@ -15,8 +14,11 @@ import (
 
 func WriteCmd(clictx *cli.Context) error {
 	useStdin := clictx.Bool("stdin")
-	if !useStdin {
-		return errors.New("only stdin currently supported")
+
+	var r io.Reader
+	switch {
+	case useStdin:
+		r = os.Stdin
 	}
 
 	s, err := storeFromCli(clictx)
@@ -30,7 +32,7 @@ func WriteCmd(clictx *cli.Context) error {
 
 	id := "foo"
 
-	hashes, err := s.Write(context.Background(), id, nil, strings.NewReader("foo"))
+	hashes, err := s.Write(context.Background(), id, nil, r)
 	if err != nil {
 		return fmt.Errorf("write: %v", err)
 	}
@@ -73,6 +75,9 @@ func previewBlob(ctx context.Context, s store, ref fixity.Ref, notSafe bool) err
 	case notSafe:
 		fmt.Println(string(b))
 	}
+
+	// newline
+	fmt.Println("")
 
 	return nil
 }
