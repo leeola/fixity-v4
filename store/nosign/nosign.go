@@ -2,6 +2,7 @@ package nosign
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"time"
@@ -21,36 +22,60 @@ func New(bs blobstore.ReadWriter) (*Store, error) {
 	return &Store{bs: bs}, nil
 }
 
-func (s *Store) Write(ctx context.Context, id string, r io.Reader) ([]fixity.Ref, error) {
-	return s.WriteTime(ctx, time.Now(), id, r)
+func (s *Store) Write(ctx context.Context, id string, v fixity.ValueMap, r io.Reader) ([]fixity.Ref, error) {
+	return s.WriteTime(ctx, time.Now(), id, v, r)
 }
 
-func (s *Store) WriteTime(ctx context.Context, t time.Time, id string, r io.Reader) ([]fixity.Ref, error) {
-	return s.WriteTimeNamespace(ctx, t, id, "", r)
+func (s *Store) WriteTime(ctx context.Context, t time.Time, id string, v fixity.ValueMap, r io.Reader) ([]fixity.Ref, error) {
+	// default to user namespace, ie ""
+	return s.WriteTimeNamespace(ctx, t, id, "", v, r)
 }
 
 func (s *Store) WriteTimeNamespace(ctx context.Context,
-	t time.Time, id, namespace string, r io.Reader) ([]fixity.Ref, error) {
+	t time.Time, id, namespace string, v fixity.ValueMap, r io.Reader) ([]fixity.Ref, error) {
 
-	chunker, err := resticfork.New(r, resticfork.DefaultAverageChunkSize)
-	if err != nil {
-		return nil, fmt.Errorf("restic new: %v", err)
+	if v == nil && r == nil {
+		return nil, errors.New("values and data cannot be nil")
 	}
 
-	cHashes, totalSize, checksum, err := wutil.WriteChunks(ctx, s.bs, chunker)
-	if err != nil {
-		return nil, fmt.Errorf("writechunker: %v", err)
+	var refs []fixity.Ref
+
+	var dataRef fixity.Ref
+	if r != nil {
+		chunker, err := resticfork.New(r, resticfork.DefaultAverageChunkSize)
+		if err != nil {
+			return nil, fmt.Errorf("restic new: %v", err)
+		}
+
+		cHashes, totalSize, checksum, err := wutil.WriteChunks(ctx, s.bs, chunker)
+		if err != nil {
+			return nil, fmt.Errorf("writechunker: %v", err)
+		}
+
+		cHashes, err = wutil.WriteData(ctx, s.bs, cHashes, totalSize, checksum)
+		if err != nil {
+			return nil, fmt.Errorf("writecontent: %v", err)
+		}
+
+		dataRef = cHashes[len(cHashes)-1]
+		refs = cHashes
 	}
 
-	cHashes, err = wutil.WriteContent(ctx, s.bs, cHashes, totalSize, checksum)
-	if err != nil {
-		return nil, fmt.Errorf("writecontent: %v", err)
+	var valuesRef fixity.Ref
+	if v != nil {
+		ref, err := wutil.WriteValues(ctx, s.bs, v)
+		if err != nil {
+			return nil, fmt.Errorf("writecontent: %v", err)
+		}
+		valuesRef = ref
+		refs = append(refs, ref)
 	}
 
 	mutation := fixity.Mutation{
-		ID:   id,
-		Time: t.String(), // TODO(leeola): parse?
-		Data: cHashes[len(cHashes)-1],
+		ID:     id,
+		Time:   t.String(), // TODO(leeola): parse?
+		Data:   dataRef,
+		Values: valuesRef,
 	}
 
 	ref, err := wutil.MarshalAndWrite(ctx, s.bs, mutation)
@@ -58,7 +83,7 @@ func (s *Store) WriteTimeNamespace(ctx context.Context,
 		return nil, fmt.Errorf("marshalandwrite mutation: %v", err)
 	}
 
-	return append(cHashes, ref), nil
+	return append(refs, ref), nil
 }
 
 func (s *Store) Blob(ctx context.Context, ref fixity.Ref) (fixity.BlobReadCloser, error) {

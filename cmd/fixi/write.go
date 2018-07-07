@@ -23,7 +23,7 @@ func WriteCmd(clictx *cli.Context) error {
 
 	id := "foo"
 
-	hashes, err := s.Write(context.Background(), id, strings.NewReader("foo"))
+	hashes, err := s.Write(context.Background(), id, nil, strings.NewReader("foo"))
 	if err != nil {
 		return fmt.Errorf("write: %v", err)
 	}

@@ -15,7 +15,7 @@ import (
 
 const partSize = 3 // low for testing
 
-func WriteContent(ctx context.Context, w blobstore.Writer,
+func WriteData(ctx context.Context, w blobstore.Writer,
 	chunkRefs []fixity.Ref, totalSize int64, contentHash string) ([]fixity.Ref, error) {
 
 	chunkRefLen := len(chunkRefs)
@@ -113,4 +113,8 @@ func MarshalAndWrite(ctx context.Context, w blobstore.Writer, v interface{}) (fi
 	}
 
 	return ref, nil
+}
+
+func WriteValues(ctx context.Context, w blobstore.Writer, v fixity.ValueMap) (fixity.Ref, error) {
+	return MarshalAndWrite(ctx, w, v)
 }
