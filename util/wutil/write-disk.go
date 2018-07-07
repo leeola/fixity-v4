@@ -70,7 +70,8 @@ func WriteData(ctx context.Context, w blobstore.Writer,
 			Parts:     chunkRefs[0:endBound],
 			MoreParts: lastPart,
 		},
-		Size: totalSize,
+		Size:     totalSize,
+		Checksum: contentHash,
 	}
 
 	ref, err := MarshalAndWrite(ctx, w, data)
