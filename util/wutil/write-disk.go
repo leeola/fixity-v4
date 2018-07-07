@@ -52,6 +52,7 @@ func WriteData(ctx context.Context, w blobstore.Writer,
 			return nil, fmt.Errorf("marshalandwrite part %d: %v", i, err)
 		}
 		chunkRefs = append(chunkRefs, ref)
+		lastPart = &ref
 	}
 
 	endBound := partSize
