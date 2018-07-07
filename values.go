@@ -3,9 +3,9 @@ package fixity
 type Values map[string]Value
 
 type Value struct {
-	Type        ValueType
-	IntValue    int
-	StringValue string
+	Type        ValueType `json:"type"`
+	IntValue    int       `json:"intValue,omitempty"`
+	StringValue string    `json:"stringValue,omitempty"`
 }
 
 type ValueType int
