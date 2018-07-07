@@ -2,7 +2,7 @@ package fixity
 
 import "time"
 
-//go:generate stringer -type=BlobType -output=fixity_string.go
+//go:generate stringer -type=BlobType,ValueType -output=fixity_string.go
 
 type Ref string
 
