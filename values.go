@@ -1,26 +1,8 @@
 package fixity
 
-type Values map[string]Value
+import "github.com/leeola/fixity/value"
 
-type Value struct {
-	Type        ValueType `json:"type"`
-	IntValue    int       `json:"intValue,omitempty"`
-	StringValue string    `json:"stringValue,omitempty"`
-}
-
-type ValueType int
-
-const (
-	ValueTypeInt    ValueType = 1
-	ValueTypeString ValueType = 2
-)
-
-func (m Values) SetInt(key string, v int) {
-	m[key] = Value{
-		Type:     ValueTypeInt,
-		IntValue: v,
-	}
-}
+type Values map[string]value.Value
 
 func (m Values) Int(key string) (int, bool) {
 	v, ok := m[key]
@@ -28,7 +10,7 @@ func (m Values) Int(key string) (int, bool) {
 		return 0, false
 	}
 
-	if v.Type != ValueTypeInt {
+	if v.Type != value.TypeInt {
 		return 0, false
 	}
 

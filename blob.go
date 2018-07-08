@@ -1,5 +1,7 @@
 package fixity
 
+//go:generate stringer -type=BlobType -output=blob_string.go
+
 import "io"
 
 type BlobType int

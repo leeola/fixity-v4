@@ -2,8 +2,6 @@ package fixity
 
 import "time"
 
-//go:generate stringer -type=BlobType,ValueType -output=fixity_string.go
-
 type Ref string
 
 type Mutation struct {
