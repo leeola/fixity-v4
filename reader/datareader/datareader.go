@@ -31,7 +31,7 @@ func New(ctx context.Context, bs blobstore.Reader, ref fixity.Ref) (*Reader, err
 func (r *Reader) dataStruct() error {
 	var data fixity.Data
 	if err := blobstore.ReadAndUnmarshal(r.ctx, r.bs, r.dataRef, &data); err != nil {
-		return fmt.Errorf("readandunmarshal %v: %v", r.dataRef, err)
+		return fmt.Errorf("readandunmarshal %q: %v", r.dataRef, err)
 	}
 
 	partsLength := len(data.Parts.Parts)
@@ -50,6 +50,7 @@ func (r *Reader) dataStruct() error {
 
 	r.partReadCloser = rc
 	r.partsIndex++
+	r.partsLength = partsLength
 
 	return nil
 }

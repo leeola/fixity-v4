@@ -10,6 +10,7 @@ import (
 	"github.com/leeola/fixity"
 	"github.com/leeola/fixity/blobstore"
 	"github.com/leeola/fixity/chunk/resticfork"
+	"github.com/leeola/fixity/reader/datareader"
 	"github.com/leeola/fixity/util/wutil"
 )
 
@@ -97,4 +98,26 @@ func (s *Store) Blob(ctx context.Context, ref fixity.Ref) (io.ReadCloser, error)
 	}
 
 	return rc, nil
+}
+
+func (s *Store) Read(ctx context.Context, ref fixity.Ref) (io.Reader, error) {
+	var mutation fixity.Mutation
+	if err := blobstore.ReadAndUnmarshal(ctx, s.bs, ref, &mutation); err != nil {
+		return nil, fmt.Errorf("read mutation: %v", err)
+	}
+
+	if mutation.SchemaType != fixity.BlobTypeMutation {
+		return nil, fmt.Errorf("must read mutation blobs")
+	}
+
+	var data io.Reader
+	if mutation.Data != "" {
+		dr, err := datareader.New(ctx, s.bs, mutation.Data)
+		if err != nil {
+			return nil, fmt.Errorf("datareader new: %v", err)
+		}
+		data = dr
+	}
+
+	return data, nil
 }

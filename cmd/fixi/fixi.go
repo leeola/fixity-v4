@@ -36,6 +36,18 @@ func main() {
 			},
 		},
 		{
+			Name:      "read",
+			ArgsUsage: "HASH",
+			Usage:     "read a mutation from HASH",
+			Action:    ReadCmd,
+			Flags: []cli.Flag{
+				cli.StringFlag{
+					Name:  "filename",
+					Usage: "output data to given filename",
+				},
+			},
+		},
+		{
 			Name:      "write",
 			Aliases:   []string{"w"},
 			ArgsUsage: "FILE",
