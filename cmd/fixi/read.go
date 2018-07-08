@@ -8,6 +8,7 @@ import (
 	"io"
 	"os"
 
+	"github.com/fatih/color"
 	"github.com/leeola/fixity"
 	"github.com/urfave/cli"
 )
@@ -17,10 +18,7 @@ func ReadCmd(clictx *cli.Context) error {
 		return errors.New("missing mutation reference argument")
 	}
 
-	filename := clictx.String("filename")
-	if filename == "" {
-		return fmt.Errorf("filename currently required")
-	}
+	color.NoColor = clictx.Bool("no-stderr-color")
 
 	s, err := storeFromCli(clictx)
 	if err != nil {
@@ -34,30 +32,41 @@ func ReadCmd(clictx *cli.Context) error {
 		return fmt.Errorf("read %q: %v", ref, err)
 	}
 
-	fmt.Fprintln(os.Stderr, "mutation:")
-	if err := printAsJSON(os.Stderr, mutation); err != nil {
-		return fmt.Errorf("print mutation: %v", err)
+	if !clictx.Bool("no-mutation") {
+		fmt.Fprintln(os.Stderr, "mutation:")
+		if err := printAsJSON(os.Stderr, mutation); err != nil {
+			return fmt.Errorf("print mutation: %v", err)
+		}
 	}
 
-	if values != nil {
+	if !clictx.Bool("no-values") && values != nil {
 		fmt.Fprintln(os.Stderr, "values:")
 		if err := printAsJSON(os.Stderr, values); err != nil {
 			return fmt.Errorf("print mutation: %v", err)
 		}
 	}
 
-	f, err := os.OpenFile(filename, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
-	if err != nil {
-		return fmt.Errorf("openfile %q: %v", filename, err)
-	}
-	defer f.Close()
+	filename := clictx.String("filename")
+	if filename != "" {
+		fmt.Fprintln(os.Stderr, "data written to:", filename)
+		f, err := os.OpenFile(filename, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
+		if err != nil {
+			return fmt.Errorf("openfile %q: %v", filename, err)
+		}
+		defer f.Close()
 
-	if _, err := io.Copy(f, r); err != nil {
-		return fmt.Errorf("copy file: %v", err)
-	}
+		if _, err := io.Copy(f, r); err != nil {
+			return fmt.Errorf("copy file: %v", err)
+		}
 
-	if err := f.Sync(); err != nil {
-		return fmt.Errorf("sync: %v", err)
+		if err := f.Sync(); err != nil {
+			return fmt.Errorf("sync: %v", err)
+		}
+	} else {
+		fmt.Fprintln(os.Stderr, "data:")
+		if _, err := io.Copy(os.Stdout, r); err != nil {
+			return fmt.Errorf("copy stdout: %v", err)
+		}
 	}
 
 	return nil

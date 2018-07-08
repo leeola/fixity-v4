@@ -95,6 +95,6 @@ func printJsonBytes(out io.Writer, b []byte) error {
 		return err
 	}
 
-	fmt.Print("\n")
+	fmt.Fprint(out, "\n")
 	return nil
 }

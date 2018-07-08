@@ -45,6 +45,18 @@ func main() {
 					Name:  "dont-print-values",
 					Usage: "do not output values to stderr",
 				},
+				cli.BoolFlag{
+					Name:  "no-stderr-color",
+					Usage: "do not output color to stderr",
+				},
+				cli.BoolFlag{
+					Name:  "no-mutation",
+					Usage: "do not print mutation to stderr",
+				},
+				cli.BoolFlag{
+					Name:  "no-values",
+					Usage: "do not print values to stderr",
+				},
 				cli.StringFlag{
 					Name:  "filename",
 					Usage: "output data to given filename",
