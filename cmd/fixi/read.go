@@ -10,6 +10,7 @@ import (
 
 	"github.com/fatih/color"
 	"github.com/leeola/fixity"
+	"github.com/mattn/go-isatty"
 	"github.com/urfave/cli"
 )
 
@@ -63,7 +64,16 @@ func ReadCmd(clictx *cli.Context) error {
 			return fmt.Errorf("sync: %v", err)
 		}
 	} else {
-		fmt.Fprintln(os.Stderr, "data:")
+
+		var redirectedText string
+		redirected := os.Getenv("TERM") == "dumb" ||
+			(!isatty.IsTerminal(os.Stdout.Fd()) && !isatty.IsCygwinTerminal(os.Stdout.Fd()))
+		if redirected {
+			redirectedText = "redirected"
+		}
+
+		fmt.Fprintln(os.Stderr, "data:", redirectedText)
+
 		if _, err := io.Copy(os.Stdout, r); err != nil {
 			return fmt.Errorf("copy stdout: %v", err)
 		}
