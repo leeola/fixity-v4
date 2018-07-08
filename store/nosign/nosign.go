@@ -100,7 +100,7 @@ func (s *Store) Blob(ctx context.Context, ref fixity.Ref) (io.ReadCloser, error)
 	return rc, nil
 }
 
-func (s *Store) Read(ctx context.Context, ref fixity.Ref) (fixity.Mutation, fixity.Values, io.Reader, error) {
+func (s *Store) Read(ctx context.Context, ref fixity.Ref) (fixity.Mutation, fixity.Values, fixity.Reader, error) {
 	var mutation fixity.Mutation
 	if err := blobstore.ReadAndUnmarshal(ctx, s.bs, ref, &mutation); err != nil {
 		return fixity.Mutation{}, nil, nil, fmt.Errorf("read mutation: %v", err)
@@ -117,7 +117,7 @@ func (s *Store) Read(ctx context.Context, ref fixity.Ref) (fixity.Mutation, fixi
 		}
 	}
 
-	var data io.Reader
+	var data fixity.Reader
 	if mutation.Data != "" {
 		dr, err := datareader.New(ctx, s.bs, mutation.Data)
 		if err != nil {

@@ -18,6 +18,8 @@ type Reader struct {
 	parts                   []fixity.Ref
 	partsIndex, partsLength int
 	nextPartsRef            *fixity.Ref
+
+	data fixity.Data
 }
 
 func New(ctx context.Context, bs blobstore.Reader, ref fixity.Ref) (*Reader, error) {
@@ -51,6 +53,7 @@ func (r *Reader) dataStruct() error {
 	r.partReadCloser = rc
 	r.partsIndex++
 	r.partsLength = partsLength
+	r.data = data
 
 	return nil
 }
@@ -126,4 +129,24 @@ func (r *Reader) Read(p []byte) (int, error) {
 		return n, nil
 	}
 	return n, err
+}
+
+func (r *Reader) Checksum() (string, error) {
+	if r.partReadCloser == nil {
+		if err := r.dataStruct(); err != nil {
+			return "", fmt.Errorf("dataschema: %v", err)
+		}
+	}
+
+	return r.data.Checksum, nil
+}
+
+func (r *Reader) Size() (int64, error) {
+	if r.partReadCloser == nil {
+		if err := r.dataStruct(); err != nil {
+			return 0, fmt.Errorf("dataschema: %v", err)
+		}
+	}
+
+	return r.data.Size, nil
 }
