@@ -100,24 +100,32 @@ func (s *Store) Blob(ctx context.Context, ref fixity.Ref) (io.ReadCloser, error)
 	return rc, nil
 }
 
-func (s *Store) Read(ctx context.Context, ref fixity.Ref) (fixity.Mutation, io.Reader, error) {
+func (s *Store) Read(ctx context.Context, ref fixity.Ref) (fixity.Mutation, fixity.Values, io.Reader, error) {
 	var mutation fixity.Mutation
 	if err := blobstore.ReadAndUnmarshal(ctx, s.bs, ref, &mutation); err != nil {
-		return fixity.Mutation{}, nil, fmt.Errorf("read mutation: %v", err)
+		return fixity.Mutation{}, nil, nil, fmt.Errorf("read mutation: %v", err)
 	}
 
 	if mutation.SchemaType != fixity.BlobTypeMutation {
-		return fixity.Mutation{}, nil, fmt.Errorf("must read mutation blobs")
+		return fixity.Mutation{}, nil, nil, fmt.Errorf("must read mutation blobs")
+	}
+
+	var values fixity.ValuesMap
+	if mutation.ValuesMap != "" {
+		if err := blobstore.ReadAndUnmarshal(ctx, s.bs, mutation.ValuesMap, &values); err != nil {
+			return fixity.Mutation{}, nil, nil, fmt.Errorf("read values: %v", err)
+		}
 	}
 
 	var data io.Reader
 	if mutation.Data != "" {
 		dr, err := datareader.New(ctx, s.bs, mutation.Data)
 		if err != nil {
-			return fixity.Mutation{}, nil, fmt.Errorf("datareader new: %v", err)
+			return fixity.Mutation{}, nil, nil, fmt.Errorf("datareader new: %v", err)
 		}
 		data = dr
 	}
 
-	return mutation, data, nil
+	// values will be nil if not defined, which is okay.
+	return mutation, values.Values, data, nil
 }
