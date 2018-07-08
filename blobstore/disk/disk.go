@@ -13,6 +13,8 @@ import (
 	"github.com/leeola/fixity"
 )
 
+const bsDir = "blobs"
+
 // Blobstore implements a Fixity Blobstore for an simple Filesystem.
 //
 // NOTE: Blobstore is not safe for concurrent use out of process, but
@@ -27,6 +29,8 @@ func New(path string) (*Blobstore, error) {
 	if path == "" {
 		return nil, errors.New("missing required Config field: Path")
 	}
+
+	path = filepath.Join(path, bsDir)
 
 	if err := os.MkdirAll(path, 0755); err != nil {
 		return nil, err
