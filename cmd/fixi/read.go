@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -28,9 +29,21 @@ func ReadCmd(clictx *cli.Context) error {
 	}
 
 	ref := fixity.Ref(clictx.Args().First())
-	_, _, r, err := s.Read(context.Background(), ref)
+	mutation, values, r, err := s.Read(context.Background(), ref)
 	if err != nil {
 		return fmt.Errorf("read %q: %v", ref, err)
+	}
+
+	fmt.Fprintln(os.Stderr, "mutation:")
+	if err := printAsJSON(os.Stderr, mutation); err != nil {
+		return fmt.Errorf("print mutation: %v", err)
+	}
+
+	if values != nil {
+		fmt.Fprintln(os.Stderr, "values:")
+		if err := printAsJSON(os.Stderr, values); err != nil {
+			return fmt.Errorf("print mutation: %v", err)
+		}
 	}
 
 	f, err := os.OpenFile(filename, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
@@ -48,4 +61,15 @@ func ReadCmd(clictx *cli.Context) error {
 	}
 
 	return nil
+}
+
+// printAsJSON marshalls the given struct to json to print it with the
+// same highlighter as blob printing.
+func printAsJSON(out io.Writer, v interface{}) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return fmt.Errorf("marshal: %v", err)
+	}
+
+	return printJsonBytes(out, b)
 }

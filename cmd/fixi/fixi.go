@@ -42,6 +42,10 @@ func main() {
 			Action:    ReadCmd,
 			Flags: []cli.Flag{
 				cli.StringFlag{
+					Name:  "dont-print-values",
+					Usage: "do not output values to stderr",
+				},
+				cli.StringFlag{
 					Name:  "filename",
 					Usage: "output data to given filename",
 				},
