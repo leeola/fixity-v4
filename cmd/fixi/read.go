@@ -77,6 +77,10 @@ func ReadCmd(clictx *cli.Context) error {
 		if _, err := io.Copy(os.Stdout, r); err != nil {
 			return fmt.Errorf("copy stdout: %v", err)
 		}
+
+		if !redirected {
+			fmt.Fprintln(os.Stderr)
+		}
 	}
 
 	return nil
