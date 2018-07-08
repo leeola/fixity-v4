@@ -28,7 +28,7 @@ func ReadCmd(clictx *cli.Context) error {
 	}
 
 	ref := fixity.Ref(clictx.Args().First())
-	mutation, values, r, err := s.Read(context.Background(), ref)
+	mutation, values, r, err := s.ReadRef(context.Background(), ref)
 	if err != nil {
 		return fmt.Errorf("read %q: %v", ref, err)
 	}
