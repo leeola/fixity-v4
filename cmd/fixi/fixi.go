@@ -4,21 +4,20 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/leeola/fixity"
-	"github.com/leeola/fixity/autoload"
-	homedir "github.com/mitchellh/go-homedir"
+	"github.com/leeola/fixity/blobstore/disk"
+	"github.com/leeola/fixity/index/bleve"
+	"github.com/leeola/fixity/store/nosign"
 	"github.com/urfave/cli"
 )
 
 func main() {
 	app := cli.NewApp()
 	app.Name = "fixi"
-	app.HelpName = "fixi" // this was being set to "blob", how?
 	app.Usage = "a low level cli to interact with a fixity store"
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
 			Name:   "config, c",
-			Value:  "~/.config/fixity/config.toml",
+			Value:  "~/.config/fixity/client.toml",
 			Usage:  "load config from `PATH`",
 			EnvVar: "FIXI_CONFIG",
 		},
@@ -28,109 +27,42 @@ func main() {
 		{
 			Name:      "blob",
 			ArgsUsage: "HASH",
-			Usage:     "inspect a raw blob from HASH",
+			Usage:     "inspect a blob from HASH",
 			Action:    BlobCmd,
-		},
-		{
-			Name:  "blocks",
-			Usage: "inspect the fixity blockchain",
 			Flags: []cli.Flag{
 				cli.BoolFlag{
-					Name:  "block-hashes",
-					Usage: "display full block hashes",
-				},
-				cli.BoolFlag{
-					Name:  "content-hashes",
-					Usage: "display full content hashes",
-				},
-				cli.IntFlag{
-					Name:  "limit",
-					Value: 25,
-					Usage: "limit the total blocks displayed by `LIMIT`",
-				},
-				cli.StringFlag{
-					Name:  "type",
-					Usage: "only display blocks of `TYPE`",
+					Name:  "allow-unsafe",
+					Usage: "allow printing schemaless bytes",
 				},
 			},
-			Action: BlocksCmd,
-		},
-		{
-			Name:      "delete",
-			ArgsUsage: "ID",
-			Usage:     "delete the given id from the blockchain",
-			Flags:     []cli.Flag{},
-			Action:    DeleteCmd,
-		},
-		{
-			Name:      "info",
-			ArgsUsage: "ID",
-			Usage:     "return content info such as total size, versions, etc",
-			Flags:     []cli.Flag{},
-			Action:    InfoCmd,
 		},
 		{
 			Name:      "read",
-			ArgsUsage: "ID PATH",
-			Aliases:   []string{"r"},
-			Usage:     "read the given ID or hash content to the given PATH",
+			ArgsUsage: "HASH",
+			Usage:     "read a mutation from HASH",
+			Action:    ReadCmd,
 			Flags: []cli.Flag{
-				cli.BoolFlag{
-					Name:  "hash",
-					Usage: "use a hash as the first arg instead of hash",
+				cli.StringFlag{
+					Name:  "dont-print-values",
+					Usage: "do not output values to stderr",
 				},
 				cli.BoolFlag{
-					Name:  "stdout",
-					Usage: "print the bytes to stdout; this can be verbose!",
+					Name:  "no-stderr-color",
+					Usage: "do not output color to stderr",
 				},
-			},
-			Action: ReadCmd,
-		},
-		{
-			Name:      "search",
-			ArgsUsage: "QUERY",
-			Aliases:   []string{"s"},
-			Usage:     "search for hashes matching the query",
-			Action:    SearchCmd,
-		},
-		{
-			Name:  "sync",
-			Usage: "synchronize the given file or directory with the fixity store",
-			Flags: []cli.Flag{
 				cli.BoolFlag{
-					Name:  "cli",
-					Usage: "upload from cli args",
+					Name:  "no-mutation",
+					Usage: "do not print mutation to stderr",
+				},
+				cli.BoolFlag{
+					Name:  "no-values",
+					Usage: "do not print values to stderr",
 				},
 				cli.StringFlag{
-					Name:  "id",
-					Usage: "manually specify the id. required if using cli or stdin",
-				},
-				cli.BoolFlag{
-					Name:  "dont-ignore-hidden",
-					Usage: "do not ignore hidden files",
-				},
-				cli.StringFlag{
-					Name:  "folder",
-					Usage: "the folder to store the file(s) under in fixity",
-				},
-				cli.StringSliceFlag{
-					Name:  "index",
-					Usage: "a field or field=value to index",
-				},
-				cli.StringSliceFlag{
-					Name:  "fts",
-					Usage: "a field or field=value to index with full text search",
-				},
-				cli.BoolFlag{
-					Name:  "stdin",
-					Usage: "upload from stdin",
-				},
-				cli.BoolFlag{
-					Name:  "recursive, r",
-					Usage: "recursively sync files",
+					Name:  "filename",
+					Usage: "output data to given filename",
 				},
 			},
-			Action: SyncCmd,
 		},
 		{
 			Name:      "write",
@@ -138,37 +70,21 @@ func main() {
 			ArgsUsage: "FILE",
 			Usage:     "write a content to fixity",
 			Flags: []cli.Flag{
-				cli.BoolFlag{
-					Name:  "cli",
-					Usage: "upload from cli args",
+				cli.StringFlag{
+					Name:  "id",
+					Usage: "id of written data",
 				},
 				cli.BoolFlag{
 					Name:  "stdin",
 					Usage: "upload from stdin",
 				},
 				cli.BoolFlag{
-					Name:  "spam-bytes",
-					Usage: "do not hide large chunks byte contents",
-				},
-				cli.StringFlag{
-					Name:  "id",
-					Usage: "the id of the content",
-				},
-				cli.IntFlag{
-					Name:  "manual-chunksize",
-					Usage: "the average chunksize in B",
-				},
-				cli.StringSliceFlag{
-					Name:  "index",
-					Usage: "a field or field=value to index",
-				},
-				cli.StringSliceFlag{
-					Name:  "fts",
-					Usage: "a field or field=value to index with full text search",
+					Name:  "preview",
+					Usage: "preview blobs with schemas",
 				},
 				cli.BoolFlag{
-					Name:  "inspect",
-					Usage: "inspect the written data structure",
+					Name:  "allow-unsafe",
+					Usage: "allow previewing schemaless bytes",
 				},
 			},
 			Action: WriteCmd,
@@ -181,14 +97,23 @@ func main() {
 	}
 }
 
-// loadFixity expands the configPath and loads fixity.
-func loadFixity(ctx *cli.Context) (fixity.Fixity, error) {
-	configPath := ctx.GlobalString("config")
+func storeFromCli(clictx *cli.Context) (*nosign.Store, error) {
+	path := "./_store"
 
-	configPath, err := homedir.Expand(configPath)
+	bs, err := disk.New(path)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("blobstore new: %v", err)
 	}
 
-	return autoload.LoadFixity(configPath)
+	ix, err := bleve.New(path)
+	if err != nil {
+		return nil, fmt.Errorf("index new: %v", err)
+	}
+
+	s, err := nosign.New(bs, ix)
+	if err != nil {
+		return nil, fmt.Errorf("store new: %v", err)
+	}
+
+	return s, nil
 }

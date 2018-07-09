@@ -1,177 +1,132 @@
 package main
 
 import (
-	"encoding/json"
+	"context"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"strconv"
-	"strings"
 
 	"github.com/leeola/fixity"
-	"github.com/leeola/fixity/util/fixityutil"
+	"github.com/leeola/fixity/reader/blobreader"
 	"github.com/urfave/cli"
 )
 
-func WriteCmd(ctx *cli.Context) error {
-	if len(ctx.Args()) == 0 && !ctx.Bool("stdin") {
-		return cli.ShowCommandHelp(ctx, "write")
+func WriteCmd(clictx *cli.Context) error {
+	useStdin := clictx.Bool("stdin")
+
+	id := clictx.String("id")
+
+	filenames := clictx.Args()
+	filenamesLen := len(filenames)
+	useFiles := filenamesLen > 0
+
+	if filenamesLen > 1 && id != "" {
+		return errors.New("cannot write multiple files to a single id")
+	}
+	if !useFiles && !useStdin {
+		return errors.New("missing files or stdin to write")
 	}
 
-	fields, err := fieldsFromCtx(ctx)
+	s, err := storeFromCli(clictx)
 	if err != nil {
+		// no wrap above helper errs
 		return err
 	}
 
-	req := fixity.NewWrite(ctx.String("id"), nil)
-	req.Fields = fields
-
-	if chunkSize := ctx.Int("manual-chunksize"); chunkSize != 0 {
-		req.AverageChunkSize = uint64(chunkSize)
+	if useStdin {
+		return writeReadCloser(clictx, s, ioutil.NopCloser(os.Stdin), id)
 	}
 
-	if ctx.Bool("cli") {
-		req.Blob = ioutil.NopCloser(strings.NewReader(strings.Join(ctx.Args(), " ")))
-	} else if ctx.Bool("stdin") {
-		req.Blob = ioutil.NopCloser(os.Stdout)
-	} else {
-		path := ctx.Args().First()
-
-		fi, err := os.Stat(path)
-		if err != nil {
-			return err
-		}
-
-		// TODO(leeola): append unix metadata to fields array
-
-		// automatically set the id as the filename, if not provided
-		//
-		// By using isSet we allow the caller to supply an empty id if that's
-		// what they provided.
-		if req.Id == "" && !ctx.IsSet("id") {
-			req.Id = filepath.Base(path)
-		}
-
-		if req.AverageChunkSize == fixity.DefaultAverageChunkSize {
-			req.SetChunkSizeFromFileInfo(fi)
-		}
-
-		f, err := os.OpenFile(path, os.O_RDONLY, 0644)
-		if err != nil {
-			return err
-		}
-		req.Blob = f
-	}
-
-	fixi, err := loadFixity(ctx)
-	if err != nil {
-		return err
-	}
-
-	c, err := fixi.WriteRequest(req)
-	if err != nil {
-		return err
-	}
-
-	b, err := c.Blob()
-	if err != nil {
-		return err
-	}
-
-	out := os.Stdout
-	inspect := ctx.Bool("inspect")
-	spamBytes := ctx.Bool("spam-bytes")
-
-	for _, h := range b.ChunkHashes {
-		fmt.Fprintln(out, h)
-		if inspect {
-			var c fixity.Chunk
-			if err := fixityutil.ReadAndUnmarshal(fixi, h, &c); err != nil {
-				return err
-			}
-
-			if len(c.ChunkBytes) > 50 && !spamBytes {
-				c.ChunkBytes = []byte("...spam bytes hidden...")
-			}
-
-			if err := printStruct(out, c); err != nil {
-				return err
-			}
-		}
-	}
-
-	fmt.Fprintln(out, b.Hash)
-	if inspect {
-		if err := printStruct(out, b); err != nil {
-			return err
-		}
-	}
-
-	fmt.Fprintln(out, c.Hash)
-	if inspect {
-		if err := printStruct(out, c); err != nil {
-			return err
+	for _, filename := range filenames {
+		if err := writeFile(clictx, s, id, filename); err != nil {
+			return fmt.Errorf("writereadcloser %q: %v", filename, err)
 		}
 	}
 
 	return nil
 }
 
-func fieldsFromCtx(ctx *cli.Context) (fixity.Fields, error) {
-	indexFields := ctx.StringSlice("index")
-	ftsFields := ctx.StringSlice("fts")
-	hasIndexFields := len(indexFields) > 0
-	hasFtsFields := len(ftsFields) > 0
-
-	if !hasIndexFields && !hasFtsFields {
-		return nil, nil
+func writeFile(clictx *cli.Context, s store, id, filename string) error {
+	if id == "" {
+		paths := []string{"files"}
+		if dir := filepath.Base(filepath.Dir(filename)); dir != "" {
+			paths = append(paths, dir)
+		}
+		paths = append(paths, filepath.Base(filename))
+		id = filepath.Join(paths...)
 	}
 
-	var fields []fixity.Field
-	for _, f := range indexFields {
-		k, v := splitKeyValue(f)
-		fields = append(fields, fixity.Field{
-			Field: k,
-			Value: v,
-		})
-	}
-
-	for _, f := range ftsFields {
-		k, v := splitKeyValue(f)
-		fields = append(fields, fixity.Field{
-			Field:   k,
-			Value:   v,
-			Options: (fixity.FieldOptions{}).FullTextSearch(),
-		})
-	}
-
-	return fields, nil
-}
-
-func splitKeyValue(s string) (string, interface{}) {
-	kv := strings.SplitN(s, "=", 2)
-	k := kv[0]
-	if len(kv) == 1 {
-		return k, nil
-	}
-
-	sv := kv[1]
-	if v, err := strconv.ParseBool(sv); err == nil {
-		return k, v
-	}
-	if v, err := strconv.Atoi(sv); err == nil {
-		return k, v
-	}
-	return k, sv
-}
-
-func printStruct(out io.Writer, v interface{}) error {
-	b, err := json.Marshal(v)
+	f, err := os.OpenFile(filename, os.O_RDONLY, 0644)
 	if err != nil {
-		return err
+		return fmt.Errorf("openfile %q: %v", filename, err)
+	}
+	defer f.Close()
+
+	if err := writeReadCloser(clictx, s, f, id); err != nil {
+		return fmt.Errorf("writereadcloser %q: %v", filename, err)
 	}
 
-	return printJsonBytes(os.Stdout, b)
+	if err := f.Sync(); err != nil {
+		return fmt.Errorf("sync: %v", err)
+	}
+
+	return nil
+}
+
+func writeReadCloser(clictx *cli.Context, s store, r io.Reader, id string) error {
+	preview := clictx.Bool("preview")
+	allowUnsafe := clictx.Bool("allow-unsafe")
+
+	if id == "" {
+		return errors.New("id must be defined if it cannot be inferred")
+	}
+
+	hashes, err := s.Write(context.Background(), id, nil, r)
+	if err != nil {
+		return fmt.Errorf("write: %v", err)
+	}
+
+	for _, h := range hashes {
+		fmt.Println(h)
+
+		if preview {
+			if err := previewBlob(context.Background(), s, h, allowUnsafe); err != nil {
+				return fmt.Errorf("previewblob: %v", err)
+			}
+		}
+	}
+
+	return nil
+}
+
+func previewBlob(ctx context.Context, s store, ref fixity.Ref, notSafe bool) error {
+	rc, err := s.Blob(ctx, ref)
+	if err != nil {
+		return fmt.Errorf("blob: %v", err)
+	}
+	defer rc.Close()
+
+	r, bt, err := blobreader.BlobType(rc)
+	if err != nil {
+		return fmt.Errorf("blobtype: %v", err)
+	}
+
+	b, err := ioutil.ReadAll(r)
+	if err != nil {
+		return fmt.Errorf("readall: %v", err)
+	}
+
+	switch {
+	case bt != fixity.BlobTypeSchemaless:
+		if err := printJsonBytes(os.Stdout, b); err != nil {
+			return fmt.Errorf("printjsonbytes: %v", err)
+		}
+	case notSafe:
+		fmt.Println(string(b))
+	}
+
+	return nil
 }

@@ -2,6 +2,8 @@ package main
 
 import (
 	"bytes"
+	"context"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -9,37 +11,64 @@ import (
 
 	"github.com/fatih/color"
 	"github.com/leeola/fixity"
+	"github.com/leeola/fixity/reader/blobreader"
 	"github.com/nwidger/jsoncolor"
 	"github.com/urfave/cli"
 )
 
-func BlobCmd(ctx *cli.Context) error {
-	h := ctx.Args().Get(0)
-	if h == "" {
-		return cli.ShowCommandHelp(ctx, "blob")
-	}
-
-	fixity, err := loadFixity(ctx)
+func BlobCmd(clictx *cli.Context) error {
+	s, err := storeFromCli(clictx)
 	if err != nil {
+		// no wrap above helper errs
 		return err
 	}
 
-	return printHash(fixity, h)
+	notSafe := clictx.Bool("allow-unsafe")
+
+	for _, sRef := range clictx.Args() {
+		ref := fixity.Ref(sRef)
+		if err := printBlob(context.Background(), s, ref, notSafe); err != nil {
+			return fmt.Errorf("printblob %q: %v", ref, err)
+		}
+	}
+
+	return nil
 }
 
-func printHash(fixi fixity.Fixity, h string) error {
-	rc, err := fixi.Blob(h)
+type store interface {
+	Write(ctx context.Context, id string, v fixity.Values, r io.Reader) ([]fixity.Ref, error)
+	Blob(ctx context.Context, ref fixity.Ref) (io.ReadCloser, error)
+}
+
+func printBlob(ctx context.Context, s store, ref fixity.Ref, notSafe bool) error {
+	rc, err := s.Blob(ctx, ref)
 	if err != nil {
-		return err
+		return fmt.Errorf("blob: %v", err)
 	}
 	defer rc.Close()
 
-	b, err := ioutil.ReadAll(rc)
+	r, bt, err := blobreader.BlobType(rc)
 	if err != nil {
-		return err
+		return fmt.Errorf("blobtype: %v", err)
 	}
 
-	return printJsonBytes(os.Stdout, b)
+	b, err := ioutil.ReadAll(r)
+	if err != nil {
+		return fmt.Errorf("readall: %v", err)
+	}
+
+	switch {
+	case bt != fixity.BlobTypeSchemaless:
+		if err := printJsonBytes(os.Stdout, b); err != nil {
+			return fmt.Errorf("printjsonbytes: %v", err)
+		}
+	case notSafe:
+		fmt.Println(string(b))
+	default:
+		return errors.New("use --not-safe to print schemaless blobs")
+	}
+
+	return nil
 }
 
 func printJsonBytes(out io.Writer, b []byte) error {
@@ -66,6 +95,6 @@ func printJsonBytes(out io.Writer, b []byte) error {
 		return err
 	}
 
-	fmt.Print("\n")
+	fmt.Fprint(out, "\n")
 	return nil
 }
