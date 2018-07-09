@@ -9,7 +9,6 @@ import (
 	"os"
 
 	"github.com/fatih/color"
-	"github.com/leeola/fixity"
 	"github.com/mattn/go-isatty"
 	"github.com/urfave/cli"
 )
@@ -27,10 +26,10 @@ func ReadCmd(clictx *cli.Context) error {
 		return err
 	}
 
-	ref := fixity.Ref(clictx.Args().First())
-	mutation, values, r, err := s.ReadRef(context.Background(), ref)
+	id := clictx.Args().First()
+	mutation, values, r, err := s.Read(context.Background(), id)
 	if err != nil {
-		return fmt.Errorf("read %q: %v", ref, err)
+		return fmt.Errorf("read %q: %v", id, err)
 	}
 
 	if !clictx.Bool("no-mutation") {

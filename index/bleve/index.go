@@ -25,7 +25,7 @@ func (ix *Index) Index(ref fixity.Ref, m fixity.Mutation, d *fixity.Data, v fixi
 	}
 
 	indexedValues["fixityID"] = m.ID
-	indexedValues["fixityRef"] = ref
+	indexedValues["fixityRef"] = string(ref)
 
 	if err := ix.idIndex.Index(m.ID, indexedValues); err != nil {
 		return fmt.Errorf("bleve id index: %v", err)

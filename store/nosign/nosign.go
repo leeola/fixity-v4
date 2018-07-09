@@ -11,8 +11,10 @@ import (
 	"github.com/leeola/fixity/blobstore"
 	"github.com/leeola/fixity/chunk/resticfork"
 	"github.com/leeola/fixity/index"
+	"github.com/leeola/fixity/q"
 	"github.com/leeola/fixity/reader/datareader"
 	"github.com/leeola/fixity/util/wutil"
+	"github.com/leeola/fixity/value"
 )
 
 type Store struct {
@@ -107,6 +109,29 @@ func (s *Store) Blob(ctx context.Context, ref fixity.Ref) (io.ReadCloser, error)
 	}
 
 	return rc, nil
+}
+
+func (s *Store) Read(ctx context.Context, id string) (
+	fixity.Mutation, fixity.Values, fixity.Reader, error) {
+
+	refs, err := s.index.Query(q.New().Eq("fixityID", value.String(id)))
+	if err != nil {
+		return fixity.Mutation{}, nil, nil, fmt.Errorf("query id: %v", err)
+	}
+
+	refsLen := len(refs)
+	tooManyMatches := refsLen > 1
+	noMatches := refsLen == 0
+
+	if tooManyMatches {
+		return fixity.Mutation{}, nil, nil, fmt.Errorf("id matched more than once")
+	}
+
+	if noMatches {
+		return fixity.Mutation{}, nil, nil, fmt.Errorf("id not found")
+	}
+
+	return s.ReadRef(ctx, refs[0])
 }
 
 func (s *Store) ReadRef(ctx context.Context, ref fixity.Ref) (
