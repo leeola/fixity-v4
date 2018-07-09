@@ -15,7 +15,7 @@ import (
 const partSize = 2 // low for testing
 
 func WriteData(ctx context.Context, w blobstore.Writer,
-	chunkRefs []fixity.Ref, totalSize int64, contentHash string) ([]fixity.Ref, error) {
+	chunkRefs []fixity.Ref, totalSize int64, contentHash string) ([]fixity.Ref, *fixity.Data, error) {
 
 	chunkRefLen := len(chunkRefs)
 
@@ -48,7 +48,7 @@ func WriteData(ctx context.Context, w blobstore.Writer,
 
 		ref, err := MarshalAndWrite(ctx, w, part)
 		if err != nil {
-			return nil, fmt.Errorf("marshalandwrite part %d: %v", i, err)
+			return nil, nil, fmt.Errorf("marshalandwrite part %d: %v", i, err)
 		}
 		chunkRefs = append(chunkRefs, ref)
 		lastPart = &ref
@@ -75,10 +75,10 @@ func WriteData(ctx context.Context, w blobstore.Writer,
 
 	ref, err := MarshalAndWrite(ctx, w, data)
 	if err != nil {
-		return nil, fmt.Errorf("marshalandwrite content: %v", err)
+		return nil, nil, fmt.Errorf("marshalandwrite content: %v", err)
 	}
 
-	return append(chunkRefs, ref), nil
+	return append(chunkRefs, ref), &data, nil
 }
 
 func WriteChunks(ctx context.Context, w blobstore.Writer, r chunk.Chunker) (
@@ -133,10 +133,17 @@ func MarshalAndWrite(ctx context.Context, w blobstore.Writer, v interface{}) (fi
 }
 
 func WriteValues(ctx context.Context, w blobstore.Writer, v fixity.Values) (fixity.Ref, error) {
-	return MarshalAndWrite(ctx, w, fixity.ValuesMap{
+	vs := fixity.ValuesMap{
 		Schema: fixity.Schema{
 			SchemaType: fixity.BlobTypeValues,
 		},
 		Values: v,
-	})
+	}
+
+	ref, err := MarshalAndWrite(ctx, w, vs)
+	if err != nil {
+		return "", err
+	}
+
+	return ref, nil
 }

@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/leeola/fixity/blobstore/disk"
+	"github.com/leeola/fixity/index/bleve"
 	"github.com/leeola/fixity/store/nosign"
 	"github.com/urfave/cli"
 )
@@ -97,12 +98,19 @@ func main() {
 }
 
 func storeFromCli(clictx *cli.Context) (*nosign.Store, error) {
-	bs, err := disk.New("./_store")
+	path := "./_store"
+
+	bs, err := disk.New(path)
 	if err != nil {
 		return nil, fmt.Errorf("blobstore new: %v", err)
 	}
 
-	s, err := nosign.New(bs)
+	ix, err := bleve.New(path)
+	if err != nil {
+		return nil, fmt.Errorf("index new: %v", err)
+	}
+
+	s, err := nosign.New(bs, ix)
 	if err != nil {
 		return nil, fmt.Errorf("store new: %v", err)
 	}
