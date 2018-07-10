@@ -21,7 +21,9 @@ func (s *Blobstore) pathHash(h string) string {
 		last := len(h) - 1
 		for i, char := range h {
 			buffer.WriteRune(char)
-			if (i+1)%2 == 0 && i != last {
+			// >8 skips the normal length of multihash encoding prefix.
+			// Ie, needless separation.
+			if i > 8 && (i+1)%2 == 0 && i != last {
 				buffer.WriteRune('/')
 			}
 		}
