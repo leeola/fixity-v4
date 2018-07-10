@@ -23,9 +23,10 @@ const bsDir = "blobs"
 type Blobstore struct {
 	mu   sync.Mutex
 	path string
+	flat bool
 }
 
-func New(path string) (*Blobstore, error) {
+func New(path string, flat bool) (*Blobstore, error) {
 	if path == "" {
 		return nil, errors.New("missing required Config field: Path")
 	}
@@ -38,6 +39,7 @@ func New(path string) (*Blobstore, error) {
 
 	return &Blobstore{
 		path: path,
+		flat: flat,
 	}, nil
 }
 

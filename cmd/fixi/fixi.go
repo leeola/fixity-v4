@@ -100,7 +100,7 @@ func main() {
 func storeFromCli(clictx *cli.Context) (*nosign.Store, error) {
 	path := "./_store"
 
-	bs, err := disk.New(path)
+	bs, err := disk.New(path, true)
 	if err != nil {
 		return nil, fmt.Errorf("blobstore new: %v", err)
 	}
