@@ -15,12 +15,12 @@ func main() {
 	app.Name = "fixi"
 	app.Usage = "a low level cli to interact with a fixity store"
 	app.Flags = []cli.Flag{
-		cli.StringFlag{
-			Name:   "config, c",
-			Value:  "~/.config/fixity/client.toml",
-			Usage:  "load config from `PATH`",
-			EnvVar: "FIXI_CONFIG",
-		},
+	// cli.StringFlag{
+	// 	Name:   "config, c",
+	// 	Value:  "~/.config/fixity/client.toml",
+	// 	Usage:  "load config from `PATH`",
+	// 	EnvVar: "FIXI_CONFIG",
+	// },
 	}
 
 	app.Commands = []cli.Command{
@@ -37,7 +37,16 @@ func main() {
 			},
 		},
 		{
+			Name:      "query",
+			Aliases:   []string{"q"},
+			ArgsUsage: "QUERY",
+			Usage:     "search the store for QUERY",
+			Action:    QueryCmd,
+			Flags:     []cli.Flag{},
+		},
+		{
 			Name:      "read",
+			Aliases:   []string{"r"},
 			ArgsUsage: "HASH",
 			Usage:     "read a mutation from HASH",
 			Action:    ReadCmd,
