@@ -11,7 +11,7 @@ type QueryIndexer interface {
 }
 
 type Indexer interface {
-	Index(mutRef fixity.Ref, m fixity.Mutation, d *fixity.Data, v fixity.Values) error
+	Index(mutRef fixity.Ref, m fixity.Mutation, d *fixity.DataSchema, v fixity.Values) error
 }
 
 // TODO(leeola): articulate a mechanism to query against unique ids or

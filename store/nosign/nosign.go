@@ -48,7 +48,7 @@ func (s *Store) WriteTimeNamespace(ctx context.Context,
 	var refs []fixity.Ref
 
 	var (
-		data    *fixity.Data
+		data    *fixity.DataSchema
 		dataRef fixity.Ref
 	)
 	if r != nil {
@@ -85,10 +85,10 @@ func (s *Store) WriteTimeNamespace(ctx context.Context,
 		Schema: fixity.Schema{
 			SchemaType: fixity.BlobTypeMutation,
 		},
-		ID:        id,
-		Time:      t,
-		Data:      dataRef,
-		ValuesMap: valuesRef,
+		ID:           id,
+		Time:         t,
+		DataSchema:   dataRef,
+		ValuesSchema: valuesRef,
 	}
 
 	ref, err := wutil.MarshalAndWrite(ctx, s.bstor, mutation)
@@ -149,16 +149,16 @@ func (s *Store) ReadRef(ctx context.Context, ref fixity.Ref) (
 		return fixity.Mutation{}, nil, nil, fmt.Errorf("must read mutation blobs")
 	}
 
-	var values fixity.ValuesMap
-	if mutation.ValuesMap != "" {
-		if err := blobstore.ReadAndUnmarshal(ctx, s.bstor, mutation.ValuesMap, &values); err != nil {
+	var values fixity.ValuesSchema
+	if mutation.ValuesSchema != "" {
+		if err := blobstore.ReadAndUnmarshal(ctx, s.bstor, mutation.ValuesSchema, &values); err != nil {
 			return fixity.Mutation{}, nil, nil, fmt.Errorf("read values: %v", err)
 		}
 	}
 
 	var data fixity.Reader
-	if mutation.Data != "" {
-		dr, err := datareader.New(ctx, s.bstor, mutation.Data)
+	if mutation.DataSchema != "" {
+		dr, err := datareader.New(ctx, s.bstor, mutation.DataSchema)
 		if err != nil {
 			return fixity.Mutation{}, nil, nil, fmt.Errorf("datareader new: %v", err)
 		}

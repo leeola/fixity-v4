@@ -19,7 +19,7 @@ type Reader struct {
 	partsIndex, partsLength int
 	nextPartsRef            *fixity.Ref
 
-	data fixity.Data
+	data fixity.DataSchema
 }
 
 func New(ctx context.Context, bs blobstore.Reader, ref fixity.Ref) (*Reader, error) {
@@ -31,20 +31,20 @@ func New(ctx context.Context, bs blobstore.Reader, ref fixity.Ref) (*Reader, err
 }
 
 func (r *Reader) dataStruct() error {
-	var data fixity.Data
+	var data fixity.DataSchema
 	if err := blobstore.ReadAndUnmarshal(r.ctx, r.bs, r.dataRef, &data); err != nil {
 		return fmt.Errorf("readandunmarshal %q: %v", r.dataRef, err)
 	}
 
-	partsLength := len(data.Parts.Parts)
+	partsLength := len(data.PartsSchema.Parts)
 	if partsLength == 0 {
 		return fmt.Errorf("dataschema %q missing parts", r.dataRef)
 	}
 
-	r.parts = data.Parts.Parts
+	r.parts = data.PartsSchema.Parts
 	r.nextPartsRef = data.MoreParts
 
-	firstPart := data.Parts.Parts[0]
+	firstPart := data.PartsSchema.Parts[0]
 	rc, err := r.bs.Read(r.ctx, firstPart)
 	if err != nil {
 		return fmt.Errorf("dataschema %q read: %v", r.dataRef, err)
@@ -63,7 +63,7 @@ func (r *Reader) nextParts() error {
 		return io.EOF
 	}
 
-	var parts fixity.Parts
+	var parts fixity.PartsSchema
 	if err := blobstore.ReadAndUnmarshal(r.ctx, r.bs, *r.nextPartsRef, &parts); err != nil {
 		return fmt.Errorf("readandunmarshal: %v", err)
 	}

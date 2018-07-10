@@ -8,7 +8,7 @@ import (
 	"github.com/leeola/fixity/value"
 )
 
-func (ix *Index) Index(ref fixity.Ref, m fixity.Mutation, d *fixity.Data, v fixity.Values) error {
+func (ix *Index) Index(ref fixity.Ref, m fixity.Mutation, d *fixity.DataSchema, v fixity.Values) error {
 
 	indexedValues := map[string]interface{}{}
 

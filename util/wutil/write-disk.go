@@ -15,7 +15,7 @@ import (
 const partSize = 100
 
 func WriteData(ctx context.Context, w blobstore.Writer,
-	chunkRefs []fixity.Ref, totalSize int64, contentHash string) ([]fixity.Ref, *fixity.Data, error) {
+	chunkRefs []fixity.Ref, totalSize int64, contentHash string) ([]fixity.Ref, *fixity.DataSchema, error) {
 
 	chunkRefLen := len(chunkRefs)
 
@@ -38,7 +38,7 @@ func WriteData(ctx context.Context, w blobstore.Writer,
 			endBound = startBound + chunkRefLen%partSize
 		}
 
-		part := fixity.Parts{
+		part := fixity.PartsSchema{
 			Schema: fixity.Schema{
 				SchemaType: fixity.BlobTypeParts,
 			},
@@ -61,8 +61,8 @@ func WriteData(ctx context.Context, w blobstore.Writer,
 
 	// now we've written all the parts except for the most important
 	// one, the content which has a part embedded.
-	data := fixity.Data{
-		Parts: fixity.Parts{
+	data := fixity.DataSchema{
+		PartsSchema: fixity.PartsSchema{
 			Schema: fixity.Schema{
 				SchemaType: fixity.BlobTypeData,
 			},
@@ -133,7 +133,7 @@ func MarshalAndWrite(ctx context.Context, w blobstore.Writer, v interface{}) (fi
 }
 
 func WriteValues(ctx context.Context, w blobstore.Writer, v fixity.Values) (fixity.Ref, error) {
-	vs := fixity.ValuesMap{
+	vs := fixity.ValuesSchema{
 		Schema: fixity.Schema{
 			SchemaType: fixity.BlobTypeValues,
 		},
