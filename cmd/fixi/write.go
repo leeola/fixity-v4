@@ -8,9 +8,11 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/leeola/fixity"
 	"github.com/leeola/fixity/reader/blobreader"
+	"github.com/leeola/fixity/value"
 	"github.com/urfave/cli"
 )
 
@@ -84,7 +86,19 @@ func writeReadCloser(clictx *cli.Context, s store, r io.Reader, id string) error
 		return errors.New("id must be defined if it cannot be inferred")
 	}
 
-	hashes, err := s.Write(context.Background(), id, nil, r)
+	var values fixity.Values
+	for _, kv := range clictx.StringSlice("kv") {
+		if values == nil {
+			values = fixity.Values{}
+		}
+		k, v, err := splitKV(kv)
+		if err != nil {
+			return err // no wrap helper err
+		}
+		values[k] = value.String(v)
+	}
+
+	hashes, err := s.Write(context.Background(), id, values, r)
 	if err != nil {
 		return fmt.Errorf("write: %v", err)
 	}
@@ -129,4 +143,13 @@ func previewBlob(ctx context.Context, s store, ref fixity.Ref, notSafe bool) err
 	}
 
 	return nil
+}
+
+func splitKV(kv string) (string, string, error) {
+	split := strings.SplitN(kv, "=", 2)
+	if len(split) != 2 {
+		return "", "", errors.New("invalid kv format, requires key=value pair")
+	}
+
+	return split[0], split[1], nil
 }

@@ -112,6 +112,10 @@ func main() {
 					Name:  "id",
 					Usage: "id of written data",
 				},
+				cli.StringSliceFlag{
+					Name:  "kv",
+					Usage: "a key=value pair to index write",
+				},
 				cli.BoolFlag{
 					Name:  "stdin",
 					Usage: "upload from stdin",
