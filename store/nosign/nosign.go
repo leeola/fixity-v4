@@ -114,7 +114,7 @@ func (s *Store) Blob(ctx context.Context, ref fixity.Ref) (io.ReadCloser, error)
 func (s *Store) Read(ctx context.Context, id string) (
 	fixity.Mutation, fixity.Values, fixity.Reader, error) {
 
-	refs, err := s.index.Query(q.New().Eq("fixityID", value.String(id)))
+	refs, err := s.index.Query(q.New().Eq(index.FIDKey, value.String(id)))
 	if err != nil {
 		return fixity.Mutation{}, nil, nil, fmt.Errorf("query id: %v", err)
 	}

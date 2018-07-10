@@ -19,3 +19,10 @@ type Indexer interface {
 type Querier interface {
 	Query(q.Query) ([]fixity.Ref, error)
 }
+
+const (
+	FIDKey       string = "fid"
+	FRefKey      string = "fref"
+	FSizeKey     string = "fsize"
+	FChecksumKey string = "fchecksum"
+)

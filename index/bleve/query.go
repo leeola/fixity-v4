@@ -6,13 +6,14 @@ import (
 	"github.com/blevesearch/bleve"
 	"github.com/blevesearch/bleve/search/query"
 	"github.com/leeola/fixity"
+	"github.com/leeola/fixity/index"
 	"github.com/leeola/fixity/q"
 	"github.com/leeola/fixity/value/operator"
 )
 
 const (
-	fieldNameRef = "fixityRef"
-	fieldNameID  = "fixityID"
+	fieldNameRef = index.FRefKey
+	fieldNameID  = index.FIDKey
 )
 
 func (ix *Index) Query(qu q.Query) ([]fixity.Ref, error) {

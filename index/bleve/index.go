@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/leeola/fixity"
+	"github.com/leeola/fixity/index"
 	"github.com/leeola/fixity/value"
 )
 
@@ -24,8 +25,12 @@ func (ix *Index) Index(ref fixity.Ref, m fixity.Mutation, d *fixity.Data, v fixi
 		}
 	}
 
-	indexedValues["fixityID"] = m.ID
-	indexedValues["fixityRef"] = string(ref)
+	indexedValues[index.FIDKey] = m.ID
+	indexedValues[index.FRefKey] = string(ref)
+	if d != nil {
+		indexedValues[index.FSizeKey] = d.Size
+		indexedValues[index.FChecksumKey] = d.Checksum
+	}
 
 	if err := ix.idIndex.Index(m.ID, indexedValues); err != nil {
 		return fmt.Errorf("bleve id index: %v", err)
