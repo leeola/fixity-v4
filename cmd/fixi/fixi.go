@@ -71,6 +71,10 @@ func main() {
 					Name:  "filename",
 					Usage: "output data to given filename",
 				},
+				cli.BoolFlag{
+					Name:  "ref",
+					Usage: "read from mutation refs, not ids",
+				},
 			},
 		},
 		{

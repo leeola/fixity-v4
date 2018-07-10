@@ -9,13 +9,17 @@ import (
 	"os"
 
 	"github.com/fatih/color"
+	"github.com/leeola/fixity"
 	"github.com/mattn/go-isatty"
 	"github.com/urfave/cli"
 )
 
 func ReadCmd(clictx *cli.Context) error {
-	if len(clictx.Args()) != 1 {
-		return errors.New("missing mutation reference argument")
+	if len(clictx.Args()) < 1 {
+		return errors.New("missing mutation id or ref arg")
+	}
+	if len(clictx.Args()) > 1 {
+		return errors.New("too many mutation id or ref args")
 	}
 
 	color.NoColor = clictx.Bool("no-stderr-color")
@@ -26,10 +30,24 @@ func ReadCmd(clictx *cli.Context) error {
 		return err
 	}
 
-	id := clictx.Args().First()
-	mutation, values, r, err := s.Read(context.Background(), id)
-	if err != nil {
-		return fmt.Errorf("read %q: %v", id, err)
+	var (
+		mutation fixity.Mutation
+		values   fixity.Values
+		r        fixity.Reader
+	)
+
+	if clictx.Bool("ref") {
+		ref := fixity.Ref(clictx.Args().First())
+		mutation, values, r, err = s.ReadRef(context.Background(), ref)
+		if err != nil {
+			return fmt.Errorf("read %q: %v", ref, err)
+		}
+	} else {
+		id := clictx.Args().First()
+		mutation, values, r, err = s.Read(context.Background(), id)
+		if err != nil {
+			return fmt.Errorf("read %q: %v", id, err)
+		}
 	}
 
 	if !clictx.Bool("no-mutation") {
