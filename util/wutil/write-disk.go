@@ -12,7 +12,7 @@ import (
 	"github.com/leeola/fixity/chunk"
 )
 
-const partSize = 2 // low for testing
+const partSize = 100
 
 func WriteData(ctx context.Context, w blobstore.Writer,
 	chunkRefs []fixity.Ref, totalSize int64, contentHash string) ([]fixity.Ref, *fixity.Data, error) {
