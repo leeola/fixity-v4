@@ -34,6 +34,13 @@ func FromString(s string) Query {
 		switch op {
 		case "eq":
 			op = operator.Equal
+
+		case "":
+			// default empty ops to equal.
+			//
+			// in the future it should probably translate to some type of loose
+			// operator, maybe fts?
+			op = operator.Equal
 		}
 
 		v := value.String(valueStr)
