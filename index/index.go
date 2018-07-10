@@ -17,7 +17,7 @@ type Indexer interface {
 // TODO(leeola): articulate a mechanism to query against unique ids or
 // versions.
 type Querier interface {
-	Query(q.Query) ([]fixity.Ref, error)
+	Query(q.Query) ([]fixity.Match, error)
 }
 
 const (

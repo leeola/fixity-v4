@@ -117,14 +117,14 @@ func (s *Store) Blob(ctx context.Context, ref fixity.Ref) (io.ReadCloser, error)
 func (s *Store) Read(ctx context.Context, id string) (
 	fixity.Mutation, fixity.Values, fixity.Reader, error) {
 
-	refs, err := s.Query(q.New().Eq(index.FIDKey, value.String(id)))
+	matches, err := s.Query(q.New().Eq(index.FIDKey, value.String(id)))
 	if err != nil {
 		return fixity.Mutation{}, nil, nil, fmt.Errorf("query id: %v", err)
 	}
 
-	refsLen := len(refs)
-	tooManyMatches := refsLen > 1
-	noMatches := refsLen == 0
+	matchesLen := len(matches)
+	tooManyMatches := matchesLen > 1
+	noMatches := matchesLen == 0
 
 	if tooManyMatches {
 		return fixity.Mutation{}, nil, nil, fmt.Errorf("id matched more than once")
@@ -134,7 +134,7 @@ func (s *Store) Read(ctx context.Context, id string) (
 		return fixity.Mutation{}, nil, nil, fmt.Errorf("id not found")
 	}
 
-	return s.ReadRef(ctx, refs[0])
+	return s.ReadRef(ctx, matches[0].Ref)
 }
 
 func (s *Store) ReadRef(ctx context.Context, ref fixity.Ref) (

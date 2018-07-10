@@ -16,7 +16,7 @@ const (
 	fieldNameID  = index.FIDKey
 )
 
-func (ix *Index) Query(qu q.Query) ([]fixity.Ref, error) {
+func (ix *Index) Query(qu q.Query) ([]fixity.Match, error) {
 	var index bleve.Index
 	if qu.IncludeVersions {
 		index = ix.refIndex
@@ -27,37 +27,50 @@ func (ix *Index) Query(qu q.Query) ([]fixity.Ref, error) {
 	return queryIndex(index, qu)
 }
 
-func queryIndex(ix bleve.Index, qu q.Query) ([]fixity.Ref, error) {
+func queryIndex(ix bleve.Index, qu q.Query) ([]fixity.Match, error) {
 	bq, err := fixQtoBleveQ(qu.Constraint)
 	if err != nil {
 		return nil, err // avoiding helper context to callers
 	}
 
 	search := bleve.NewSearchRequest(bq)
-	search.Fields = []string{fieldNameRef}
+	search.Fields = []string{fieldNameID, fieldNameRef}
 
 	searchResults, err := ix.Search(search)
 	if err != nil {
 		return nil, fmt.Errorf("search: %v", err)
 	}
 
-	refs := make([]fixity.Ref, len(searchResults.Hits))
+	matches := make([]fixity.Match, len(searchResults.Hits))
 
 	for i, hit := range searchResults.Hits {
-		fv, ok := hit.Fields[fieldNameRef]
+		refIfc, ok := hit.Fields[fieldNameRef]
 		if !ok {
 			return nil, fmt.Errorf("hit does not contain field: %s", fieldNameRef)
 		}
 
-		s, ok := fv.(string)
+		refStr, ok := refIfc.(string)
 		if !ok {
 			return nil, fmt.Errorf("hit field ref not valid string")
 		}
 
-		refs[i] = fixity.Ref(s)
+		idIfc, ok := hit.Fields[fieldNameID]
+		if !ok {
+			return nil, fmt.Errorf("hit does not contain field: %s", fieldNameRef)
+		}
+
+		id, ok := idIfc.(string)
+		if !ok {
+			return nil, fmt.Errorf("hit field ref not valid string")
+		}
+
+		matches[i] = fixity.Match{
+			ID:  id,
+			Ref: fixity.Ref(refStr),
+		}
 	}
 
-	return refs, nil
+	return matches, nil
 }
 
 func fixQtoBleveQ(c q.Constraint) (query.Query, error) {
