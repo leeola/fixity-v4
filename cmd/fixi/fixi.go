@@ -37,6 +37,35 @@ func main() {
 			},
 		},
 		{
+			Name:      "cat",
+			Aliases:   []string{"r"},
+			ArgsUsage: "ID",
+			Usage:     "read a mutation from ID",
+			Action:    CatCmd,
+			Flags: []cli.Flag{
+				cli.StringFlag{
+					Name:  "dont-print-values",
+					Usage: "do not output values to stderr",
+				},
+				cli.BoolFlag{
+					Name:  "no-stderr-color",
+					Usage: "do not output color to stderr",
+				},
+				cli.BoolFlag{
+					Name:  "no-mutation",
+					Usage: "do not print mutation to stderr",
+				},
+				cli.BoolFlag{
+					Name:  "no-values",
+					Usage: "do not print values to stderr",
+				},
+				cli.BoolFlag{
+					Name:  "ref",
+					Usage: "read from mutation refs, not ids",
+				},
+			},
+		},
+		{
 			Name:      "query",
 			Aliases:   []string{"q"},
 			ArgsUsage: "QUERY",
@@ -66,10 +95,6 @@ func main() {
 				cli.BoolFlag{
 					Name:  "no-values",
 					Usage: "do not print values to stderr",
-				},
-				cli.StringFlag{
-					Name:  "filename",
-					Usage: "output data to given filename",
 				},
 				cli.BoolFlag{
 					Name:  "ref",
