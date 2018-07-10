@@ -1,8 +1,8 @@
 package q
 
 import (
+	"github.com/leeola/fixity/q/operator"
 	"github.com/leeola/fixity/value"
-	"github.com/leeola/fixity/value/operator"
 )
 
 type Constraint struct {
@@ -35,9 +35,13 @@ func (q Query) WithoutVersions() Query {
 	return q
 }
 
-func (q Query) Eq(field string, value value.Value) Query {
-	q.Constraint = Eq(field, value)
+func (q Query) Const(c Constraint) Query {
+	q.Constraint = c
 	return q
+}
+
+func (q Query) Eq(field string, value value.Value) Query {
+	return q.Const(Eq(field, value))
 }
 
 func Eq(field string, value value.Value) Constraint {
@@ -45,5 +49,26 @@ func Eq(field string, value value.Value) Constraint {
 		Operator: operator.Equal,
 		Field:    &field,
 		Value:    &value,
+	}
+}
+
+func (q Query) And(c ...Constraint) Query {
+	q.Const(And(c...))
+	return q
+}
+
+// And requires that all given constraints are succeed.
+//
+// Note that if a single constraint is supplied, no AND constraint is
+// returned, only the single constraint. In other words, with a
+// constraint like AND(Eq(1,2)), AND is completely pointless.
+func And(c ...Constraint) Constraint {
+	if len(c) == 1 {
+		return c[0]
+	}
+
+	return Constraint{
+		Operator:       operator.And,
+		SubConstraints: c,
 	}
 }

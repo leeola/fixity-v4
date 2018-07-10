@@ -8,7 +8,7 @@ import (
 	"github.com/leeola/fixity"
 	"github.com/leeola/fixity/index"
 	"github.com/leeola/fixity/q"
-	"github.com/leeola/fixity/value/operator"
+	"github.com/leeola/fixity/q/operator"
 )
 
 const (
@@ -63,7 +63,7 @@ func queryIndex(ix bleve.Index, qu q.Query) ([]fixity.Ref, error) {
 func fixQtoBleveQ(c q.Constraint) (query.Query, error) {
 	switch c.Operator {
 	case operator.Equal:
-		if c.Field == nil || c.Value == nil {
+		if c.Value == nil {
 			return nil, fmt.Errorf("field or value nil on equal op")
 		}
 		s, err := c.Value.ToString()
@@ -71,7 +71,10 @@ func fixQtoBleveQ(c q.Constraint) (query.Query, error) {
 			return nil, fmt.Errorf("equal tostring: %v", err)
 		}
 		bq := bleve.NewTermQuery(s)
-		bq.FieldVal = *c.Field
+		// allow fieldless matches
+		if c.Field != nil {
+			bq.FieldVal = *c.Field
+		}
 		return bq, nil
 	default:
 		return nil, fmt.Errorf("unsupported constraint operator: %q", c.Operator)
