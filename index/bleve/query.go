@@ -17,12 +17,17 @@ const (
 )
 
 func (ix *Index) Query(qu q.Query) ([]fixity.Ref, error) {
-	// for prototype, use only id index
-	return queryIndex(ix.idIndex, qu)
+	var index bleve.Index
+	if qu.IncludeVersions {
+		index = ix.refIndex
+	} else {
+		index = ix.idIndex
+	}
+
+	return queryIndex(index, qu)
 }
 
 func queryIndex(ix bleve.Index, qu q.Query) ([]fixity.Ref, error) {
-
 	bq, err := fixQtoBleveQ(qu.Constraint)
 	if err != nil {
 		return nil, err // avoiding helper context to callers

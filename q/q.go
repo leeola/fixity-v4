@@ -13,8 +13,9 @@ type Constraint struct {
 }
 
 type Query struct {
-	LimitBy    int
-	Constraint Constraint
+	IncludeVersions bool
+	LimitBy         int
+	Constraint      Constraint
 }
 
 func New() Query {
@@ -22,6 +23,16 @@ func New() Query {
 		// set a default limit
 		LimitBy: 10,
 	}
+}
+
+func (q Query) WithVersions() Query {
+	q.IncludeVersions = true
+	return q
+}
+
+func (q Query) WithoutVersions() Query {
+	q.IncludeVersions = false
+	return q
 }
 
 func (q Query) Eq(field string, value value.Value) Query {
