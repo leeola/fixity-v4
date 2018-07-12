@@ -20,6 +20,7 @@ func DefaultGenerator() (config.Config, error) {
 				Type: "disk",
 				ConfigInterface: disk.Config{
 					Path: "_store",
+					Flat: true,
 				},
 			},
 		},
