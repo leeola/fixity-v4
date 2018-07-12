@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"os"
 
+	// import defaults
+	_ "github.com/leeola/fixity/defaultpkg"
+
 	"github.com/leeola/fixity"
 	"github.com/urfave/cli"
 )

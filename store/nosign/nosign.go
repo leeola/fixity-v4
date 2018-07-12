@@ -44,7 +44,7 @@ func New(name string, fc config.Config) (*Store, error) {
 
 	ix, err := fixity.NewIndexFromConfig(c.IndexKey, fc)
 	if err != nil {
-		return nil, fmt.Errorf("blobstoreFromConfig: %v", err)
+		return nil, fmt.Errorf("indexFromConfig: %v", err)
 	}
 
 	return &Store{bstor: bs, index: ix, Querier: ix}, nil

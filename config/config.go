@@ -14,8 +14,9 @@ type Config struct {
 }
 
 type TypeConfig struct {
-	Type   string `json:"type"`
-	Config json.RawMessage
+	Type            string `json:"type"`
+	Config          json.RawMessage
+	ConfigInterface interface{} `json:"-"`
 }
 
 func (c Config) BlobstoreConfig(key string, v interface{}) error {
@@ -43,4 +44,28 @@ func (c Config) StoreConfig(key string, v interface{}) error {
 	}
 
 	return json.Unmarshal(tc.Config, v)
+}
+
+func (c Config) MarshalInterfaces() (Config, error) {
+	configs := map[string]map[string]TypeConfig{
+		"blobstore": c.BlobstoreConfigs,
+		"index":     c.IndexConfigs,
+		"store":     c.StoreConfigs,
+	}
+
+	for configGroupName, configGroup := range configs {
+		for k, tc := range configGroup {
+			if tc.ConfigInterface != nil {
+				b, err := json.Marshal(tc.ConfigInterface)
+				if err != nil {
+					return Config{}, fmt.Errorf("marshal %s config %q: %v", configGroupName, tc.Type, err)
+				}
+				tc.Config = b
+				tc.ConfigInterface = nil
+				configGroup[k] = tc
+			}
+		}
+	}
+
+	return c, nil
 }

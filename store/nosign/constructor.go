@@ -1,8 +1,6 @@
 package nosign
 
 import (
-	"errors"
-
 	"github.com/leeola/fixity"
 	"github.com/leeola/fixity/config"
 )
@@ -14,5 +12,5 @@ func init() {
 }
 
 func Constructor(name string, c config.Config) (fixity.Store, error) {
-	return nil, errors.New("not implemented")
+	return New(name, c)
 }

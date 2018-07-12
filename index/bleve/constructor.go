@@ -1,8 +1,6 @@
-package index
+package bleve
 
 import (
-	"errors"
-
 	"github.com/leeola/fixity"
 	"github.com/leeola/fixity/config"
 )
@@ -13,6 +11,6 @@ func init() {
 	fixity.RegisterIndex(configType, fixity.IndexCreatorFunc(Constructor))
 }
 
-func Constructor(name string, c config.Config) (fixity.QueryIndexer, error) {
-	return nil, errors.New("not implemented")
+func Constructor(n string, c config.Config) (fixity.QueryIndexer, error) {
+	return New(n, c)
 }

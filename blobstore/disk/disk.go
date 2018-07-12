@@ -11,9 +11,15 @@ import (
 	"sync"
 
 	"github.com/leeola/fixity"
+	"github.com/leeola/fixity/config"
 )
 
 const bsDir = "blobs"
+
+type Config struct {
+	Path string
+	Flat bool
+}
 
 // Blobstore implements a Fixity Blobstore for an simple Filesystem.
 //
@@ -26,12 +32,17 @@ type Blobstore struct {
 	flat bool
 }
 
-func New(path string, flat bool) (*Blobstore, error) {
-	if path == "" {
+func New(name string, cfg config.Config) (*Blobstore, error) {
+	var c Config
+	if err := cfg.BlobstoreConfig(name, &c); err != nil {
+		return nil, fmt.Errorf("unmarshal config: %v", err)
+	}
+
+	if c.Path == "" {
 		return nil, errors.New("missing required Config field: Path")
 	}
 
-	path = filepath.Join(path, bsDir)
+	path := filepath.Join(c.Path, bsDir)
 
 	if err := os.MkdirAll(path, 0755); err != nil {
 		return nil, err
@@ -39,7 +50,7 @@ func New(path string, flat bool) (*Blobstore, error) {
 
 	return &Blobstore{
 		path: path,
-		flat: flat,
+		flat: c.Flat,
 	}, nil
 }
 

@@ -8,6 +8,7 @@ import (
 	"github.com/blevesearch/bleve"
 	"github.com/blevesearch/bleve/analysis/analyzer/keyword"
 	"github.com/blevesearch/bleve/mapping"
+	"github.com/leeola/fixity/config"
 )
 
 const (
@@ -16,14 +17,27 @@ const (
 	refIndexDir = "ref_index"
 )
 
+type Config struct {
+	Path string
+}
+
 type Index struct {
 	idIndex  bleve.Index
 	refIndex bleve.Index
 }
 
-func New(path string) (*Index, error) {
-	idPath := filepath.Join(path, subDir, idIndexDir)
-	refPath := filepath.Join(path, subDir, refIndexDir)
+func New(name string, cfg config.Config) (*Index, error) {
+	var c Config
+	if err := cfg.IndexConfig(name, &c); err != nil {
+		return nil, fmt.Errorf("indexconfig: %v", err)
+	}
+
+	if c.Path == "" {
+		return nil, fmt.Errorf("missing required config field: path")
+	}
+
+	idPath := filepath.Join(c.Path, subDir, idIndexDir)
+	refPath := filepath.Join(c.Path, subDir, refIndexDir)
 
 	idIndex, err := newBleve(idPath)
 	if err != nil {

@@ -1,8 +1,6 @@
 package disk
 
 import (
-	"errors"
-
 	"github.com/leeola/fixity"
 	"github.com/leeola/fixity/config"
 )
@@ -13,6 +11,6 @@ func init() {
 	fixity.RegisterBlobstore(configType, fixity.BlobstoreCreatorFunc(Constructor))
 }
 
-func Constructor(name string, c config.Config) (fixity.ReadWriter, error) {
-	return nil, errors.New("not implemented")
+func Constructor(n string, c config.Config) (fixity.ReadWriter, error) {
+	return New(n, c)
 }

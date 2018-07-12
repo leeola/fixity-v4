@@ -22,6 +22,12 @@ var (
 	registeredDefault   func() (config.Config, error)
 )
 
+func init() {
+	blobstoreRegistry = map[string]BlobstoreCreator{}
+	indexRegistry = map[string]IndexCreator{}
+	storeRegistry = map[string]StoreCreator{}
+}
+
 type Writer interface {
 	Write(context.Context, []byte) (Ref, error)
 }
@@ -73,8 +79,7 @@ func RegisterBlobstore(key string, c BlobstoreCreator) {
 	blobstoreRegistryMu.Lock()
 	defer blobstoreRegistryMu.Unlock()
 
-	_, ok := blobstoreRegistry[key]
-	if ok {
+	if _, ok := blobstoreRegistry[key]; ok {
 		panic(fmt.Sprintf("already registered blobstore: %s", key))
 	}
 
@@ -152,15 +157,58 @@ func NewFromConfig(key string, c config.Config) (Store, error) {
 		return nil, fmt.Errorf("store type not found: %q", tc.Type)
 	}
 
-	return constructor.New(key, c)
+	s, err := constructor.New(key, c)
+	if err != nil {
+		return nil, fmt.Errorf("store constructor %s: %v", key, err)
+	}
+
+	return s, nil
 }
 
 func NewBlobstoreFromConfig(key string, c config.Config) (ReadWriter, error) {
-	return nil, errors.New("not implemented")
+	if key == "" {
+		return nil, fmt.Errorf("empty blobstore name")
+	}
+
+	tc, ok := c.BlobstoreConfigs[key]
+	if !ok {
+		return nil, fmt.Errorf("blobstore name not found: %q", key)
+	}
+
+	constructor, ok := blobstoreRegistry[tc.Type]
+	if !ok {
+		return nil, fmt.Errorf("blobstore type not found: %q", tc.Type)
+	}
+
+	s, err := constructor.New(key, c)
+	if err != nil {
+		return nil, fmt.Errorf("blobstore constructor %s: %v", key, err)
+	}
+
+	return s, nil
 }
 
 func NewIndexFromConfig(key string, c config.Config) (QueryIndexer, error) {
-	return nil, errors.New("not implemented")
+	if key == "" {
+		return nil, fmt.Errorf("empty index name")
+	}
+
+	tc, ok := c.IndexConfigs[key]
+	if !ok {
+		return nil, fmt.Errorf("index name not found: %q", key)
+	}
+
+	constructor, ok := indexRegistry[tc.Type]
+	if !ok {
+		return nil, fmt.Errorf("index type not found: %q", tc.Type)
+	}
+
+	s, err := constructor.New(key, c)
+	if err != nil {
+		return nil, fmt.Errorf("index constructor %s: %v", key, err)
+	}
+
+	return s, nil
 }
 
 type QueryIndexer interface {
