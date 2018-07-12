@@ -8,13 +8,12 @@ import (
 	"io"
 
 	"github.com/leeola/fixity"
-	"github.com/leeola/fixity/blobstore"
 	"github.com/leeola/fixity/chunk"
 )
 
 const partSize = 100
 
-func WriteData(ctx context.Context, w blobstore.Writer,
+func WriteData(ctx context.Context, w fixity.Writer,
 	chunkRefs []fixity.Ref, totalSize int64, contentHash string) ([]fixity.Ref, *fixity.DataSchema, error) {
 
 	chunkRefLen := len(chunkRefs)
@@ -81,7 +80,7 @@ func WriteData(ctx context.Context, w blobstore.Writer,
 	return append(chunkRefs, ref), &data, nil
 }
 
-func WriteChunks(ctx context.Context, w blobstore.Writer, r chunk.Chunker) (
+func WriteChunks(ctx context.Context, w fixity.Writer, r chunk.Chunker) (
 	refs []fixity.Ref, totalSize int64, contentHash string, err error) {
 
 	hasher, err := fixity.Hasher(fixity.DefaultMultihashName)
@@ -118,7 +117,7 @@ func WriteChunks(ctx context.Context, w blobstore.Writer, r chunk.Chunker) (
 	return hashes, totalSize, hash, nil
 }
 
-func MarshalAndWrite(ctx context.Context, w blobstore.Writer, v interface{}) (fixity.Ref, error) {
+func MarshalAndWrite(ctx context.Context, w fixity.Writer, v interface{}) (fixity.Ref, error) {
 	b, err := json.Marshal(v)
 	if err != nil {
 		return "", fmt.Errorf("marshal: %v", err)
@@ -132,7 +131,7 @@ func MarshalAndWrite(ctx context.Context, w blobstore.Writer, v interface{}) (fi
 	return ref, nil
 }
 
-func WriteValues(ctx context.Context, w blobstore.Writer, v fixity.Values) (fixity.Ref, error) {
+func WriteValues(ctx context.Context, w fixity.Writer, v fixity.Values) (fixity.Ref, error) {
 	vs := fixity.ValuesSchema{
 		Schema: fixity.Schema{
 			SchemaType: fixity.BlobTypeValues,

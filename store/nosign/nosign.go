@@ -10,12 +10,18 @@ import (
 	"github.com/leeola/fixity"
 	"github.com/leeola/fixity/blobstore"
 	"github.com/leeola/fixity/chunk/resticfork"
+	"github.com/leeola/fixity/config"
 	"github.com/leeola/fixity/index"
 	"github.com/leeola/fixity/q"
 	"github.com/leeola/fixity/reader/datareader"
 	"github.com/leeola/fixity/util/wutil"
 	"github.com/leeola/fixity/value"
 )
+
+type Config struct {
+	BlobstoreKey string
+	IndexKey     string
+}
 
 type Store struct {
 	// embedded because the store exposes the same methods.
@@ -25,7 +31,22 @@ type Store struct {
 	index index.Indexer
 }
 
-func New(bs blobstore.ReadWriter, ix index.QueryIndexer) (*Store, error) {
+func New(name string, fc config.Config) (*Store, error) {
+	var c Config
+	if err := fc.StoreConfig(name, &c); err != nil {
+		return nil, fmt.Errorf("unmarshal config: %v", err)
+	}
+
+	bs, err := fixity.NewBlobstoreFromConfig(c.BlobstoreKey, fc)
+	if err != nil {
+		return nil, fmt.Errorf("blobstoreFromConfig: %v", err)
+	}
+
+	ix, err := fixity.NewIndexFromConfig(c.IndexKey, fc)
+	if err != nil {
+		return nil, fmt.Errorf("blobstoreFromConfig: %v", err)
+	}
+
 	return &Store{bstor: bs, index: ix, Querier: ix}, nil
 }
 

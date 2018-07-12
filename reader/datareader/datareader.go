@@ -11,7 +11,7 @@ import (
 
 type Reader struct {
 	ctx     context.Context
-	bs      blobstore.Reader
+	bs      fixity.BlobReader
 	dataRef fixity.Ref
 
 	partReadCloser          io.ReadCloser
@@ -22,7 +22,7 @@ type Reader struct {
 	data fixity.DataSchema
 }
 
-func New(ctx context.Context, bs blobstore.Reader, ref fixity.Ref) (*Reader, error) {
+func New(ctx context.Context, bs fixity.BlobReader, ref fixity.Ref) (*Reader, error) {
 	return &Reader{
 		ctx:     ctx,
 		bs:      bs,
