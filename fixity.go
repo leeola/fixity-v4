@@ -1,7 +1,6 @@
 package fixity
 
 import (
-	"errors"
 	"fmt"
 	"time"
 
@@ -26,14 +25,10 @@ func New() (Store, error) {
 	// TODO(leeola): try to load the config here
 	//
 
-	if defaultConfig == nil {
-		return nil, errors.New("no default config generator specified")
-	}
-
 	// config doesn't exist, generate a default.
-	c, err := defaultConfig()
+	c, err := DefaultConfig()
 	if err != nil {
-		return nil, fmt.Errorf("defaultConfigGen: %v", err)
+		return nil, fmt.Errorf("defaultconfig: %v", err)
 	}
 
 	return NewFromConfig(c.Store, c)
