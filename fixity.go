@@ -31,17 +31,17 @@ func New() (Store, error) {
 		return nil, fmt.Errorf("defaultconfig: %v", err)
 	}
 
-	return NewFromConfig(c.Store, c)
+	return NewFromConfig(c)
 }
 
-func NewFromConfig(name string, c config.Config) (Store, error) {
-	if name == "" {
+func NewFromConfig(c config.Config) (Store, error) {
+	if c.Store == "" {
 		return nil, fmt.Errorf("missing required config: store")
 	}
 
-	tc, ok := c.StoreConfigs[name]
+	tc, ok := c.StoreConfigs[c.Store]
 	if !ok {
-		return nil, fmt.Errorf("store name not found: %q", name)
+		return nil, fmt.Errorf("store name not found: %q", c.Store)
 	}
 
 	constructor, ok := storeRegistry[tc.Type]
@@ -49,9 +49,9 @@ func NewFromConfig(name string, c config.Config) (Store, error) {
 		return nil, fmt.Errorf("store type not found: %q", tc.Type)
 	}
 
-	s, err := constructor.New(name, c)
+	s, err := constructor.New(c.Store, c)
 	if err != nil {
-		return nil, fmt.Errorf("store constructor %s: %v", name, err)
+		return nil, fmt.Errorf("store constructor %s: %v", c.Store, err)
 	}
 
 	return s, nil
