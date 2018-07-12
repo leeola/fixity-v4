@@ -49,6 +49,12 @@ type StoreCreator interface {
 	New(name string, c config.Config) (Store, error)
 }
 
+type BlobstoreCreatorFunc func(string, config.Config) (ReadWriter, error)
+
+type IndexCreatorFunc func(string, config.Config) (QueryIndexer, error)
+
+type StoreCreatorFunc func(string, config.Config) (Store, error)
+
 type Inputer interface {
 	// Init a config with optional user input.
 	Init(Input) (json.RawMessage, error)
@@ -107,7 +113,10 @@ func RegisterStore(key string, c StoreCreator) {
 
 type Store interface {
 	Blob(ctx context.Context, ref Ref) (io.ReadCloser, error)
+	Read(ctx context.Context, id string) (Mutation, Values, Reader, error)
+	ReadRef(context.Context, Ref) (Mutation, Values, Reader, error)
 	Write(ctx context.Context, id string, v Values, r io.Reader) ([]Ref, error)
+	Querier
 }
 
 func New() (Store, error) {
@@ -146,11 +155,11 @@ func NewFromConfig(key string, c config.Config) (Store, error) {
 	return constructor.New(key, c)
 }
 
-func NewBlobstoreFromConfig(key string) (ReadWriter, error) {
+func NewBlobstoreFromConfig(key string, c config.Config) (ReadWriter, error) {
 	return nil, errors.New("not implemented")
 }
 
-func NewIndexFromConfig(key string) (QueryIndexer, error) {
+func NewIndexFromConfig(key string, c config.Config) (QueryIndexer, error) {
 	return nil, errors.New("not implemented")
 }
 
@@ -171,4 +180,16 @@ type Querier interface {
 
 func SetDefaultConfig(f func() (config.Config, error)) {
 	registeredDefault = f
+}
+
+func (f BlobstoreCreatorFunc) New(name string, c config.Config) (ReadWriter, error) {
+	return f(name, c)
+}
+
+func (f IndexCreatorFunc) New(name string, c config.Config) (QueryIndexer, error) {
+	return f(name, c)
+}
+
+func (f StoreCreatorFunc) New(name string, c config.Config) (Store, error) {
+	return f(name, c)
 }
