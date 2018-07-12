@@ -40,59 +40,59 @@ type IndexConstructorFunc func(string, config.Config) (Index, error)
 
 type StoreConstructorFunc func(string, config.Config) (Store, error)
 
-func RegisterBlobstore(key string, c BlobstoreConstructor) {
-	if key == "" {
-		panic(fmt.Sprintf("key cannot be empty"))
+func RegisterBlobstore(blobstoreType string, c BlobstoreConstructor) {
+	if blobstoreType == "" {
+		panic(fmt.Sprintf("blobstoreType cannot be empty"))
 	}
 
 	blobstoreRegistryMu.Lock()
 	defer blobstoreRegistryMu.Unlock()
 
-	if _, ok := blobstoreRegistry[key]; ok {
-		panic(fmt.Sprintf("already registered blobstore: %s", key))
+	if _, ok := blobstoreRegistry[blobstoreType]; ok {
+		panic(fmt.Sprintf("already registered blobstore: %s", blobstoreType))
 	}
 
-	blobstoreRegistry[key] = c
+	blobstoreRegistry[blobstoreType] = c
 }
 
-func RegisterIndex(key string, c IndexConstructor) {
-	if key == "" {
-		panic(fmt.Sprintf("key cannot be empty"))
+func RegisterIndex(indexType string, c IndexConstructor) {
+	if indexType == "" {
+		panic(fmt.Sprintf("indexType cannot be empty"))
 	}
 
 	indexRegistryMu.Lock()
 	defer indexRegistryMu.Unlock()
 
-	if _, ok := indexRegistry[key]; ok {
-		panic(fmt.Sprintf("already registered index: %s", key))
+	if _, ok := indexRegistry[indexType]; ok {
+		panic(fmt.Sprintf("already registered index: %s", indexType))
 	}
 
-	indexRegistry[key] = c
+	indexRegistry[indexType] = c
 }
 
-func RegisterStore(key string, c StoreConstructor) {
-	if key == "" {
-		panic(fmt.Sprintf("key cannot be empty"))
+func RegisterStore(storeType string, c StoreConstructor) {
+	if storeType == "" {
+		panic(fmt.Sprintf("storeType cannot be empty"))
 	}
 
 	storeRegistryMu.Lock()
 	defer storeRegistryMu.Unlock()
 
-	if _, ok := storeRegistry[key]; ok {
-		panic(fmt.Sprintf("already registered store: %s", key))
+	if _, ok := storeRegistry[storeType]; ok {
+		panic(fmt.Sprintf("already registered store: %s", storeType))
 	}
 
-	storeRegistry[key] = c
+	storeRegistry[storeType] = c
 }
 
-func (f BlobstoreConstructorFunc) New(name string, c config.Config) (Blobstore, error) {
-	return f(name, c)
+func (f BlobstoreConstructorFunc) New(n string, c config.Config) (Blobstore, error) {
+	return f(n, c)
 }
 
-func (f IndexConstructorFunc) New(name string, c config.Config) (Index, error) {
-	return f(name, c)
+func (f IndexConstructorFunc) New(n string, c config.Config) (Index, error) {
+	return f(n, c)
 }
 
-func (f StoreConstructorFunc) New(name string, c config.Config) (Store, error) {
-	return f(name, c)
+func (f StoreConstructorFunc) New(n string, c config.Config) (Store, error) {
+	return f(n, c)
 }
