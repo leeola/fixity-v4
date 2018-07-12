@@ -8,9 +8,9 @@ import (
 const configType = "bleve"
 
 func init() {
-	fixity.RegisterIndex(configType, fixity.IndexCreatorFunc(Constructor))
+	fixity.RegisterIndex(configType, fixity.IndexConstructorFunc(Constructor))
 }
 
-func Constructor(n string, c config.Config) (fixity.QueryIndexer, error) {
+func Constructor(n string, c config.Config) (fixity.Index, error) {
 	return New(n, c)
 }

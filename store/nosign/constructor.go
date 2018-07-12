@@ -8,7 +8,7 @@ import (
 const configType = "nosign"
 
 func init() {
-	fixity.RegisterStore(configType, fixity.StoreCreatorFunc(Constructor))
+	fixity.RegisterStore(configType, fixity.StoreConstructorFunc(Constructor))
 }
 
 func Constructor(name string, c config.Config) (fixity.Store, error) {

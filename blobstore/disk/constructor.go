@@ -8,9 +8,9 @@ import (
 const configType = "disk"
 
 func init() {
-	fixity.RegisterBlobstore(configType, fixity.BlobstoreCreatorFunc(Constructor))
+	fixity.RegisterBlobstore(configType, fixity.BlobstoreConstructorFunc(Constructor))
 }
 
-func Constructor(n string, c config.Config) (fixity.ReadWriter, error) {
+func Constructor(n string, c config.Config) (fixity.Blobstore, error) {
 	return New(n, c)
 }

@@ -1,77 +1,46 @@
 package fixity
 
 import (
-	"context"
-	"encoding/json"
-	"errors"
 	"fmt"
-	"io"
 	"sync"
 
 	"github.com/leeola/fixity/config"
-	"github.com/leeola/fixity/q"
 )
 
 var (
-	blobstoreRegistry   map[string]BlobstoreCreator
+	blobstoreRegistry   map[string]BlobstoreConstructor
 	blobstoreRegistryMu sync.Mutex
-	indexRegistry       map[string]IndexCreator
+	indexRegistry       map[string]IndexConstructor
 	indexRegistryMu     sync.Mutex
-	storeRegistry       map[string]StoreCreator
+	storeRegistry       map[string]StoreConstructor
 	storeRegistryMu     sync.Mutex
-	registeredDefault   func() (config.Config, error)
 )
 
 func init() {
-	blobstoreRegistry = map[string]BlobstoreCreator{}
-	indexRegistry = map[string]IndexCreator{}
-	storeRegistry = map[string]StoreCreator{}
+	blobstoreRegistry = map[string]BlobstoreConstructor{}
+	indexRegistry = map[string]IndexConstructor{}
+	storeRegistry = map[string]StoreConstructor{}
 }
 
-type Writer interface {
-	Write(context.Context, []byte) (Ref, error)
+type BlobstoreConstructor interface {
+	New(name string, c config.Config) (Blobstore, error)
 }
 
-type BlobReader interface {
-	Read(context.Context, Ref) (io.ReadCloser, error)
+type IndexConstructor interface {
+	New(name string, c config.Config) (Index, error)
 }
 
-type ReadWriter interface {
-	BlobReader
-	Writer
-}
-
-type Input map[string]interface{}
-
-type BlobstoreCreator interface {
-	New(name string, c config.Config) (ReadWriter, error)
-}
-
-type IndexCreator interface {
-	New(name string, c config.Config) (QueryIndexer, error)
-}
-
-type StoreCreator interface {
+type StoreConstructor interface {
 	New(name string, c config.Config) (Store, error)
 }
 
-type BlobstoreCreatorFunc func(string, config.Config) (ReadWriter, error)
+type BlobstoreConstructorFunc func(string, config.Config) (Blobstore, error)
 
-type IndexCreatorFunc func(string, config.Config) (QueryIndexer, error)
+type IndexConstructorFunc func(string, config.Config) (Index, error)
 
-type StoreCreatorFunc func(string, config.Config) (Store, error)
+type StoreConstructorFunc func(string, config.Config) (Store, error)
 
-type Inputer interface {
-	// Init a config with optional user input.
-	Init(Input) (json.RawMessage, error)
-}
-
-type InputError struct {
-	Field   string
-	Message string
-}
-
-func RegisterBlobstore(key string, c BlobstoreCreator) {
+func RegisterBlobstore(key string, c BlobstoreConstructor) {
 	if key == "" {
 		panic(fmt.Sprintf("key cannot be empty"))
 	}
@@ -86,7 +55,7 @@ func RegisterBlobstore(key string, c BlobstoreCreator) {
 	blobstoreRegistry[key] = c
 }
 
-func RegisterIndex(key string, c IndexCreator) {
+func RegisterIndex(key string, c IndexConstructor) {
 	if key == "" {
 		panic(fmt.Sprintf("key cannot be empty"))
 	}
@@ -101,7 +70,7 @@ func RegisterIndex(key string, c IndexCreator) {
 	indexRegistry[key] = c
 }
 
-func RegisterStore(key string, c StoreCreator) {
+func RegisterStore(key string, c StoreConstructor) {
 	if key == "" {
 		panic(fmt.Sprintf("key cannot be empty"))
 	}
@@ -116,128 +85,14 @@ func RegisterStore(key string, c StoreCreator) {
 	storeRegistry[key] = c
 }
 
-type Store interface {
-	Blob(ctx context.Context, ref Ref) (io.ReadCloser, error)
-	Read(ctx context.Context, id string) (Mutation, Values, Reader, error)
-	ReadRef(context.Context, Ref) (Mutation, Values, Reader, error)
-	Write(ctx context.Context, id string, v Values, r io.Reader) ([]Ref, error)
-	Querier
-}
-
-func New() (Store, error) {
-	//
-	// TODO(leeola): try to load the config here
-	//
-
-	if registeredDefault == nil {
-		return nil, errors.New("no default config generator specified")
-	}
-
-	// config doesn't exist, generate a default.
-	c, err := registeredDefault()
-	if err != nil {
-		return nil, fmt.Errorf("defaultConfigGen: %v", err)
-	}
-
-	return NewFromConfig(c.Store, c)
-}
-
-func NewFromConfig(key string, c config.Config) (Store, error) {
-	if key == "" {
-		return nil, fmt.Errorf("missing required config: store")
-	}
-
-	tc, ok := c.StoreConfigs[key]
-	if !ok {
-		return nil, fmt.Errorf("store name not found: %q", key)
-	}
-
-	constructor, ok := storeRegistry[tc.Type]
-	if !ok {
-		return nil, fmt.Errorf("store type not found: %q", tc.Type)
-	}
-
-	s, err := constructor.New(key, c)
-	if err != nil {
-		return nil, fmt.Errorf("store constructor %s: %v", key, err)
-	}
-
-	return s, nil
-}
-
-func NewBlobstoreFromConfig(key string, c config.Config) (ReadWriter, error) {
-	if key == "" {
-		return nil, fmt.Errorf("empty blobstore name")
-	}
-
-	tc, ok := c.BlobstoreConfigs[key]
-	if !ok {
-		return nil, fmt.Errorf("blobstore name not found: %q", key)
-	}
-
-	constructor, ok := blobstoreRegistry[tc.Type]
-	if !ok {
-		return nil, fmt.Errorf("blobstore type not found: %q", tc.Type)
-	}
-
-	s, err := constructor.New(key, c)
-	if err != nil {
-		return nil, fmt.Errorf("blobstore constructor %s: %v", key, err)
-	}
-
-	return s, nil
-}
-
-func NewIndexFromConfig(key string, c config.Config) (QueryIndexer, error) {
-	if key == "" {
-		return nil, fmt.Errorf("empty index name")
-	}
-
-	tc, ok := c.IndexConfigs[key]
-	if !ok {
-		return nil, fmt.Errorf("index name not found: %q", key)
-	}
-
-	constructor, ok := indexRegistry[tc.Type]
-	if !ok {
-		return nil, fmt.Errorf("index type not found: %q", tc.Type)
-	}
-
-	s, err := constructor.New(key, c)
-	if err != nil {
-		return nil, fmt.Errorf("index constructor %s: %v", key, err)
-	}
-
-	return s, nil
-}
-
-type QueryIndexer interface {
-	Indexer
-	Querier
-}
-
-type Indexer interface {
-	Index(mutRef Ref, m Mutation, d *DataSchema, v Values) error
-}
-
-// TODO(leeola): articulate a mechanism to query against unique ids or
-// versions.
-type Querier interface {
-	Query(q.Query) ([]Match, error)
-}
-
-func SetDefaultConfig(f func() (config.Config, error)) {
-	registeredDefault = f
-}
-
-func (f BlobstoreCreatorFunc) New(name string, c config.Config) (ReadWriter, error) {
+func (f BlobstoreConstructorFunc) New(name string, c config.Config) (Blobstore, error) {
 	return f(name, c)
 }
 
-func (f IndexCreatorFunc) New(name string, c config.Config) (QueryIndexer, error) {
+func (f IndexConstructorFunc) New(name string, c config.Config) (Index, error) {
 	return f(name, c)
 }
 
-func (f StoreCreatorFunc) New(name string, c config.Config) (Store, error) {
+func (f StoreConstructorFunc) New(name string, c config.Config) (Store, error) {
 	return f(name, c)
 }

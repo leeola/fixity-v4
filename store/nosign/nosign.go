@@ -27,7 +27,7 @@ type Store struct {
 	// embedded because the store exposes the same methods.
 	index.Querier
 
-	bstor fixity.ReadWriter
+	bstor fixity.Blobstore
 	index index.Indexer
 }
 
