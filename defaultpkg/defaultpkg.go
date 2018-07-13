@@ -39,8 +39,8 @@ func DefaultGenerator() (config.Config, error) {
 			"default": {
 				Type: "nosign",
 				ConfigInterface: nosign.Config{
-					BlobstoreKey: "default",
-					IndexKey:     "default",
+					BlobstoreName: "default",
+					IndexName:     "default",
 				},
 			},
 		},

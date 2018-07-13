@@ -17,8 +17,8 @@ import (
 const bsDir = "blobs"
 
 type Config struct {
-	Path string
-	Flat bool
+	Path string `json:"path"`
+	Flat bool   `json:"flat"`
 }
 
 // Blobstore implements a Fixity Blobstore for an simple Filesystem.

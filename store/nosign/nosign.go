@@ -19,8 +19,8 @@ import (
 )
 
 type Config struct {
-	BlobstoreKey string
-	IndexKey     string
+	BlobstoreName string `json:"blobstoreName"`
+	IndexName     string `json:"indexName"`
 }
 
 type Store struct {
@@ -37,12 +37,12 @@ func New(name string, fc config.Config) (*Store, error) {
 		return nil, fmt.Errorf("unmarshal config: %v", err)
 	}
 
-	bs, err := fixity.NewBlobstoreFromConfig(c.BlobstoreKey, fc)
+	bs, err := fixity.NewBlobstoreFromConfig(c.BlobstoreName, fc)
 	if err != nil {
 		return nil, fmt.Errorf("blobstoreFromConfig: %v", err)
 	}
 
-	ix, err := fixity.NewIndexFromConfig(c.IndexKey, fc)
+	ix, err := fixity.NewIndexFromConfig(c.IndexName, fc)
 	if err != nil {
 		return nil, fmt.Errorf("indexFromConfig: %v", err)
 	}

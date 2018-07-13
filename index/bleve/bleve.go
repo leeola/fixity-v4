@@ -18,7 +18,7 @@ const (
 )
 
 type Config struct {
-	Path string
+	Path string `json:"path"`
 }
 
 type Index struct {

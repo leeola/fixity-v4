@@ -13,7 +13,7 @@ import (
 	homedir "github.com/mitchellh/go-homedir"
 )
 
-const DefaultConfigPath = "~/.config/fixity/config.toml"
+const DefaultConfigPath = "~/.config/fixity/config.json"
 
 type Config struct {
 	Store string `json:"store"`
@@ -21,15 +21,15 @@ type Config struct {
 	Log      bool      `json:"log"`
 	LogLevel log.Level `json:"logLevel"`
 
-	BlobstoreConfigs map[string]TypeConfig
-	IndexConfigs     map[string]TypeConfig
-	StoreConfigs     map[string]TypeConfig
+	BlobstoreConfigs map[string]TypeConfig `json:"blobstoreConfigs"`
+	IndexConfigs     map[string]TypeConfig `json:"indexConfigs"`
+	StoreConfigs     map[string]TypeConfig `json:"storeConfigs"`
 }
 
 type TypeConfig struct {
-	Type            string `json:"type"`
-	Config          json.RawMessage
-	ConfigInterface interface{} `json:"-"`
+	Type            string          `json:"type"`
+	Config          json.RawMessage `json:"config"`
+	ConfigInterface interface{}     `json:"-"`
 }
 
 func (c Config) BlobstoreConfig(key string, v interface{}) error {
@@ -125,7 +125,7 @@ func Save(path string, c Config) error {
 	}
 	defer f.Close()
 
-	b, err := json.Marshal(c)
+	b, err := json.MarshalIndent(c, "", "  ")
 	if err != nil {
 		return fmt.Errorf("marshal: %v", err)
 	}
