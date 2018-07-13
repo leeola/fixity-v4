@@ -23,10 +23,10 @@ type Mutation struct {
 }
 
 func New() (Store, error) {
-	return NewFromConfigpath(config.DefaultConfigPath)
+	return NewFromConfigpath(config.DefaultConfigPath, "")
 }
 
-func NewFromConfigpath(path string) (Store, error) {
+func NewFromConfigpath(storeName string, path string) (Store, error) {
 	c, err := config.Open(path)
 	if perr, ok := err.(*os.PathError); ok && perr.Err == syscall.ENOENT {
 		// config doesn't exist, generate a default.
@@ -43,17 +43,20 @@ func NewFromConfigpath(path string) (Store, error) {
 		return nil, fmt.Errorf("open config: %v", err)
 	}
 
-	return NewFromConfig(c)
+	return NewFromConfig(storeName, c)
 }
 
-func NewFromConfig(c config.Config) (Store, error) {
-	if c.Store == "" {
-		return nil, fmt.Errorf("missing required config: store")
+func NewFromConfig(storeName string, c config.Config) (Store, error) {
+	if storeName == "" {
+		storeName = c.Store
+	}
+	if storeName == "" {
+		return nil, fmt.Errorf("missing required argument: storeName")
 	}
 
-	tc, ok := c.StoreConfigs[c.Store]
+	tc, ok := c.StoreConfigs[storeName]
 	if !ok {
-		return nil, fmt.Errorf("store name not found: %q", c.Store)
+		return nil, fmt.Errorf("store name not found: %q", storeName)
 	}
 
 	constructor, ok := storeRegistry[tc.Type]
@@ -61,9 +64,9 @@ func NewFromConfig(c config.Config) (Store, error) {
 		return nil, fmt.Errorf("store type not found: %q", tc.Type)
 	}
 
-	s, err := constructor.New(c.Store, c)
+	s, err := constructor.New(storeName, c)
 	if err != nil {
-		return nil, fmt.Errorf("store constructor %s: %v", c.Store, err)
+		return nil, fmt.Errorf("store constructor %s: %v", storeName, err)
 	}
 
 	return s, nil
