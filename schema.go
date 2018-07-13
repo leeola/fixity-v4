@@ -31,5 +31,5 @@ type PartsSchema struct {
 
 type ValuesSchema struct {
 	Schema
-	Values Values `json:"value"`
+	Values Values `json:"values"`
 }
