@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/leeola/fixity/config/log"
 	homedir "github.com/mitchellh/go-homedir"
 )
 
@@ -16,6 +17,9 @@ const DefaultConfigPath = "~/.config/fixity/config.toml"
 
 type Config struct {
 	Store string `json:"store"`
+
+	Log      bool      `json:"log"`
+	LogLevel log.Level `json:"logLevel"`
 
 	BlobstoreConfigs map[string]TypeConfig
 	IndexConfigs     map[string]TypeConfig

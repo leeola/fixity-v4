@@ -4,6 +4,7 @@ import (
 	"github.com/leeola/fixity"
 	"github.com/leeola/fixity/blobstore/disk"
 	"github.com/leeola/fixity/config"
+	"github.com/leeola/fixity/config/log"
 	"github.com/leeola/fixity/index/bleve"
 	"github.com/leeola/fixity/store/nosign"
 )
@@ -14,7 +15,9 @@ func init() {
 
 func DefaultGenerator() (config.Config, error) {
 	return config.Config{
-		Store: "default",
+		Store:    "default",
+		Log:      true,
+		LogLevel: log.Info,
 		BlobstoreConfigs: map[string]config.TypeConfig{
 			"default": {
 				Type: "disk",
