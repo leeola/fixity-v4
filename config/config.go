@@ -1,9 +1,18 @@
 package config
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
+	"io/ioutil"
+	"os"
+	"path/filepath"
+
+	homedir "github.com/mitchellh/go-homedir"
 )
+
+const DefaultConfigPath = "~/.config/fixity/config.toml"
 
 type Config struct {
 	Store string `json:"store"`
@@ -68,4 +77,62 @@ func (c Config) MarshalInterfaces() (Config, error) {
 	}
 
 	return c, nil
+}
+
+func Open(path string) (Config, error) {
+	path, err := homedir.Expand(path)
+	if err != nil {
+		return Config{}, fmt.Errorf("expand: %v", err)
+	}
+
+	f, err := os.OpenFile(path, os.O_RDONLY, 0644)
+	if err != nil {
+		// not wrapping for parent to check file err
+		return Config{}, err
+	}
+	defer f.Close()
+
+	b, err := ioutil.ReadAll(f)
+	if err != nil {
+		return Config{}, fmt.Errorf("read: %v", err)
+	}
+
+	var c Config
+	if err := json.Unmarshal(b, &c); err != nil {
+		return Config{}, fmt.Errorf("unmarshal: %v", err)
+	}
+
+	return c, nil
+}
+
+func Save(path string, c Config) error {
+	path, err := homedir.Expand(path)
+	if err != nil {
+		return fmt.Errorf("expand: %v", err)
+	}
+
+	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
+		return fmt.Errorf("mkdirall: %v", err)
+	}
+
+	f, err := os.OpenFile(path, os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0644)
+	if err != nil {
+		return fmt.Errorf("open: %v", err)
+	}
+	defer f.Close()
+
+	b, err := json.Marshal(c)
+	if err != nil {
+		return fmt.Errorf("marshal: %v", err)
+	}
+
+	if _, err := io.Copy(f, bytes.NewReader(b)); err != nil {
+		return fmt.Errorf("copy: %v", err)
+	}
+
+	if err := f.Sync(); err != nil {
+		return fmt.Errorf("sync: %v", err)
+	}
+
+	return nil
 }

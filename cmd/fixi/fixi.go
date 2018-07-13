@@ -5,6 +5,7 @@ import (
 	"os"
 
 	// import defaults
+	"github.com/leeola/fixity/config"
 	_ "github.com/leeola/fixity/defaultpkg"
 
 	"github.com/leeola/fixity"
@@ -16,12 +17,12 @@ func main() {
 	app.Name = "fixi"
 	app.Usage = "a low level cli to interact with a fixity store"
 	app.Flags = []cli.Flag{
-	// cli.StringFlag{
-	// 	Name:   "config, c",
-	// 	Value:  "~/.config/fixity/client.toml",
-	// 	Usage:  "load config from `PATH`",
-	// 	EnvVar: "FIXI_CONFIG",
-	// },
+		cli.StringFlag{
+			Name:   "config, c",
+			Value:  config.DefaultConfigPath,
+			Usage:  "load config from `PATH`",
+			EnvVar: "FIXI_CONFIG",
+		},
 	}
 
 	app.Commands = []cli.Command{
@@ -141,5 +142,5 @@ func main() {
 }
 
 func storeFromCli(clictx *cli.Context) (fixity.Store, error) {
-	return fixity.New()
+	return fixity.NewFromConfigpath(clictx.GlobalString("config"))
 }
