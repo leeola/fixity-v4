@@ -30,9 +30,9 @@ func NewFromConfigpath(storeName string, path string) (Store, error) {
 	c, err := config.Open(path)
 	if perr, ok := err.(*os.PathError); ok && perr.Err == syscall.ENOENT {
 		// config doesn't exist, generate a default.
-		c, err = DefaultConfig()
+		c, err = NewConfig()
 		if err != nil {
-			return nil, fmt.Errorf("defaultconfig: %v", err)
+			return nil, fmt.Errorf("new config: %v", err)
 		}
 
 		if err := config.Save(path, c); err != nil {
