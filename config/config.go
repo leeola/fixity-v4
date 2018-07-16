@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"syscall"
 
 	"github.com/leeola/fixity/config/log"
 	homedir "github.com/mitchellh/go-homedir"
@@ -90,9 +91,11 @@ func Open(path string) (Config, error) {
 	}
 
 	f, err := os.OpenFile(path, os.O_RDONLY, 0644)
+	if perr, ok := err.(*os.PathError); ok && perr.Err == syscall.ENOENT {
+		return Config{}, ErrNotExist
+	}
 	if err != nil {
-		// not wrapping for parent to check file err
-		return Config{}, err
+		return Config{}, fmt.Errorf("open: %v", err)
 	}
 	defer f.Close()
 

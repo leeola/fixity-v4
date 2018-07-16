@@ -142,5 +142,5 @@ func main() {
 }
 
 func storeFromCli(clictx *cli.Context) (fixity.Store, error) {
-	return fixity.NewFromConfigpath("", clictx.GlobalString("config"))
+	return fixity.NewFromPath("", clictx.GlobalString("config"))
 }

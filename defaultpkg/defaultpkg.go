@@ -1,7 +1,6 @@
 package defaultpkg
 
 import (
-	"github.com/leeola/fixity"
 	"github.com/leeola/fixity/blobstore/disk"
 	"github.com/leeola/fixity/config"
 	"github.com/leeola/fixity/config/log"
@@ -10,39 +9,35 @@ import (
 )
 
 func init() {
-	fixity.SetDefaultConfig(DefaultGenerator)
+	config.Configure(DefaultConfigure)
 }
 
-func DefaultGenerator() (config.Config, error) {
-	return config.Config{
-		Store:    "default",
-		Log:      true,
-		LogLevel: log.Info,
-		BlobstoreConfigs: map[string]config.TypeConfig{
-			"default": {
-				Type: "disk",
-				ConfigInterface: disk.Config{
-					Path: "_store",
-					Flat: true,
-				},
-			},
+func DefaultConfigure(c config.Config) (config.Config, error) {
+	c.Store = "default"
+	c.Log = true
+	c.LogLevel = log.Info
+	c.BlobstoreConfigs["default"] = config.TypeConfig{
+		Type: "disk",
+		ConfigInterface: disk.Config{
+			Path: "_store",
+			Flat: true,
 		},
-		IndexConfigs: map[string]config.TypeConfig{
-			"default": {
-				Type: "bleve",
-				ConfigInterface: bleve.Config{
-					Path: "_store",
-				},
-			},
+	}
+
+	c.IndexConfigs["default"] = config.TypeConfig{
+		Type: "bleve",
+		ConfigInterface: bleve.Config{
+			Path: "_store",
 		},
-		StoreConfigs: map[string]config.TypeConfig{
-			"default": {
-				Type: "nosign",
-				ConfigInterface: nosign.Config{
-					BlobstoreName: "default",
-					IndexName:     "default",
-				},
-			},
+	}
+
+	c.StoreConfigs["default"] = config.TypeConfig{
+		Type: "nosign",
+		ConfigInterface: nosign.Config{
+			BlobstoreName: "default",
+			IndexName:     "default",
 		},
-	}.MarshalInterfaces()
+	}
+
+	return c, nil
 }

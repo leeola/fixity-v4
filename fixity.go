@@ -2,8 +2,6 @@ package fixity
 
 import (
 	"fmt"
-	"os"
-	"syscall"
 	"time"
 
 	"github.com/leeola/fixity/config"
@@ -23,14 +21,14 @@ type Mutation struct {
 }
 
 func New() (Store, error) {
-	return NewFromConfigpath(config.DefaultConfigPath, "")
+	return NewFromPath("", config.DefaultConfigPath)
 }
 
-func NewFromConfigpath(storeName string, path string) (Store, error) {
+func NewFromPath(storeName string, path string) (Store, error) {
 	c, err := config.Open(path)
-	if perr, ok := err.(*os.PathError); ok && perr.Err == syscall.ENOENT {
+	if err == config.ErrNotExist {
 		// config doesn't exist, generate a default.
-		c, err = NewConfig()
+		c, err = config.NewConfig()
 		if err != nil {
 			return nil, fmt.Errorf("new config: %v", err)
 		}
