@@ -20,7 +20,7 @@ func DefaultConfigure(c config.Config) (config.Config, error) {
 	c.BlobstoreConfigs["default"] = config.TypeConfig{
 		Type: "disk",
 		ConfigInterface: disk.Config{
-			Path: "store",
+			Path: "blobs",
 			Flat: true,
 		},
 	}
