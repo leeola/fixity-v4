@@ -16,10 +16,12 @@ type DataSchema struct {
 	// Ie, just the raw user uploaded data.
 	//
 	// Hex encoded for user convenience, but using the same hashing algorithm
-	// that the content address was decided as.
+	// that the content address of this dataschema. That is to say, if the
+	// content address of this dataschema is a Blake2b multihash, this
+	// checksum will be a plain Blake2b hash, not a multihash.
 	//
-	// NOTE: For ease of comparison, this hash string *does not* include
-	// multihash identification prefixes.
+	// IMPORTANT: For ease of comparison, this hash string *does not*
+	// include multihash identification prefixes.
 	Checksum string `json:"checksum"`
 }
 
