@@ -24,8 +24,8 @@ func New() (Store, error) {
 	return NewFromPath("", config.DefaultConfigPath)
 }
 
-func NewFromPath(storeName string, path string) (Store, error) {
-	c, err := config.Open(path)
+func NewFromPath(storeName string, configPath string) (Store, error) {
+	c, err := config.Open(configPath)
 	if err == config.ErrNotExist {
 		// config doesn't exist, generate a default.
 		c, err = config.NewConfig()
@@ -33,7 +33,7 @@ func NewFromPath(storeName string, path string) (Store, error) {
 			return nil, fmt.Errorf("new config: %v", err)
 		}
 
-		if err := config.Save(path, c); err != nil {
+		if err := config.Save(configPath, c); err != nil {
 			return nil, fmt.Errorf("save config: %v", err)
 		}
 	}
@@ -64,7 +64,7 @@ func NewFromConfig(storeName string, c config.Config) (Store, error) {
 
 	s, err := constructor.New(storeName, c)
 	if err != nil {
-		return nil, fmt.Errorf("store constructor %s: %v", storeName, err)
+		return nil, fmt.Errorf("store %q constructor: %v", storeName, err)
 	}
 
 	return s, nil

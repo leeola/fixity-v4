@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"sync"
 )
 
@@ -31,6 +32,11 @@ func NewConfig() (Config, error) {
 		if err != nil {
 			return Config{}, err
 		}
+	}
+
+	c, err = c.MarshalInterfaces()
+	if err != nil {
+		return Config{}, fmt.Errorf("marshal typeconfigs: %v", err)
 	}
 
 	return c, nil

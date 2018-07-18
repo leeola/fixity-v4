@@ -12,6 +12,7 @@ import (
 
 	"github.com/leeola/fixity"
 	"github.com/leeola/fixity/config"
+	"github.com/leeola/fixity/util/pathutil"
 )
 
 const bsDir = "blobs"
@@ -38,18 +39,23 @@ func New(name string, cfg config.Config) (*Blobstore, error) {
 		return nil, fmt.Errorf("unmarshal config: %v", err)
 	}
 
-	if c.Path == "" {
-		return nil, errors.New("missing required Config field: Path")
+	rootPath, err := pathutil.ExpandJoin(cfg.RootPath, c.Path)
+	if err != nil {
+		return nil, fmt.Errorf("expandjoin: %v", err)
 	}
 
-	path := filepath.Join(c.Path, bsDir)
+	if rootPath == "" {
+		return nil, errors.New("rootpath and disk path empty")
+	}
 
-	if err := os.MkdirAll(path, 0755); err != nil {
+	rootPath = filepath.Join(rootPath, bsDir)
+
+	if err := os.MkdirAll(rootPath, 0755); err != nil {
 		return nil, err
 	}
 
 	return &Blobstore{
-		path: path,
+		path: rootPath,
 		flat: c.Flat,
 	}, nil
 }

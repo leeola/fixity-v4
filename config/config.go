@@ -19,6 +19,8 @@ const DefaultConfigPath = "~/.config/fixity/config.json"
 type Config struct {
 	Store string `json:"store"`
 
+	RootPath string `json:"rootPath"`
+
 	Log      bool      `json:"log"`
 	LogLevel log.Level `json:"logLevel"`
 

@@ -14,12 +14,13 @@ func init() {
 
 func DefaultConfigure(c config.Config) (config.Config, error) {
 	c.Store = "default"
+	c.RootPath = "_store" // tmp default for early PoC dev
 	c.Log = true
 	c.LogLevel = log.Info
 	c.BlobstoreConfigs["default"] = config.TypeConfig{
 		Type: "disk",
 		ConfigInterface: disk.Config{
-			Path: "_store",
+			Path: "store",
 			Flat: true,
 		},
 	}
@@ -27,7 +28,7 @@ func DefaultConfigure(c config.Config) (config.Config, error) {
 	c.IndexConfigs["default"] = config.TypeConfig{
 		Type: "bleve",
 		ConfigInterface: bleve.Config{
-			Path: "_store",
+			Path: "index",
 		},
 	}
 

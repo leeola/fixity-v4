@@ -9,6 +9,7 @@ import (
 	"github.com/blevesearch/bleve/analysis/analyzer/keyword"
 	"github.com/blevesearch/bleve/mapping"
 	"github.com/leeola/fixity/config"
+	"github.com/leeola/fixity/util/pathutil"
 )
 
 const (
@@ -32,12 +33,17 @@ func New(name string, cfg config.Config) (*Index, error) {
 		return nil, fmt.Errorf("indexconfig: %v", err)
 	}
 
-	if c.Path == "" {
-		return nil, fmt.Errorf("missing required config field: path")
+	rootPath, err := pathutil.ExpandJoin(cfg.RootPath, c.Path)
+	if err != nil {
+		return nil, fmt.Errorf("expandjoin: %v", err)
 	}
 
-	idPath := filepath.Join(c.Path, subDir, idIndexDir)
-	refPath := filepath.Join(c.Path, subDir, refIndexDir)
+	if rootPath == "" {
+		return nil, fmt.Errorf("rootpath and bleve path empty")
+	}
+
+	idPath := filepath.Join(rootPath, subDir, idIndexDir)
+	refPath := filepath.Join(rootPath, subDir, refIndexDir)
 
 	idIndex, err := newBleve(idPath)
 	if err != nil {
