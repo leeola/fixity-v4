@@ -13,9 +13,8 @@ import (
 )
 
 const (
-	subDir      = "index_bleve"
-	idIndexDir  = "id_index"
-	refIndexDir = "ref_index"
+	idIndexDir  = "id"
+	refIndexDir = "ref"
 )
 
 type Config struct {
@@ -42,8 +41,8 @@ func New(name string, cfg config.Config) (*Index, error) {
 		return nil, fmt.Errorf("rootpath and bleve path empty")
 	}
 
-	idPath := filepath.Join(rootPath, subDir, idIndexDir)
-	refPath := filepath.Join(rootPath, subDir, refIndexDir)
+	idPath := filepath.Join(rootPath, idIndexDir)
+	refPath := filepath.Join(rootPath, refIndexDir)
 
 	idIndex, err := newBleve(idPath)
 	if err != nil {

@@ -48,8 +48,6 @@ func New(name string, cfg config.Config) (*Blobstore, error) {
 		return nil, errors.New("rootpath and disk path empty")
 	}
 
-	rootPath = filepath.Join(rootPath, bsDir)
-
 	if err := os.MkdirAll(rootPath, 0755); err != nil {
 		return nil, err
 	}
