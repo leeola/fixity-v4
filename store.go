@@ -10,5 +10,6 @@ type Store interface {
 	Read(ctx context.Context, id string) (Mutation, Values, Reader, error)
 	ReadRef(context.Context, Ref) (Mutation, Values, Reader, error)
 	Write(ctx context.Context, id string, v Values, r io.Reader) ([]Ref, error)
+	WriteNamespace(ctx context.Context, id, namespace string, v Values, r io.Reader) ([]Ref, error)
 	Querier
 }

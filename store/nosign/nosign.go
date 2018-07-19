@@ -51,12 +51,12 @@ func New(name string, fc config.Config) (*Store, error) {
 }
 
 func (s *Store) Write(ctx context.Context, id string, v fixity.Values, r io.Reader) ([]fixity.Ref, error) {
-	return s.WriteTime(ctx, time.Now(), id, v, r)
+	// default to user namespace, ie ""
+	return s.WriteNamespace(ctx, id, "", v, r)
 }
 
-func (s *Store) WriteTime(ctx context.Context, t time.Time, id string, v fixity.Values, r io.Reader) ([]fixity.Ref, error) {
-	// default to user namespace, ie ""
-	return s.WriteTimeNamespace(ctx, t, id, "", v, r)
+func (s *Store) WriteNamespace(ctx context.Context, id, namespace string, v fixity.Values, r io.Reader) ([]fixity.Ref, error) {
+	return s.WriteTimeNamespace(ctx, time.Now(), id, namespace, v, r)
 }
 
 func (s *Store) WriteTimeNamespace(ctx context.Context,
