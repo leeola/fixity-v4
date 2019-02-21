@@ -1,42 +1,24 @@
+# Archived
 
-# Fixity (unstable)
+This (Go) Version of Fixity is being archived and the format being altered.
+Failings from this version of the fixity "spec" were centered around the
+`embeddable database` goal of fixity.
 
-_fixity: the quality of being incapable of mutation; immutability_
+This implementation does not map cleanly to SQL-oriented databases. The
+schemaless design has proven more of a burdon than a benefit. Schemaless
+ends up translating to requring custom indexers to understand the database
+oriented data. This requirement ends up meaning that for an embedded database
+Fixity would have to use its own implementation of indexing and the resulting
+output would never compare to more SQL-centric real databases.
 
-Fixity is an experimental immutable personal data store.
+This implementation has proven good in many respects, but falls short of that
+schema problem. The new format will have the goal of being easily translatable
+to SQL oriented databases.
 
-This is a highly experimental pet project. API and Json formats are not
-yet final.
+As an aside, the primary author (Lee Olayvar) has switched primarily from Go to
+Rust, and the new version is being written in Rust - hence the repo change.
 
-
-## Project Goals
-
-With massive inspiration from [Perkeep](https://perkeep.org),
-Fixity aims to be:
-
-- Low maintenance, small in scope.
-- Versioned and content addressable.
-- An embeddable database "for your life".
-- Syncable with safety and confidence _(content addressable)_.
-
-
-## Why not Perkeep _(née Camlistore)_?
-
-There are no reasons, you should use Perkeep.
-
-
-## Why write this then?
-
-Experimentation and flexibility, primarily. I want the ability
-to control drastic changes to the underlying system and design.
-For example, being a small embeddable database is important
-to me and the design will reflect that.
-
-With that said, as time goes on there may be a small differences
-in this project that give it merit. Only time will tell.
-
-For now, your data is important. Use Perkeep.
-
+For future developments, see [https://github.com/leeola/fixity](https://github.com/leeola/fixity).
 
 ## License
 
